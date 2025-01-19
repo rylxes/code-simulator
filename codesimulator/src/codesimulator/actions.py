@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import sys
+import time
 from typing import Optional
 
 import pyautogui
@@ -24,10 +25,10 @@ class ActionSimulator:
         self.app_config = AppConfig()
         self.app_switcher = AppSwitcher(self.app_config)
         self.typing_speed = {
-            'min': 0.05,
-            'max': 0.15,
-            'line_break': (1.0, 2.0),
-            'mistake_rate': 0.12,
+            "min": 0.05,
+            "max": 0.15,
+            "line_break": (1.0, 2.0),
+            "mistake_rate": 0.09,
         }
 
     def _configure_pyautogui(self):
@@ -43,7 +44,7 @@ class ActionSimulator:
             dict: Contains estimated time in seconds and detailed breakdown
         """
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, "r") as file:
                 lines = file.readlines()
 
             total_chars = sum(len(line.rstrip()) for line in lines)
@@ -52,15 +53,17 @@ class ActionSimulator:
             non_empty_lines = total_lines - empty_lines
 
             # Calculate timing components
-            avg_char_time = (self.typing_speed['min'] + self.typing_speed['max']) / 2
+            avg_char_time = (self.typing_speed["min"] + self.typing_speed["max"]) / 2
             char_typing_time = total_chars * avg_char_time
 
             # Calculate mistake time
-            expected_mistakes = int(total_chars * self.typing_speed['mistake_rate'])
-            mistake_time = expected_mistakes * (0.2 + 0.1)  # 0.2s pause + 0.1s correction
+            expected_mistakes = int(total_chars * self.typing_speed["mistake_rate"])
+            mistake_time = expected_mistakes * (
+                0.2 + 0.1
+            )  # 0.2s pause + 0.1s correction
 
             # Calculate line break time
-            avg_line_break = sum(self.typing_speed['line_break']) / 2
+            avg_line_break = sum(self.typing_speed["line_break"]) / 2
             line_break_time = non_empty_lines * avg_line_break
 
             # Empty lines take less time
@@ -71,28 +74,28 @@ class ActionSimulator:
 
             # Create detailed breakdown
             timing_details = {
-                'total_time_seconds': round(total_time, 2),
-                'total_time_formatted': self._format_time(total_time),
-                'breakdown': {
-                    'characters': {
-                        'count': total_chars,
-                        'time_seconds': round(char_typing_time, 2)
+                "total_time_seconds": round(total_time, 2),
+                "total_time_formatted": self._format_time(total_time),
+                "breakdown": {
+                    "characters": {
+                        "count": total_chars,
+                        "time_seconds": round(char_typing_time, 2),
                     },
-                    'lines': {
-                        'total': total_lines,
-                        'empty': empty_lines,
-                        'non_empty': non_empty_lines,
-                        'time_seconds': round(line_break_time + empty_line_time, 2)
+                    "lines": {
+                        "total": total_lines,
+                        "empty": empty_lines,
+                        "non_empty": non_empty_lines,
+                        "time_seconds": round(line_break_time + empty_line_time, 2),
                     },
-                    'expected_mistakes': {
-                        'count': expected_mistakes,
-                        'time_seconds': round(mistake_time, 2)
+                    "expected_mistakes": {
+                        "count": expected_mistakes,
+                        "time_seconds": round(mistake_time, 2),
                     },
-                    'typing_speed': {
-                        'chars_per_second': round(1 / avg_char_time, 2),
-                        'avg_pause_between_lines': round(avg_line_break, 2)
-                    }
-                }
+                    "typing_speed": {
+                        "chars_per_second": round(1 / avg_char_time, 2),
+                        "avg_pause_between_lines": round(avg_line_break, 2),
+                    },
+                },
             }
 
             # Log the estimate
@@ -140,7 +143,7 @@ class ActionSimulator:
                 if timing_details:
                     # Give user a moment to read the estimate
                     await asyncio.sleep(2)
-                    await self._simulate_code_typing(file_path)
+                await self._simulate_code_typing(file_path)
             else:
                 # Try to find a default code file
                 default_file = self._get_default_code_file()
@@ -150,7 +153,7 @@ class ActionSimulator:
                     if timing_details:
                         # Give user a moment to read the estimate
                         await asyncio.sleep(2)
-                        await self._simulate_code_typing(default_file)
+                    await self._simulate_code_typing(default_file)
                 else:
                     # Fall back to random actions if no code file is found
                     await self._simulate_random_actions()
@@ -166,8 +169,8 @@ class ActionSimulator:
     def _get_default_code_file(self) -> Optional[str]:
         """Get the path to the default code file in resources."""
         try:
-            resources_dir = os.path.join(os.path.dirname(__file__), 'resources')
-            code_files = [f for f in os.listdir(resources_dir) if f.endswith('.txt')]
+            resources_dir = os.path.join(os.path.dirname(__file__), "resources")
+            code_files = [f for f in os.listdir(resources_dir) if f.endswith(".txt")]
             if code_files:
                 return os.path.join(resources_dir, random.choice(code_files))
         except Exception as e:
@@ -201,7 +204,7 @@ class ActionSimulator:
                 logger.warning("No configured applications running")
 
                 # Fall back to default window switching if no configured apps are available
-                if sys.platform == 'darwin':
+                if sys.platform == "darwin":
                     self._mac_window_switch(reverse)
                 else:
                     self._default_window_switch(reverse)
@@ -212,13 +215,13 @@ class ActionSimulator:
 
     def _mac_window_switch(self, reverse: bool):
         """Handle MacOS window switching."""
-        keys = ['command', 'shift', 'tab'] if reverse else ['command', 'tab']
+        keys = ["command", "shift", "tab"] if reverse else ["command", "tab"]
         pyautogui.hotkey(*keys)
         logger.info("Switched window using Command+Tab")
 
     def _default_window_switch(self, reverse: bool):
         """Handle default window switching."""
-        keys = ['ctrl', 'shift', 'tab'] if reverse else ['ctrl', 'tab']
+        keys = ["ctrl", "shift", "tab"] if reverse else ["ctrl", "tab"]
         pyautogui.hotkey(*keys)
         logger.info("Switched window using Ctrl+Tab")
 
@@ -232,24 +235,10 @@ class ActionSimulator:
         except Exception as e:
             logger.error(f"Error clicking center screen: {e}")
 
-    async def _simulate_file_typing(self, file_path: str):
-        """Simulate typing content from a file."""
-        try:
-            with open(file_path, "r") as f:
-                for line in f:
-                    if not self.loop_flag:
-                        break
-                    await self._type_line(line)
-        except FileNotFoundError:
-            logger.error(f"File not found: {file_path}")
-            self.text_box.value += f"Error: File not found: {file_path}\n"
-        except Exception as e:
-            logger.error(f"Error typing from file: {e}")
-
     async def _simulate_code_typing(self, file_path: str):
         """Simulate typing code from a file with realistic timing and occasional mistakes."""
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, "r") as file:
                 lines = file.readlines()
 
             logger.info(f"Started typing code from {file_path}")
@@ -261,14 +250,14 @@ class ActionSimulator:
 
                 line = line.rstrip()  # Remove trailing whitespace
                 if not line:  # Handle empty lines
-                    pyautogui.press('enter')
-                    await asyncio.sleep(random.uniform(*self.typing_speed['line_break']))
+                    pyautogui.press("enter")
+                    await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
                     continue
 
                 await self._type_line_with_simulation(line)
 
                 # Add a natural pause between lines
-                await asyncio.sleep(random.uniform(*self.typing_speed['line_break']))
+                await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
 
         except FileNotFoundError:
             logger.error(f"Code file not found: {file_path}")
@@ -277,13 +266,6 @@ class ActionSimulator:
             logger.error(f"Error during code typing: {e}")
             self.text_box.value += f"Error during code typing: {e}\n"
 
-    async def _type_line(self, line: str):
-        """Type a single line with random delays."""
-        pyautogui.typewrite(line)
-        pyautogui.press("enter")
-        self.text_box.value += f"Typed: {line.strip()}\n"
-        await asyncio.sleep(random.uniform(0.5, 1.5))
-
     async def _type_line_with_simulation(self, line: str):
         """Type a single line with realistic simulation of typing behavior."""
         for char in line:
@@ -291,7 +273,7 @@ class ActionSimulator:
                 break
 
             # Simulate occasional typing mistake
-            if random.random() < self.typing_speed['mistake_rate']:
+            if random.random() < self.typing_speed["mistake_rate"]:
                 await self._simulate_typing_mistake(char)
 
             # Type the actual character
@@ -299,22 +281,22 @@ class ActionSimulator:
 
             # Random delay between keystrokes
             await asyncio.sleep(
-                random.uniform(self.typing_speed['min'], self.typing_speed['max'])
+                random.uniform(self.typing_speed["min"], self.typing_speed["max"])
             )
 
         # Press enter at the end of the line
-        pyautogui.press('enter')
+        pyautogui.press("enter")
         logger.info(f"Typed line: {line}")
 
     async def _simulate_typing_mistake(self, correct_char: str):
         """Simulate a typing mistake and correction."""
         # Type a wrong character
-        wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
+        wrong_char = random.choice("abcdefghijklmnopqrstuvwxyz")
         pyautogui.write(wrong_char)
         await asyncio.sleep(0.2)  # Slight pause before correction
 
         # Correct the mistake
-        pyautogui.press('backspace')
+        pyautogui.press("backspace")
         await asyncio.sleep(0.1)
 
     async def _simulate_random_actions(self):
@@ -324,13 +306,13 @@ class ActionSimulator:
                 self._random_cursor_move,
                 self._random_scroll,
                 self._middle_click,
-                self._window_switch_action
+                self._window_switch_action,
             ]
             for action in actions:
                 if not self.loop_flag:
                     break
                 await action()
-                await asyncio.sleep(random.uniform(0.3, 0.7))
+            await asyncio.sleep(random.uniform(0.3, 0.7))
 
     async def _random_cursor_move(self):
         """Perform random cursor movement."""
@@ -348,7 +330,7 @@ class ActionSimulator:
     async def _middle_click(self):
         """Perform middle click."""
         if random.random() < 0.3:
-            pyautogui.click(button='middle')
+            pyautogui.click(button="middle")
             logger.info("Middle clicked")
 
     async def _window_switch_action(self):

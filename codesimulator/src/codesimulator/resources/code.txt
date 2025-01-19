@@ -1,200 +1,3689 @@
-package controllers
+<?php
 
-import models.`trait`.{ExamModel, Question, QuestionPack, User}
+namespace App\Console\Commands\Migration;
 
-import javax.inject._
-import play.api.mvc._
+use App\Models\Reimbursement;
+use App\Services\Migration\MigrationLogger;
+use App\Traits\MigrationVerificationTrait;
+use Exception;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use App\Console\Commands\ByUser\FetchCraftParticipantUserData;
+use App\Console\Commands\ByUser\FetchCraftClaimUserData;
 
-import scala.concurrent.{ExecutionContext, Future}
-import models.dao.{ExamsDAO, QuestionPacksDAO, QuestionsDAO, UsersDAO}
-import play.api.Logger
-import play.filters.csrf.{AddCSRFToken, CSRF, CSRFAddToken, CSRFCheck}
-import play.mvc.Http.Context.Implicit.ctx
-import views.html.admin.{AdminDashboard, CreateQuestion, StudentAudit}
-import org.apache.poi.xssf.usermodel.{XSSFSheet, XSSFWorkbook}
-import play.api.data.Form
-import play.api.data.Forms.{mapping, text}
-import play.api.i18n.{Lang, Messages, MessagesImpl}
-import utils.{ExcelUtils, QuestionForm, QuestionUtil}
-import play.api.data.Forms._
-import play.api.libs.json.Json
+class MigrateCraftData extends Command
+{
+  use MigrationVerificationTrait;
 
-import scala.util.Try
-import scala.collection.JavaConverters._
+  protected $signature = 'migrate:all-craft-data
+                        {--user-id= : Single user ID to migrate}
+                        {--start-id= : Start of user ID range}
+                        {--end-id= : End of user ID range}
+                        {--verify : Only verify data without migration}
+                        {--dry-run : Show what would be migrated without actually migrating}';
+
+  protected $description = 'Migrate data from CraftCMS to Laravel';
+  protected $dbOperations = [];
+  protected $operationCounts = [];
+
+  protected $participantFetcher;
+  protected $claimFetcher;
+
+  protected $currentUserId;
+  protected $startTime;
+  protected $logger;
 
 
-@Singleton
-class Admin @Inject()(
-                       cc: MessagesControllerComponents,
-                       usersDAO: UsersDAO,
-                       questionUtil: QuestionUtil,
-                       examsDAO: ExamsDAO,
-                       questionPacksDAO: QuestionPacksDAO,
-                       questionDao: QuestionsDAO,
-                       addToken: CSRFAddToken,
-                       checkToken: CSRFCheck,
-                     )
-                     (implicit ec: ExecutionContext) extends MessagesAbstractController(cc) {
+  public function __construct(FetchCraftParticipantUserData $participantFetcher, FetchCraftClaimUserData $claimFetcher)
+  {
+    parent::__construct();
+    $this->participantFetcher = $participantFetcher;
+    $this->claimFetcher = $claimFetcher;
+  }
 
-  @AddCSRFToken
-  def adminDashboard: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-    validateUser(request).flatMap { result =>
-      if (result.header.status == OK) {
-        val userEmailOpt = request.session.get("user_email")
-        userEmailOpt match {
-          case Some(email) =>
-            usersDAO.isAdmin(email).flatMap { isAdmin =>
-              if (isAdmin) {
-                Future.successful(Ok(views.html.admin.AdminDashboard("Admin Dashboard")(request.flash)))
-              } else {
-                Future.successful(Redirect(routes.Application.login()))
-              }
-            }(ec)
+  private function logDbOperation($table, $operation, $data = null)
+  {
+    $context = [
+      'table' => $table,
+      'operation' => $operation,
+      'data' => $data
+    ];
 
-          case None => Future.successful(Redirect(routes.Application.login()))
+    $message = "DB Operation: {$operation} on {$table}";
+    $this->logger->info($message, $context);
+
+    // Store for summary
+    $this->dbOperations[] = [
+      'timestamp' => now(),
+      'table' => $table,
+      'operation' => $operation,
+      'data' => $data
+    ];
+
+    $key = "{$table}_{$operation}";
+    $this->operationCounts[$key] = ($this->operationCounts[$key] ?? 0) + 1;
+  }
+
+
+  private function displayDbOperationsSummary()
+  {
+    $this->logger->info("\nDatabase Operations Summary:");
+
+    $summary = [];
+    foreach ($this->operationCounts as $key => $count) {
+      list($table, $operation) = explode('_', $key);
+      $summary[] = [
+        'Table' => $table,
+        'Operation' => $operation,
+        'Count' => $count
+      ];
+    }
+
+    $this->table(
+      ['Table', 'Operation', 'Count'],
+      $summary
+    );
+
+    // Write to log file
+    Log::info('Database Migration Operations', [
+      'operations' => $this->dbOperations,
+      'summary' => $summary
+    ]);
+  }
+
+  private function logMigrationOperation($operation, $status, $data = [])
+  {
+    $context = array_merge($data, [
+      'operation' => $operation,
+      'status' => $status,
+      'timestamp' => now()->toDateTimeString()
+    ]);
+
+    $this->logger->info("Migration operation: {$operation}", $context);
+  }
+
+
+  public function handle()
+  {
+    $this->startTime = now();
+
+    try {
+      // Parse command options
+      $userId = $this->option('user-id');
+      $startId = $this->option('start-id');
+      $endId = $this->option('end-id');
+      $verifyOnly = $this->option('verify');
+      $isDryRun = $this->option('dry-run');
+
+      // Validate input combinations
+      if (!$this->validateInput($userId, $startId, $endId)) {
+        return 1;
+      }
+
+      // Get user IDs to process
+      $userIds = $this->getUserIds($userId, $startId, $endId);
+
+      foreach ($userIds as $currentUserId) {
+        // Initialize logger for current user
+        $this->logger = new MigrationLogger($currentUserId);
+        $this->logger->info("Starting migration process for user {$currentUserId}");
+
+        try {
+          if ($verifyOnly) {
+            $this->verifyData($currentUserId);
+          } else {
+            $success = $this->migrateUserData($currentUserId, $isDryRun);
+
+            if ($success && !$isDryRun) {
+              // Run post-migration validation
+              $this->runPostMigrationValidation($currentUserId);
+            }
+          }
+
+          // Generate migration summary
+          $this->logMigrationSummary($currentUserId);
+
+        } catch (Exception $e) {
+          $this->logger->error("Error processing user {$currentUserId}", [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+          ]);
+          continue;
         }
-      } else {
-        Future.successful(result)
+      }
+
+      $this->logger->info("\nMigration completed successfully!");
+      return 0;
+
+    } catch (Exception $e) {
+      $this->logger->error("Fatal error during migration: " . $e->getMessage());
+      if (isset($this->logger)) {
+        $this->logger->error("Fatal migration error", [
+          'error' => $e->getMessage(),
+          'trace' => $e->getTraceAsString()
+        ]);
+      }
+      return 1;
+    }
+  }
+
+
+  protected function validateInput($userId, $startId, $endId)
+  {
+    if ($userId && ($startId || $endId)) {
+      $this->logger->error('Cannot specify both single user ID and range');
+      return false;
+    }
+
+    if (($startId && !$endId) || (!$startId && $endId)) {
+      $this->logger->error('Must specify both start and end IDs for range');
+      return false;
+    }
+
+    if ($startId && $endId && $startId > $endId) {
+      $this->logger->error('Start ID must be less than or equal to End ID');
+      return false;
+    }
+
+    return true;
+  }
+
+  protected function getUserIds($userId, $startId, $endId)
+  {
+    if ($userId) {
+      return collect([$userId]);
+    }
+
+    if ($startId && $endId) {
+      return range($startId, $endId);
+    }
+
+    // Default to all users if no specific IDs provided
+    return DB::connection('craft')
+      ->table('users')
+      ->pluck('id');
+  }
+
+  protected function verifyData($userId)
+  {
+    $this->logger->info("\nVerifying data for User ID: $userId");
+
+    // Verify User Data
+    $craftUser = $this->getCraftUserData($userId);
+    $laravelUser = $this->getLaravelUserData($userId);
+
+    $this->verifyUserData($craftUser, $laravelUser);
+
+    // Verify Participant Data
+    $craftParticipant = $this->getCraftParticipantData($userId);
+    $laravelParticipant = $this->getlaravelParticipantData($userId);
+
+    $this->verifyParticipantData($craftParticipant, $laravelParticipant);
+
+    // Verify Claims Data
+    $craftClaims = $this->getCraftClaimsData($userId);
+    $laravelClaims = $this->getLaravelClaimsData($userId);
+
+    $this->verifyClaimsData($craftClaims, $laravelClaims);
+  }
+
+
+  protected function getLaravelUserData($userId)
+  {
+    return DB::table('users')
+      ->where('id', $userId)
+      ->first();
+  }
+
+  protected function getCraftUserData($userId)
+  {
+    return DB::connection('craft')
+      ->table('users as u')
+      ->join('elements as e', 'u.id', '=', 'e.id')
+      ->where('u.id', $userId)
+      ->where('e.enabled', 1)
+      ->whereNull('e.dateDeleted')
+      ->select([
+        'u.id',
+        'u.username',
+        'u.firstName',
+        'u.lastName',
+        'u.email',
+        'u.password',
+        'u.admin',
+        'u.locked',
+        'u.suspended',
+        'u.pending',
+        'u.lastLoginDate',
+        'u.dateCreated',
+        'u.dateUpdated'
+      ])
+      ->first();
+  }
+
+
+  protected function getCraftClaimsData($userId)
+  {
+    try {
+      $query = DB::connection('craft')
+        ->table('elements as claims')
+        ->join('content as claimContent', 'claimContent.elementId', '=', 'claims.id')
+        ->join('entries as claimEntries', 'claimEntries.id', '=', 'claims.id')
+        ->leftJoin('relations as participantRelation', function ($join) {
+          $join->on('participantRelation.sourceId', '=', 'claims.id')
+            ->where('participantRelation.fieldId', function ($query) {
+              $query->select('id')
+                ->from('fields')
+                ->where('handle', 'participant')
+                ->limit(1);
+            });
+        })
+        ->leftJoin('elements as participants', 'participantRelation.targetId', '=', 'participants.id')
+        ->leftJoin('content as participantContent', 'participantContent.elementId', '=', 'participants.id')
+        ->where('claims.type', 'craft\\elements\\Entry')
+        ->whereNull('claims.dateDeleted');
+
+      if ($userId) {
+        $query->whereExists(function ($subquery) use ($userId) {
+          $subquery->select(DB::raw(1))
+            ->from('relations')
+            ->where('relations.sourceId', $userId)
+            ->where('relations.fieldId', 152)
+            ->whereRaw('relations.targetId = claims.id');
+        });
+      }
+
+      $claims = $query->select([
+        'claims.id as craftId',
+        'claims.dateCreated',
+        'claims.dateUpdated',
+        'claimContent.field_claimId',
+        'claimContent.field_passengers',
+        'claimContent.field_claimStatus',
+        'claimContent.field_paymentStatus',
+        'claimContent.field_firstName',
+        'claimContent.field_middleName',
+        'claimContent.field_lastName',
+        'claimContent.field_email',
+        'claimContent.field_address',
+        'claimContent.field_city',
+        'claimContent.field_state',
+        'claimContent.field_zipCode',
+        'claimContent.field_primaryPhone',
+        'claimContent.field_secondaryPhone',
+        'claimContent.field_createDate',
+        'claimContent.field_claimAmountTotal',
+        'claimContent.field_claimAmountBasis',
+        'claimContent.field_departureDate',
+        'claimContent.field_returnDate',
+        'claimContent.field_servicesPurchased',
+        'claimContent.field_hasInsurance',
+        'claimContent.field_hasReimbursementSource',
+        'participantContent.field_tcrcId as participantTcrcId'
+      ])->get();
+
+
+      //dd($claims);
+
+      // Enhance each claim with its related data
+      return $claims->map(function ($claim) use ($userId) {
+        // Get passengers
+
+        //dd($claim->craftId);
+        $passengers = json_decode($claim->field_passengers, true) ?: [];
+
+
+        // Get payment history
+        $payments = DB::connection('craft')
+          ->table('matrixblocks as mb')
+          ->join('matrixcontent_paymenthistory as mph', 'mb.id', '=', 'mph.elementId')
+          ->where('mb.ownerId', $claim->craftId)
+          ->select([
+            'mph.field_payment_paymentTypeName',
+            'mph.field_payment_paymentForType',
+            'mph.field_payment_paidDate',
+            'mph.field_payment_expireDate',
+            'mph.field_payment_createDate',
+            'mph.field_payment_assessmentFee',
+            'mph.field_payment_lateFee',
+            'mph.field_payment_totalFee',
+            'mph.field_payment_subtotalAmount',
+            'mph.field_payment_totalAmount',
+            'mph.field_payment_ccAuthNumber',
+            'mph.field_payment_ccErrorCode',
+            'mph.field_payment_ccErrorText',
+            'mph.field_payment_checkNumber',
+            'mph.field_payment_checkAmount',
+            'mph.field_payment_checkDate',
+            'mph.field_payment_checkClearedDate',
+            'mph.field_payment_checkBouncedDate',
+            'mph.field_payment_note',
+            'mph.field_payment_numberOfLocations',
+            'mph.field_payment_emergencyPaymentReferenceId',
+            'mph.field_payment_manualCorrection'
+          ])
+          ->get();
+
+        // Get collaterals
+        $collaterals = DB::connection('craft')
+          ->table('matrixblocks as mb')
+          ->join('matrixcontent_collaterals as mc', 'mb.id', '=', 'mc.elementId')
+          ->where('mb.ownerId', $claim->craftId)
+          ->select([
+            'mc.field_collaterals_fileName',
+            'mc.field_collaterals_fileDescription',
+            'mc.field_collaterals_createDate'
+          ])
+          ->get();
+
+        $participantId = null;
+        if ($claim->participantTcrcId) {
+          $laravelParticipant = DB::table('participants')
+            ->where('tcrcId', $claim->participantTcrcId)
+            ->first();
+          if ($laravelParticipant) {
+            $participantId = $laravelParticipant->id;
+          }
+        }
+
+        // Return enhanced claim data
+        return [
+          'craftId' => $claim->craftId,
+          'claimId' => $claim->field_claimId,
+          'status' => $claim->field_claimStatus,
+          'userId' => $userId,
+          'paymentStatus' => $claim->field_paymentStatus,
+          'claimant' => [
+            'firstName' => $claim->field_firstName,
+            'middleName' => $claim->field_middleName,
+            'lastName' => $claim->field_lastName,
+            'email' => $claim->field_email,
+            'address' => $claim->field_address,
+            'city' => $claim->field_city,
+            'state' => $claim->field_state,
+            'zipCode' => $claim->field_zipCode,
+            'primaryPhone' => $claim->field_primaryPhone,
+            'secondaryPhone' => $claim->field_secondaryPhone
+          ],
+          'details' => [
+            'createDate' => $claim->field_createDate,
+            'claimAmount' => $claim->field_claimAmountTotal,
+            'basis' => $claim->field_claimAmountBasis,
+            'departureDate' => $claim->field_departureDate,
+            'returnDate' => $claim->field_returnDate,
+            'servicesPurchased' => $claim->field_servicesPurchased,
+            'hasInsurance' => $claim->field_hasInsurance,
+            'hasReimbursement' => $claim->field_hasReimbursementSource
+          ],
+          'passengers' => $passengers,
+          'payments' => $payments->toArray(),
+          'collaterals' => $collaterals->toArray(),
+          'participantId' => $participantId,
+          'metadata' => [
+            'dateCreated' => $claim->dateCreated,
+            'dateUpdated' => $claim->dateUpdated
+          ]
+        ];
+      });
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error fetching Craft claims data: " . $e->getMessage());
+      $this->logger->error("Craft claims data fetch error", [
+        'userId' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return collect([]);
+    }
+  }
+
+  /**
+   * Fetch claims data from Laravel database
+   */
+  protected function getLaravelClaimsData($userId)
+  {
+    try {
+      $claims = DB::table('claims')
+        ->where('userId', $userId)
+        ->get();
+
+      // Enhance each claim with its related data
+      return $claims->map(function ($claim) {
+        // Get passengers
+        $passengers = DB::table('passengers')
+          ->where('claim_id', $claim->id)
+          ->get();
+
+        // Get payment history
+        $payments = DB::table('payment_history')
+          ->where('paymentable_type', 'App\Models\Claim')
+          ->where('paymentable_id', $claim->id)
+          ->get();
+
+        // Get collaterals
+        $collaterals = DB::table('collaterals')
+          ->where('claim_id', $claim->id)
+          ->get();
+
+        // Return in same format as Craft data
+        return [
+          'claimId' => $claim->claimId,
+          'status' => $claim->claimStatus,
+          'paymentStatus' => $claim->paymentStatus,
+          'claimant' => [
+            'firstName' => $claim->firstName,
+            'middleName' => $claim->middleName,
+            'lastName' => $claim->lastName,
+            'email' => $claim->email,
+            'address' => $claim->address,
+            'city' => $claim->city,
+            'state' => $claim->state,
+            'zipCode' => $claim->zipCode,
+            'primaryPhone' => $claim->primaryPhone,
+            'secondaryPhone' => $claim->secondaryPhone
+          ],
+          'details' => [
+            'createDate' => $claim->createDate,
+            'claimAmount' => $claim->claimAmountTotal,
+            'basis' => $claim->claimAmountBasis,
+            'departureDate' => $claim->departureDate,
+            'returnDate' => $claim->returnDate,
+            'servicesPurchased' => $claim->servicesPurchased,
+            'hasInsurance' => $claim->hasInsurance,
+            'hasReimbursement' => $claim->hasReimbursementSource
+          ],
+          'passengers' => $passengers->toArray(),
+          'payments' => $payments->toArray(),
+          'collaterals' => $collaterals->toArray(),
+          'metadata' => [
+            'dateCreated' => $claim->created_at,
+            'dateUpdated' => $claim->updated_at
+          ]
+        ];
+      });
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error fetching Laravel claims data: " . $e->getMessage());
+      $this->logger->error("Laravel claims data fetch error", [
+        'userId' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return collect([]);
+    }
+  }
+
+  protected function verifyParticipantData($craftData, $laravelData)
+  {
+    if (!$craftData || !$laravelData) {
+      $this->logger->error("Cannot verify participant data - missing data from one or both sources");
+      return false;
+    }
+
+    $this->logger->info("Starting participant data verification");
+    $mismatches = [];
+
+    // Core fields verification
+    $coreFields = [
+      'tcrcId' => [
+        'label' => 'TCRC ID',
+        'compare' => function ($craft, $laravel) {
+          return (string)$craft === (string)$laravel;
+        }
+      ],
+      'sotId' => [
+        'label' => 'SOT ID',
+        'compare' => function ($craft, $laravel) {
+          return (string)$craft === (string)$laravel;
+        }
+      ],
+      'email' => [
+        'label' => 'Email',
+        'compare' => 'strict'
+      ],
+      'legalBusinessName' => [
+        'label' => 'Business Name',
+        'compare' => 'strict'
+      ],
+      'participantStatus' => [
+        'label' => 'Status',
+        'compare' => 'strict'
+      ],
+      'createDate' => [
+        'label' => 'Create Date',
+        'compare' => function ($craft, $laravel) {
+          return date('Y-m-d', strtotime($craft)) === date('Y-m-d', strtotime($laravel));
+        }
+      ],
+      'expireDate' => [
+        'label' => 'Expire Date',
+        'compare' => function ($craft, $laravel) {
+          return date('Y-m-d', strtotime($craft)) === date('Y-m-d', strtotime($laravel));
+        }
+      ],
+      'arcIatanNumber' => [
+        'label' => 'ARC/IATAN Number',
+        'compare' => 'strict'
+      ]
+    ];
+
+    foreach ($coreFields as $field => $config) {
+      $craftValue = $craftData[$field];
+      $laravelValue = $laravelData[$field];
+
+      $matches = $config['compare'] === 'strict'
+        ? $craftValue === $laravelValue
+        : $config['compare']($craftValue, $laravelValue);
+
+      if (!$matches) {
+        $mismatches[] = [
+          'field' => $config['label'],
+          'craft_value' => $craftValue,
+          'laravel_value' => $laravelValue
+        ];
       }
     }
-  }
 
+    // Verify counts
+    $countComparisons = [
+      'contacts' => count($craftData['contacts']) !== count($laravelData['contacts']),
+      'locations' => count($craftData['locations']) !== count($laravelData['locations']),
+      'sotRecords' => count($craftData['sotRecords']) !== count($laravelData['sotRecords'])
+    ];
 
-  def isLoggedIn(request: Request[AnyContent]): Boolean = {
-    request.session.get("user_email").isDefined
-  }
-
-  def validateUser(request: Request[AnyContent]): Future[Result] = {
-    if (isLoggedIn(request)) {
-      Future.successful(Ok("User is logged in"))
-    } else {
-      Future.successful(Redirect(routes.Application.login()))
+    foreach ($countComparisons as $type => $hasMismatch) {
+      if ($hasMismatch) {
+        $this->logger->warning("Count mismatch in {$type}", [
+          'craft_count' => count($craftData[$type]),
+          'laravel_count' => count($laravelData[$type])
+        ]);
+      }
     }
-  }
 
-
-  def logout: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-    Future.successful {
-      Redirect(routes.Application.adminLogin()).withNewSession
+    // Verify SOT records
+    $sotMismatches = $this->verifySotRecords($laravelData['id'], $craftData['sotRecords']);
+    if (!empty($sotMismatches)) {
+      $this->logger->warning("SOT record mismatches found", [
+        'participant_id' => $laravelData['id'],
+        'mismatches' => $sotMismatches
+      ]);
+      $mismatches = array_merge($mismatches, $sotMismatches);
     }
+
+    if (!empty($mismatches)) {
+      $this->logger->warning("Participant data verification failed", [
+        'mismatches' => $mismatches,
+        'tcrc_id' => $craftData['tcrcId']
+      ]);
+      return false;
+    }
+
+    $this->logger->info("Participant data verification passed");
+    return true;
   }
 
-  @AddCSRFToken
-  def studentAnswers: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-    studentAnswerPage(1)(request)
+  protected function verifyClaimsData($craftClaims, $laravelClaims)
+  {
+    $this->logger->info("Starting claims data verification");
+
+    if ($craftClaims->count() !== $laravelClaims->count()) {
+      $this->logger->warning("Claims count mismatch", [
+        'craft_count' => $craftClaims->count(),
+        'laravel_count' => $laravelClaims->count()
+      ]);
+    }
+
+    $verifiedCount = 0;
+    $mismatches = [];
+
+    foreach ($craftClaims as $craftClaim) {
+      $laravelClaim = $laravelClaims->firstWhere('claimId', $craftClaim['claimId']);
+
+      if (!$laravelClaim) {
+        $this->logger->warning("Missing claim in Laravel", [
+          'claim_id' => $craftClaim['claimId']
+        ]);
+        continue;
+      }
+
+      // Verify core claim data
+      $claimMismatches = $this->verifyClaimDetails($craftClaim, $laravelClaim);
+
+      $insuranceMismatches = [];
+      //dd($laravelClaim);
+      $insuranceMismatches = $this->verifyInsuranceDetails(
+        $craftClaim['craftId'],
+        $laravelClaim['claimId']
+      );
+
+      if (!empty($coreMismatches) || !empty($insuranceMismatches)) {
+        $this->logger->warning("Claim verification failed", [
+          'claim_id' => $craftClaim['claimId'],
+          'core_mismatches' => $claimMismatches,
+          'insurance_mismatches' => $insuranceMismatches
+        ]);
+      }
+
+      // Verify related data
+      $passengerMismatches = $this->verifyPassengers($craftClaim['passengers'], $laravelClaim['passengers']);
+      $paymentMismatches = $this->verifyPayments($craftClaim['payments'], $laravelClaim['payments']);
+      $collateralMismatches = $this->verifyCollaterals($craftClaim['collaterals'], $laravelClaim['collaterals']);
+
+      if (!empty($claimMismatches) || !empty($passengerMismatches) ||
+        !empty($paymentMismatches) || !empty($collateralMismatches)) {
+
+        $mismatches[$craftClaim['claimId']] = [
+          'core' => $claimMismatches,
+          'passengers' => $passengerMismatches,
+          'payments' => $paymentMismatches,
+          'collaterals' => $collateralMismatches
+        ];
+
+        $this->logger->warning("Mismatches found in claim", [
+          'claim_id' => $craftClaim['claimId'],
+          'mismatches' => $mismatches[$craftClaim['claimId']]
+        ]);
+      } else {
+        $verifiedCount++;
+      }
+    }
+
+    $this->logger->info("Claims verification completed", [
+      'total_claims' => $craftClaims->count(),
+      'verified_claims' => $verifiedCount,
+      'mismatched_claims' => count($mismatches)
+    ]);
+
+    return empty($mismatches);
   }
 
 
-  @AddCSRFToken
-  def studentQuestions: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-    studentAnswerPage(1)(request)
+  private function verifyInsuranceDetails($craftClaimId, $laravelClaimId)
+  {
+    $mismatches = [];
+
+    $craftInsurance = DB::connection('craft')
+      ->table('content')
+      ->where('elementId', $craftClaimId)
+      ->select([
+        'elementId as tcrcId',
+        'field_insurancePurchaseDate',
+        'field_insurancePurchaseAmount',
+        'field_insurancePurchasedFrom',
+        'field_insurer',
+        'field_insurerFirstName',
+        'field_insurerLastName',
+        'field_insurerAddress',
+        'field_insurerCity',
+        'field_insurerState',
+        'field_insurerZipCode',
+        'field_insuranceSellerFirstName',
+        'field_insuranceSellerLastName',
+        'field_insuranceSellerAddress',
+        'field_insuranceSellerCity',
+        'field_insuranceSellerState',
+        'field_insuranceSellerZipCode'
+      ])
+      ->first();
+
+    $laravelInsurance = DB::table('insurances')
+      ->where('claim_id', $laravelClaimId)
+      ->first();
+
+    if (!$craftInsurance || !$laravelInsurance) {
+      return [['type' => 'missing_insurance_record']];
+    }
+
+    // Verify tcrcId matches
+    if ($craftInsurance->tcrcId != $laravelInsurance->tcrcId) {
+      $mismatches[] = [
+        'field' => 'tcrcId',
+        'craft_value' => $craftInsurance->tcrcId,
+        'laravel_value' => $laravelInsurance->tcrcId
+      ];
+    }
+
+    $fieldsToCompare = [
+      'purchase_date' => 'field_insurancePurchaseDate',
+      'purchase_amount' => 'field_insurancePurchaseAmount',
+      'purchased_from' => 'field_insurancePurchasedFrom',
+      'insurer_name' => 'field_insurer',
+      'insurer_first_name' => 'field_insurerFirstName',
+      'insurer_last_name' => 'field_insurerLastName',
+      'insurer_address' => 'field_insurerAddress',
+      'insurer_city' => 'field_insurerCity',
+      'insurer_state' => 'field_insurerState',
+      'insurer_zip_code' => 'field_insurerZipCode',
+      'seller_first_name' => 'field_insuranceSellerFirstName',
+      'seller_last_name' => 'field_insuranceSellerLastName',
+      'seller_address' => 'field_insuranceSellerAddress',
+      'seller_city' => 'field_insuranceSellerCity',
+      'seller_state' => 'field_insuranceSellerState',
+      'seller_zip_code' => 'field_insuranceSellerZipCode'
+    ];
+
+    foreach ($fieldsToCompare as $laravelField => $craftField) {
+      if ($this->formatValue2($laravelInsurance->$laravelField) !==
+        $this->formatValue2($craftInsurance->$craftField)) {
+        $mismatches[] = [
+          'field' => $laravelField,
+          'craft_value' => $craftInsurance->$craftField,
+          'laravel_value' => $laravelInsurance->$laravelField
+        ];
+      }
+    }
+
+    return $mismatches;
+  }
+
+  private function formatValue2($value)
+  {
+    if (is_null($value)) return null;
+    if (is_numeric($value)) return (string)$value;
+    return trim((string)$value);
   }
 
 
-  @AddCSRFToken
-  def studentAnswerPage(page: Int): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-    validateUser(request).flatMap { result =>
-      if (result.header.status == OK) {
-        val userEmailOpt = request.session.get("user_email")
-        userEmailOpt match {
-          case Some(email) =>
-            usersDAO.isAdmin(email).flatMap { isAdmin =>
-              if (isAdmin) {
-                val questionPacksFuture = questionPacksDAO.listQuestionPacks(page, pageSize = 100)
-                val examsFuture = examsDAO.listAllExams()
-                val nonAdminUsersFuture = usersDAO.listNonAdminUsers()
-                val token = CSRF.getToken.get
-                for {
-                  questionPacks <- questionPacksFuture
-                  exams <- examsFuture
-                  nonAdminUsers <- nonAdminUsersFuture
-                } yield {
-                  Ok(views.html.admin.StudentAudit("Student Answers", token, questionPacks, exams, nonAdminUsers, Option.empty, Option.empty)(request.flash))
-                }
-              } else Future.successful(Redirect(routes.Application.login()))
-            }(ec)
+  private function verifyClaimDetails($craftClaim, $laravelClaim)
+  {
+    $mismatches = [];
+    $fieldsToCheck = [
+      'status' => 'Status',
+      'paymentStatus' => 'Payment Status',
+      'details.claimAmount' => 'Claim Amount',
+      'details.departureDate' => 'Departure Date',
+      'details.returnDate' => 'Return Date',
+      'claimant.firstName' => 'First Name',
+      'claimant.lastName' => 'Last Name',
+      'claimant.email' => 'Email',
+      'details.servicesPurchased' => 'Services Purchased',
+      'details.hasInsurance' => 'Has Insurance',
+      'details.hasReimbursement' => 'Has Reimbursement'
+    ];
 
-          case None => Future.successful(Redirect(routes.Application.login()))
+    foreach ($fieldsToCheck as $field => $label) {
+      $craftValue = data_get($craftClaim, $field);
+      $laravelValue = data_get($laravelClaim, $field);
+
+      // Special handling for monetary values
+      if (strpos($field, 'Amount') !== false) {
+        $craftValue = number_format((float)$craftValue, 2);
+        $laravelValue = number_format((float)$laravelValue, 2);
+      }
+
+      // Special handling for dates
+      if (strpos($field, 'Date') !== false) {
+        $craftValue = $craftValue ? date('Y-m-d', strtotime($craftValue)) : null;
+        $laravelValue = $laravelValue ? date('Y-m-d', strtotime($laravelValue)) : null;
+      }
+
+      // Special handling for boolean values
+      if (is_bool($craftValue) || is_bool($laravelValue)) {
+        $craftValue = (bool)$craftValue;
+        $laravelValue = (bool)$laravelValue;
+      }
+
+      if ($craftValue !== $laravelValue) {
+        $mismatches[] = [
+          'field' => $label,
+          'craft' => $craftValue ?? 'null',
+          'laravel' => $laravelValue ?? 'null'
+        ];
+      }
+    }
+
+    return $mismatches;
+  }
+
+  /**
+   * Helper method to verify passengers
+   */
+  private function verifyPassengers($craftPassengers, $laravelPassengers)
+  {
+    $mismatches = [];
+
+    if (count($craftPassengers) !== count($laravelPassengers)) {
+      $mismatches[] = [
+        'field' => 'Passenger Count',
+        'craft' => count($craftPassengers),
+        'laravel' => count($laravelPassengers)
+      ];
+    }
+
+
+    // Create arrays of passenger full names for comparison
+    $craftNames = collect($craftPassengers)->map(function ($passenger) {
+      return trim("{$passenger['col1']} {$passenger['col2']} {$passenger['col3']}");
+    })->sort()->values()->toArray();
+
+    $laravelNames = collect($laravelPassengers)->map(function ($passenger) {
+      return trim("{$passenger->firstName} {$passenger->middleName} {$passenger->lastName}");
+    })->sort()->values()->toArray();
+
+    // Compare passenger lists
+    foreach ($craftNames as $index => $craftName) {
+      if (!isset($laravelNames[$index]) || $craftName !== $laravelNames[$index]) {
+        $mismatches[] = [
+          'field' => "Passenger " . ($index + 1),
+          'craft' => $craftName,
+          'laravel' => $laravelNames[$index] ?? 'Missing'
+        ];
+      }
+    }
+
+    return $mismatches;
+  }
+
+  /**
+   * Helper method to verify payments
+   */
+  private function verifyPayments($craftPayments, $laravelPayments)
+  {
+    $mismatches = [];
+
+    if (count($craftPayments) !== count($laravelPayments)) {
+      $mismatches[] = [
+        'field' => 'Payment Count',
+        'craft' => count($craftPayments),
+        'laravel' => count($laravelPayments)
+      ];
+    }
+
+    // Create a unique key for each payment for comparison
+    $craftPaymentMap = collect($craftPayments)->keyBy(function ($payment) {
+      return $payment->field_payment_checkNumber . '-' . $payment->field_payment_paidDate;
+    });
+
+    $laravelPaymentMap = collect($laravelPayments)->keyBy(function ($payment) {
+      return $payment->checkNumber . '-' . $payment->paidDate;
+    });
+
+    // Check for missing payments in either system
+    $craftKeys = $craftPaymentMap->keys();
+    $laravelKeys = $laravelPaymentMap->keys();
+
+    $missingInLaravel = $craftKeys->diff($laravelKeys);
+    $missingInCraft = $laravelKeys->diff($craftKeys);
+
+    foreach ($missingInLaravel as $key) {
+      $payment = $craftPaymentMap[$key];
+      $mismatches[] = [
+        'field' => "Missing Payment",
+        'craft' => "Check #{$payment->field_payment_checkNumber} - {$payment->field_payment_paidDate}",
+        'laravel' => 'Not Found'
+      ];
+    }
+
+    foreach ($missingInCraft as $key) {
+      $payment = $laravelPaymentMap[$key];
+      $mismatches[] = [
+        'field' => "Missing Payment",
+        'craft' => 'Not Found',
+        'laravel' => "Check #{$payment->checkNumber} - {$payment->paidDate}"
+      ];
+    }
+
+    // Compare payment details for payments that exist in both systems
+    foreach ($craftPaymentMap as $key => $craftPayment) {
+      if ($laravelPaymentMap->has($key)) {
+        $laravelPayment = $laravelPaymentMap[$key];
+
+        // Compare amounts
+        if (number_format($craftPayment->field_payment_totalAmount, 2) !==
+          number_format($laravelPayment->totalAmount, 2)) {
+          $mismatches[] = [
+            'field' => "Payment Amount (Check #{$craftPayment->field_payment_checkNumber})",
+            'craft' => number_format($craftPayment->field_payment_totalAmount, 2),
+            'laravel' => number_format($laravelPayment->totalAmount, 2)
+          ];
         }
-      } else Future.successful(result)
+
+        // Compare dates
+        $craftDate = date('Y-m-d', strtotime($craftPayment->field_payment_paidDate));
+        $laravelDate = date('Y-m-d', strtotime($laravelPayment->paidDate));
+        if ($craftDate !== $laravelDate) {
+          $mismatches[] = [
+            'field' => "Payment Date (Check #{$craftPayment->field_payment_checkNumber})",
+            'craft' => $craftDate,
+            'laravel' => $laravelDate
+          ];
+        }
+      }
+    }
+
+    return $mismatches;
+  }
+
+  /**
+   * Helper method to verify collaterals
+   */
+  private function verifyCollaterals($craftCollaterals, $laravelCollaterals)
+  {
+    $mismatches = [];
+
+    if (count($craftCollaterals) !== count($laravelCollaterals)) {
+      $mismatches[] = [
+        'field' => 'Collateral Count',
+        'craft' => count($craftCollaterals),
+        'laravel' => count($laravelCollaterals)
+      ];
+    }
+
+    // Create arrays of filenames for comparison
+    $craftFiles = collect($craftCollaterals)->map(function ($collateral) {
+      return [
+        'name' => $collateral->field_collaterals_fileName,
+        'date' => date('Y-m-d', strtotime($collateral->field_collaterals_createDate))
+      ];
+    })->sortBy('name')->values()->toArray();
+
+    $laravelFiles = collect($laravelCollaterals)->map(function ($collateral) {
+      return [
+        'name' => $collateral->fileName,
+        'date' => date('Y-m-d', strtotime($collateral->createDate))
+      ];
+    })->sortBy('name')->values()->toArray();
+
+    // Compare collateral files
+    foreach ($craftFiles as $index => $craftFile) {
+      if (!isset($laravelFiles[$index]) ||
+        $craftFile['name'] !== $laravelFiles[$index]['name'] ||
+        $craftFile['date'] !== $laravelFiles[$index]['date']) {
+        $mismatches[] = [
+          'field' => "Collateral " . ($index + 1),
+          'craft' => "{$craftFile['name']} ({$craftFile['date']})",
+          'laravel' => isset($laravelFiles[$index]) ?
+            "{$laravelFiles[$index]['name']} ({$laravelFiles[$index]['date']})" :
+            'Missing'
+        ];
+      }
+    }
+
+    return $mismatches;
+  }
+
+  /**
+   * Helper method to format values for comparison
+   */
+  private function formatValue($value, $type = null)
+  {
+    if ($value === null) {
+      return 'null';
+    }
+
+    switch ($type) {
+      case 'money':
+        return number_format((float)$value, 2);
+      case 'date':
+        return $value ? date('Y-m-d', strtotime($value)) : null;
+      case 'boolean':
+        return $value ? 'Yes' : 'No';
+      default:
+        return (string)$value;
     }
   }
 
 
+  protected function getCraftParticipantData($userId)
+  {
+    try {
+      // Get main participant entry
+      $participant = DB::connection('craft')
+        ->table('elements')
+        ->join('relations', 'elements.id', '=', 'relations.targetId')
+        ->join('content', 'elements.id', '=', 'content.elementId')
+        ->join('entries', 'elements.id', '=', 'entries.id')
+        ->join('sections', 'entries.sectionId', '=', 'sections.id')
+        ->where('sections.handle', 'participant_business')
+        ->where('relations.sourceId', $userId)
+        ->where('elements.type', 'craft\elements\Entry')
+        ->whereNull('elements.dateDeleted')
+        ->select([
+          'elements.id as craftId',
+          'elements.dateCreated',
+          'elements.dateUpdated',
+          'content.field_tcrcId',
+          'content.field_sotId',
+          'content.field_expireDate',
+          'content.field_createDate',
+          'content.field_email',
+          'content.field_legalBusinessName',
+          'content.field_legalBusinessOwnerFirstName',
+          'content.field_legalBusinessOwnerLastName',
+          'content.field_legalBusinessStartDate',
+          'content.field_participantStatus',
+          'content.field_arcIatanNumber',
+          'content.field_isPendingPayment',
+          'content.field_isPendingRenewal',
+          'content.field_isBoardMember',
+          'content.field_hasAcceptedTerms',
+          'content.field_legacyModifyDate',
+          'content.field_legacyUserName',
+          'content.field_legacyUserid'
+        ])
+        ->first();
 
-  @AddCSRFToken
-  def searchStudentAnswers: Action[AnyContent] = Action.async { implicit request =>
-    val userEmailOpt = request.session.get("user_email")
-    userEmailOpt match {
-      case Some(email) =>
-        usersDAO.isAdmin(email).flatMap { isAdmin =>
-          if (isAdmin) {
-            val formData = request.body.asFormUrlEncoded.getOrElse(Map.empty)
-            val user = formData.get("user").map(_.head).flatMap(id => Try(id.toLong).toOption)
-            val exam = formData.get("exam").map(_.head).flatMap(id => Try(id.toLong).toOption)
+      if (!$participant) {
+        $this->logger->warning("No participant found in Craft for user ID: $userId");
+        return null;
+      }
 
-            Logger.info(s"user Form data: ${user}")
-            Logger.info(s"exam Form data: ${exam}")
+      $this->logger->info("Found participant", [
+        'craftId' => $participant->craftId,
+        'tcrcId' => $participant->field_tcrcId,
+        'businessName' => $participant->field_legalBusinessName
+      ]);
 
-            val questionPacksFuture = questionPacksDAO.searchQuestionPacks(user, exam, page = 1, pageSize = 100)
-            val examsFuture = examsDAO.listAllExams()
-            val nonAdminUsersFuture = usersDAO.listNonAdminUsers()
-            val token = CSRF.getToken.get
-            for {
-              questionPacks <- questionPacksFuture
-              exams <- examsFuture
-              nonAdminUsers <- nonAdminUsersFuture
-            } yield {
-              Ok(views.html.admin.StudentAudit("Student Answers", token, questionPacks, exams, nonAdminUsers, user, exam)(request.flash))
-                .addingToSession("selectedUser" -> user.getOrElse("").toString, "selectedExam" -> exam.getOrElse("").toString)
+      // Get all primary locations
+      $primaryLocations = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->join('matrixcontent_primarylocation as mpl', 'mb.id', '=', 'mpl.elementId')
+        ->where('mb.ownerId', $participant->craftId)
+        ->where('mb.fieldId', $this->participantFetcher->primaryLocationFieldId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id',
+          'mpl.field_location_agencyName',
+          'mpl.field_location_businessStartDate',
+          'mpl.field_location_address',
+          'mpl.field_location_city',
+          'mpl.field_location_state',
+          'mpl.field_location_zipCode',
+          'mpl.field_location_phone',
+          'mpl.field_location_fax',
+          'mpl.field_location_isPrimary_eqqbdkqc as isPrimary',
+          'mpl.field_location_isMailing_lwyddbnc as isMailing',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->get();
+
+      // Get contact information
+      $contacts = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->join('matrixcontent_contactinformation as mc', 'mb.id', '=', 'mc.elementId')
+        ->where('mb.ownerId', $participant->craftId)
+        ->where('mb.fieldId', $this->participantFetcher->matrixFieldId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id',
+          'mc.field_blockcontact_firstName',
+          'mc.field_blockcontact_middleName',
+          'mc.field_blockcontact_lastName',
+          'mc.field_blockcontact_emailAddress',
+          'mc.field_blockcontact_phoneNumber',
+          'mc.field_blockcontact_faxNumber',
+          'mc.field_blockcontact_contactTitle',
+          'mc.field_blockcontact_primaryContact',
+          'mc.field_blockcontact_isInactive',
+          'mc.field_blockcontact_adminNotes',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->get();
+
+      // Get additional locations
+      $additionalLocations = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->join('matrixcontent_locations as ml', 'mb.id', '=', 'ml.elementId')
+        ->where('mb.ownerId', $participant->craftId)
+        ->where('mb.fieldId', $this->participantFetcher->additionalLocationsFieldId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id',
+          'ml.field_location_agencyName',
+          'ml.field_location_businessStartDate',
+          'ml.field_location_address',
+          'ml.field_location_city',
+          'ml.field_location_state',
+          'ml.field_location_zipCode',
+          'ml.field_location_phone',
+          'ml.field_location_fax',
+          'ml.field_location_isPrimary as isPrimary',
+          'ml.field_location_isMailing as isMailing',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->get();
+
+      // Get SOT records
+      $sotRecords = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->join('matrixcontent_sot as ms', 'mb.id', '=', 'ms.elementId')
+        ->where('mb.ownerId', $participant->craftId)
+        ->where('mb.fieldId', $this->participantFetcher->sotFieldId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id',
+          'ms.id as sotLegacyId',
+          'ms.field_blocksot_sotId',
+          'ms.field_blocksot_sotOrgId',
+          'ms.field_blocksot_registrationExpirationDate',
+          'ms.field_blocksot_sotApprovedDate',
+          'ms.field_blocksot_sotStatus',
+          'ms.field_blocksot_isInitialFiling',
+          'ms.field_blocksot_note',
+          'ms.field_blocksot_manualCorrection',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->get();
+
+      // Get notes
+      $notes = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->join('matrixcontent_notes as mn', 'mb.id', '=', 'mn.elementId')
+        ->where('mb.ownerId', $participant->craftId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id',
+          'mn.field_note_note',
+          'mn.field_note_date',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->orderBy('mn.field_note_date', 'desc')
+        ->get();
+
+      // Combine all locations
+      $allLocations = collect();
+
+      // Add primary locations
+      foreach ($primaryLocations as $location) {
+        $allLocations->push([
+          'id' => $location->id,
+          'agencyName' => $location->field_location_agencyName,
+          'businessStartDate' => $location->field_location_businessStartDate,
+          'address' => $location->field_location_address,
+          'city' => $location->field_location_city,
+          'state' => $location->field_location_state,
+          'zipCode' => $location->field_location_zipCode,
+          'phone' => $location->field_location_phone,
+          'fax' => $location->field_location_fax,
+          'isPrimary' => $location->isPrimary,
+          'isMailing' => $location->isMailing,
+          'locationType' => 'primary',
+          'created_at' => $location->dateCreated,
+          'updated_at' => $location->dateUpdated
+        ]);
+      }
+
+      // Add additional locations
+      foreach ($additionalLocations as $location) {
+        $allLocations->push([
+          'id' => $location->id,
+          'agencyName' => $location->field_location_agencyName,
+          'businessStartDate' => $location->field_location_businessStartDate,
+          'address' => $location->field_location_address,
+          'city' => $location->field_location_city,
+          'state' => $location->field_location_state,
+          'zipCode' => $location->field_location_zipCode,
+          'phone' => $location->field_location_phone,
+          'fax' => $location->field_location_fax,
+          'isPrimary' => $location->isPrimary,
+          'isMailing' => $location->isMailing,
+          'locationType' => 'additional',
+          'created_at' => $location->dateCreated,
+          'updated_at' => $location->dateUpdated
+        ]);
+      }
+      //dd($allLocations);
+
+      // Log data collection results
+      $this->logger->info("Collected participant related data", [
+        'primary_locations' => $primaryLocations->count(),
+        'additional_locations' => $additionalLocations->count(),
+        'contacts' => $contacts->count(),
+        'sot_records' => $sotRecords->count(),
+        'notes' => $notes->count()
+      ]);
+
+      // Return structured participant data
+      return [
+        'userId' => $userId,
+        'craftId' => $participant->craftId,
+        'tcrcId' => $participant->field_tcrcId,
+        'sotId' => $participant->field_sotId,
+        'email' => $participant->field_email,
+        'legalBusinessName' => $participant->field_legalBusinessName,
+        'participantStatus' => $participant->field_participantStatus,
+        'createDate' => $participant->field_createDate,
+        'expireDate' => $participant->field_expireDate,
+        'businessOwner' => [
+          'firstName' => $participant->field_legalBusinessOwnerFirstName,
+          'lastName' => $participant->field_legalBusinessOwnerLastName,
+          'businessStartDate' => $participant->field_legalBusinessStartDate
+        ],
+        'arcIatanNumber' => $participant->field_arcIatanNumber,
+        'contacts' => $contacts->map(function ($contact) {
+          return [
+            'id' => $contact->id,
+            'firstName' => $contact->field_blockcontact_firstName,
+            'middleName' => $contact->field_blockcontact_middleName,
+            'lastName' => $contact->field_blockcontact_lastName,
+            'email' => $contact->field_blockcontact_emailAddress,
+            'phone' => $contact->field_blockcontact_phoneNumber,
+            'fax' => $contact->field_blockcontact_faxNumber,
+            'title' => $contact->field_blockcontact_contactTitle,
+            'isPrimary' => $contact->field_blockcontact_primaryContact,
+            'isInactive' => $contact->field_blockcontact_isInactive,
+            'adminNotes' => $contact->field_blockcontact_adminNotes,
+            'created_at' => $contact->dateCreated,
+            'updated_at' => $contact->dateUpdated
+          ];
+        })->toArray(),
+        'locations' => $allLocations->toArray(),
+        'sotRecords' => $sotRecords->map(function ($sot) {
+          return [
+            'id' => $sot->sotLegacyId,
+            'sotId' => $sot->field_blocksot_sotId,
+            'sotOrgId' => $sot->field_blocksot_sotOrgId,
+            'expirationDate' => $sot->field_blocksot_registrationExpirationDate,
+            'approvedDate' => $sot->field_blocksot_sotApprovedDate,
+            'status' => $sot->field_blocksot_sotStatus,
+            'isInitialFiling' => $sot->field_blocksot_isInitialFiling,
+            'note' => $sot->field_blocksot_note,
+            'manualCorrection' => $sot->field_blocksot_manualCorrection,
+            'created_at' => $sot->dateCreated,
+            'updated_at' => $sot->dateUpdated
+          ];
+        })->toArray(),
+        'notes' => $notes->map(function ($note) {
+          return [
+            'id' => $note->id,
+            'note' => $note->field_note_note,
+            'date' => $note->field_note_date,
+            'created_at' => $note->dateCreated,
+            'updated_at' => $note->dateUpdated
+          ];
+        })->toArray(),
+        'metadata' => [
+          'dateCreated' => $participant->dateCreated,
+          'dateUpdated' => $participant->dateUpdated,
+          'isPendingPayment' => $participant->field_isPendingPayment,
+          'isPendingRenewal' => $participant->field_isPendingRenewal,
+          'isBoardMember' => $participant->field_isBoardMember,
+          'hasAcceptedTerms' => $participant->field_hasAcceptedTerms,
+          'legacyData' => [
+            'modifyDate' => $participant->field_legacyModifyDate,
+            'userName' => $participant->field_legacyUserName,
+            'userId' => $participant->field_legacyUserid
+          ]
+        ]
+      ];
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error fetching Craft participant data", [
+        'userId' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      throw $e;
+    }
+  }
+
+  /**
+   * Fetch participant data from Laravel database
+   */
+  protected function getLaravelParticipantData($userId)
+  {
+    try {
+      // Get main participant data
+      $participant = DB::table('participants')
+        ->where('userId', $userId)
+        ->first();
+
+      if (!$participant) {
+        $this->warn("No participant found in Laravel for user ID: $userId");
+        return null;
+      }
+
+      // Get contacts
+      $contacts = DB::table('contact_information')
+        ->where('participant_id', $participant->id)
+        ->get();
+
+      // Get locations
+      $locations = DB::table('locations')
+        ->where('participant_id', $participant->id)
+        ->get();
+
+      // Get SOT records
+      $sotRecords = DB::table('sot')
+        ->where('participant_id', $participant->id)
+        ->get();
+
+      // Transform into same format as Craft data for comparison
+      return [
+        'tcrcId' => $participant->tcrcId,
+        'id' => $participant->id,
+        'sotId' => $participant->sotId,
+        'email' => $participant->email,
+        'legalBusinessName' => $participant->legalBusinessName,
+        'participantStatus' => $participant->participantStatus,
+        'createDate' => $participant->createDate,
+        'expireDate' => $participant->expireDate,
+        'businessOwner' => [
+          'firstName' => $participant->legalBusinessOwnerFirstName,
+          'lastName' => $participant->legalBusinessOwnerLastName
+        ],
+        'arcIatanNumber' => $participant->arcIatanNumber,
+        'contacts' => $contacts->map(function ($contact) {
+          return [
+            'firstName' => $contact->firstName,
+            'middleName' => $contact->middleName,
+            'lastName' => $contact->lastName,
+            'email' => $contact->emailAddress,
+            'phone' => $contact->phoneNumber,
+            'fax' => $contact->faxNumber,
+            'title' => $contact->contactTitle,
+            'isPrimary' => $contact->primaryContact,
+            'isInactive' => $contact->isInactive
+          ];
+        })->toArray(),
+        'locations' => $locations->map(function ($location) {
+          return [
+            'agencyName' => $location->agencyName,
+            'address' => $location->address,
+            'city' => $location->city,
+            'state' => $location->state,
+            'zipCode' => $location->zipCode,
+            'phone' => $location->phone,
+            'fax' => $location->fax,
+            'isPrimary' => $location->isPrimary,
+            'isMailing' => $location->isMailing
+          ];
+        })->toArray(),
+        'sotRecords' => $sotRecords->map(function ($sot) {
+          return [
+            'sotId' => $sot->sotId,
+            'sotOrgId' => $sot->sotOrgId,
+            'expirationDate' => $sot->registrationExpirationDate,
+            'approvedDate' => $sot->sotApprovedDate,
+            'status' => $sot->sotStatus,
+            'isInitialFiling' => $sot->isInitialFiling
+          ];
+        })->toArray(),
+        'metadata' => [
+          'dateCreated' => $participant->created_at,
+          'dateUpdated' => $participant->updated_at,
+          'isPendingPayment' => $participant->isPendingPayment,
+          'isPendingRenewal' => $participant->isPendingRenewal,
+          'isBoardMember' => $participant->isBoardMember,
+          'hasAcceptedTerms' => $participant->hasAcceptedTerms
+        ]
+      ];
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error fetching Laravel participant data: " . $e->getMessage());
+      $this->logger->error("Laravel participant data fetch error", [
+        'userId' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return null;
+    }
+  }
+
+  protected function migrateUserData($userId, $isDryRun)
+  {
+    try {
+      $this->logger->info("Starting user migration", ['dry_run' => $isDryRun]);
+      DB::beginTransaction();
+
+      // 1. Migrate user
+      $userData = $this->migrateUser($userId, $isDryRun);
+      if (!$userData || !isset($userData['user_id'])) {
+        DB::rollBack();
+        $this->logger->error("User migration failed", ['user_id' => $userId]);
+        return false;
+      }
+
+      if (!$isDryRun) {
+        $this->logMigrationOperation('user_migration', 'success', ['user_id' => $userId]);
+      }
+
+      // 2. Migrate participant if exists
+      $craftParticipant = $this->getCraftParticipantData($userId);
+      //  dd($craftParticipant);
+      if ($craftParticipant) {
+        $participantData = $this->migrateParticipantData($userId, $isDryRun);
+        if ($participantData && isset($participantData['participant_id'])) {
+          $this->logMigrationOperation('participant_migration', 'success', [
+            'participant_id' => $participantData['participant_id']
+          ]);
+        }
+      }
+
+      // 3. Migrate claims
+      $this->migrateClaimsData($userId, $isDryRun);
+      $this->logMigrationOperation('claim_migration', 'success', [
+
+      ]);
+
+      if ($isDryRun) {
+        DB::rollBack();
+        $this->logger->info("Dry run completed successfully");
+      } else {
+        DB::commit();
+        $this->logger->info("Migration committed successfully");
+
+        // Run post-migration validation
+        $this->runPostMigrationValidation($userId);
+      }
+
+      return true;
+
+    } catch (\Exception $e) {
+      DB::rollBack();
+      $this->logger->error("Migration failed", [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      throw $e;
+    }
+  }
+
+
+  public function displayParticipant($elementsId)
+  {
+    try {
+      // Get the relation from relations table first
+      $relation = DB::connection('craft')
+        ->table('relations')
+        ->where('sourceId', $elementsId)
+        ->where('fieldId', function ($query) {
+          $query->select('id')
+            ->from('fields')
+            ->where('handle', 'participant')
+            ->limit(1);
+        })
+        ->first();
+
+      if (!$relation) {
+        $this->logger->info("\nNo participant found.");
+        return;
+      }
+
+      // Get participant organization details
+      $participant = DB::connection('craft')
+        ->table('entries as e')
+        ->join('content as c', 'c.elementId', '=', 'e.id')
+        ->where('e.id', $relation->targetId)
+        ->select('c.field_legalBusinessName', 'c.field_tcrcId')
+        ->first();
+
+      //dd($participant->field_tcrcId);
+
+      if (!$participant) {
+        return null;
+      }
+
+      // Get the Laravel participant ID using the TCRC ID
+      $laravelParticipant = DB::table('participants')
+        ->where('tcrcId', $participant->field_tcrcId)
+        ->first();
+
+      return $laravelParticipant ? $laravelParticipant->id : null;
+    } catch (\Exception $e) {
+      $this->logger->error("Error getting participant ID for claim", [
+        'elementsId' => $elementsId,
+        'error' => $e->getMessage()
+      ]);
+      return null;
+    }
+  }
+
+
+  private function getParticipantIdForClaim($elementsId)
+  {
+    try {
+      // Get the relation from relations table first
+      $relation = DB::connection('craft')
+        ->table('relations')
+        ->where('sourceId', $elementsId)
+        ->where('fieldId', function ($query) {
+          $query->select('id')
+            ->from('fields')
+            ->where('handle', 'participant')
+            ->limit(1);
+        })
+        ->first();
+
+      if (!$relation) {
+        return null;
+      }
+
+      // Get participant details
+      $participant = DB::connection('craft')
+        ->table('entries as e')
+        ->join('content as c', 'c.elementId', '=', 'e.id')
+        ->where('e.id', $relation->targetId)
+        ->select('c.field_tcrcId')
+        ->first();
+
+      if (!$participant) {
+        return null;
+      }
+
+      // Get the Laravel participant ID using the TCRC ID
+      $laravelParticipant = DB::table('participants')
+        ->where('tcrcId', $participant->field_tcrcId)
+        ->first();
+
+      return $laravelParticipant ? $laravelParticipant->id : null;
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error getting participant ID for claim", [
+        'elementsId' => $elementsId,
+        'error' => $e->getMessage()
+      ]);
+      return null;
+    }
+  }
+
+  private function processParticipantPaymentHistory($participantId, $craftId)
+  {
+    try {
+
+      $payments = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('matrixcontent_paymenthistory as mph', 'mb.id', '=', 'mph.elementId')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->where('mb.ownerId', $craftId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id as legacyId',
+          'mph.field_payment_paymentTypeName',
+          'mph.field_payment_paymentForType',
+          'mph.field_payment_paidDate',
+          'mph.field_payment_expireDate',
+          'mph.field_payment_createDate',
+          'mph.field_payment_assessmentFee',
+          'mph.field_payment_lateFee',
+          'mph.field_payment_totalFee',
+          'mph.field_payment_subtotalAmount',
+          'mph.field_payment_totalAmount',
+          'mph.field_payment_ccAuthNumber',
+          'mph.field_payment_ccErrorCode',
+          'mph.field_payment_ccErrorText',
+          'mph.field_payment_checkNumber',
+          'mph.field_payment_checkAmount',
+          'mph.field_payment_checkDate',
+          'mph.field_payment_checkClearedDate',
+          'mph.field_payment_checkBouncedDate',
+          'mph.field_payment_note',
+          'mph.field_payment_numberOfLocations',
+          'mph.field_payment_emergencyPaymentReferenceId',
+          'mph.field_payment_manualCorrection',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->get();
+
+      foreach ($payments as $payment) {
+        $paymentData = [
+          'tcrcId' => $payment->legacyId,
+          'paymentable_type' => 'App\Models\Participant',
+          'paymentable_id' => $participantId,
+          'paymentTypeName' => $payment->field_payment_paymentTypeName,
+          'paymentForType' => $payment->field_payment_paymentForType,
+          'paidDate' => $payment->field_payment_paidDate,
+          'expireDate' => $payment->field_payment_expireDate,
+          'createDate' => $payment->field_payment_createDate,
+          'assessmentFee' => $this->formatDecimal($payment->field_payment_assessmentFee),
+          'lateFee' => $this->formatDecimal($payment->field_payment_lateFee),
+          'totalFee' => $this->formatDecimal($payment->field_payment_totalFee),
+          'subtotalAmount' => $this->formatDecimal($payment->field_payment_subtotalAmount),
+          'totalAmount' => $this->formatDecimal($payment->field_payment_totalAmount),
+          'ccAuthNumber' => $payment->field_payment_ccAuthNumber,
+          'ccErrorCode' => $payment->field_payment_ccErrorCode,
+          'ccErrorText' => $payment->field_payment_ccErrorText,
+          'checkNumber' => $payment->field_payment_checkNumber,
+          'checkAmount' => $this->formatDecimal($payment->field_payment_checkAmount),
+          'checkDate' => $payment->field_payment_checkDate,
+          'checkClearedDate' => $payment->field_payment_checkClearedDate,
+          'checkBouncedDate' => $payment->field_payment_checkBouncedDate,
+          'note' => $payment->field_payment_note,
+          'numberOfLocations' => $payment->field_payment_numberOfLocations,
+          'emergencyPaymentReferenceId' => $payment->field_payment_emergencyPaymentReferenceId,
+          'manualCorrection' => $payment->field_payment_manualCorrection,
+          'legacyId' => $payment->legacyId,
+          'created_at' => $payment->dateCreated,
+          'updated_at' => $payment->dateUpdated
+        ];
+
+
+        $existingPayment = DB::table('payment_history')
+          ->where('legacyId', $payment->legacyId)
+          ->first();
+
+        if ($existingPayment) {
+
+          DB::table('payment_history')
+            ->where('legacyId', $payment->legacyId)
+            ->update($paymentData);
+
+          $this->logDbOperation('payment_history', 'update', [
+            'legacyId' => $payment->legacyId,
+            'participantId' => $participantId
+          ]);
+        } else {
+          DB::table('payment_history')->insert($paymentData);
+
+          $this->logDbOperation('payment_history', 'insert', [
+            'legacyId' => $payment->legacyId,
+            'participantId' => $participantId
+          ]);
+        }
+      }
+
+      return true;
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing participant payment history", [
+        'participant_id' => $participantId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
+    }
+  }
+
+  private function formatDecimal($value)
+  {
+    if (is_null($value)) return null;
+    if (empty($value)) return 0;
+
+    // Remove any non-numeric characters except decimal point
+    $value = preg_replace('/[^0-9.]/', '', $value);
+
+    // Format to 2 decimal places
+    return number_format((float)$value, 2, '.', '');
+  }
+
+  protected function migrateParticipantData($userId, $isDryRun)
+  {
+    try {
+      // Fetch participant data from Craft
+      $craftData = $this->getCraftParticipantData($userId);
+      //dd($userId, $craftData);
+
+      if (!$craftData) {
+        $this->logger->error("No participant data found in Craft for user ID: $userId");
+        return false;
+      }
+
+      if ($isDryRun) {
+        $this->logger->info("Would migrate participant: " . $craftData['legalBusinessName']);
+        $this->table(
+          ['Field', 'Value'],
+          $this->formatParticipantDataForDisplay($craftData)
+        );
+        return ['participant_id' => null];
+      }
+
+      DB::beginTransaction();
+      try {
+        // 1. Create or update the main participant record
+        $participant = $this->createOrUpdateParticipant($userId, $craftData);
+
+
+        //dd($craftData['locations']);
+        // 2. Process primary location
+        if (!empty($craftData['locations'])) {
+          $primaryLocation = $this->processPrimaryLocation($participant->id, $craftData['locations']);
+
+          // Update participant with primary location reference
+          if ($primaryLocation) {
+            DB::table('participants')
+              ->where('id', $participant->id)
+              ->update(['primary_location_id' => $primaryLocation->id]);
+          }
+        }
+
+        // 3. Process additional locations
+        $this->processAdditionalLocations($participant->id, $craftData['locations']);
+
+        $this->processParticipantNotes($participant->id, $craftData['craftId']);
+        $this->processParticipantPaymentHistory($participant->id, $craftData['craftId']);
+
+
+        // 4. Process contacts
+        $this->processContacts($participant->id, $craftData['contacts']);
+
+        // 5. Process SOT records
+        $this->processSotRecords($participant->id, $craftData['sotRecords']);
+
+        // 6. Process DBA names (if present)
+        if (isset($craftData['dbaNames'])) {
+          $this->processDbaNames($participant->id, $craftData['dbaNames']);
+        }
+
+        DB::commit();
+
+        $this->logger->info("Successfully migrated participant: {$craftData['legalBusinessName']}");
+        return ['participant_id' => $participant->id];
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw $e;
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error migrating participant data: " . $e->getMessage());
+      $this->logger->error("Participant migration error", [
+        'userId' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
+    }
+  }
+
+
+  private function createOrUpdateParticipant($userId, $craftData)
+  {
+    try {
+      // Verify user exists
+      $user = DB::table('users')->find($userId);
+      if (!$user) {
+        throw new \Exception("User with ID $userId not found in Laravel database");
+      }
+
+      // Prepare participant data
+      $participantData = [
+        'userId' => $userId,
+        'tcrcId' => $craftData['tcrcId'],
+        'sotId' => $craftData['sotId'],
+        'expireDate' => $craftData['expireDate'],
+        'createDate' => $craftData['createDate'],
+        'email' => $craftData['email'],
+        'legalBusinessName' => $craftData['legalBusinessName'],
+        'legalBusinessOwnerFirstName' => $craftData['businessOwner']['firstName'],
+        'legalBusinessOwnerLastName' => $craftData['businessOwner']['lastName'],
+        'legalBusinessStartDate' => $craftData['businessOwner']['businessStartDate'] ?? null,
+        'participantStatus' => $craftData['participantStatus'],
+        'arcIatanNumber' => $craftData['arcIatanNumber'],
+        'isPendingPayment' => $craftData['metadata']['isPendingPayment'] ?? false,
+        'isPendingRenewal' => $craftData['metadata']['isPendingRenewal'] ?? false,
+        'isBoardMember' => $craftData['metadata']['isBoardMember'] ?? false,
+        'hasAcceptedTerms' => $craftData['metadata']['hasAcceptedTerms'] ?? false,
+        'updated_at' => $craftData['metadata']['dateUpdated']
+      ];
+
+
+      $existingParticipant = DB::table('participants')
+        ->where(function ($query) use ($craftData, $userId) {
+          $query->where('tcrcId', $craftData['tcrcId'])
+            ->orWhere('userId', $userId);
+        })
+        ->first();
+
+      if ($existingParticipant) {
+        // Handle potential conflicts
+        if ($existingParticipant->userId != $userId && $existingParticipant->tcrcId == $craftData['tcrcId']) {
+          $this->logger->warning("Participant TCRC ID conflict detected", [
+            'tcrcId' => $craftData['tcrcId'],
+            'existing_user_id' => $existingParticipant->userId,
+            'new_user_id' => $userId
+          ]);
+        }
+
+
+        DB::table('participants')
+          ->where('id', $existingParticipant->id)
+          ->update($participantData);
+
+        $this->logDbOperation('participants', 'update', [
+          'id' => $existingParticipant->id,
+          'tcrcId' => $craftData['tcrcId'],
+          'email' => $craftData['email']
+        ]);
+
+        $this->logger->info("Updated existing participant", [
+          'participantId' => $existingParticipant->id,
+          'tcrcId' => $craftData['tcrcId']
+        ]);
+
+        return DB::table('participants')->find($existingParticipant->id);
+      } else {
+
+        $participantData['created_at'] = $craftData['metadata']['dateCreated'];
+        $participantId = DB::table('participants')->insertGetId($participantData);
+        $this->logDbOperation('participants', 'insert', [
+          'id' => $participantId,
+          'tcrcId' => $craftData['tcrcId'],
+          'email' => $craftData['email']
+        ]);
+
+        $this->logger->info("Created new participant", [
+          'participantId' => $participantId,
+          'tcrcId' => $craftData['tcrcId']
+        ]);
+
+        return DB::table('participants')->find($participantId);
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error creating/updating participant", [
+        'userId' => $userId,
+        'tcrcId' => $craftData['tcrcId'] ?? null,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      throw $e;
+    }
+  }
+
+  /**
+   * Process and create/update primary location
+   *
+   * @param int $participantId
+   * @param array $locations
+   * @return object|null
+   */
+  private function processPrimaryLocation($participantId, $locations)
+  {
+    $primaryLocation = collect($locations)->first(function ($location) {
+      return $location['isPrimary'] === 1;
+    });
+
+    if (!$primaryLocation) {
+      $this->warn("No primary location found for participant ID: $participantId");
+      return null;
+    }
+
+    try {
+      $locationData = [
+        'participant_id' => $participantId,
+        'agencyName' => $primaryLocation['agencyName'],
+        'businessStartDate' => $primaryLocation['businessStartDate'] ?? null,
+        'address' => $primaryLocation['address'],
+        'city' => $primaryLocation['city'],
+        'state' => $primaryLocation['state'],
+        'zipCode' => $primaryLocation['zipCode'],
+        'phone' => $primaryLocation['phone'],
+        'fax' => $primaryLocation['fax'],
+        'legacyId' => $primaryLocation['id'],
+        'isPrimary' => true,
+        'isMailing' => $primaryLocation['isMailing'] ?? false,
+        'updated_at' => now()
+      ];
+
+      $locationId = DB::table('locations')->updateOrInsert(
+        ['legacyId' => $primaryLocation['id']],
+        array_merge($locationData, [
+          'created_at' => DB::raw('COALESCE(created_at, NOW())')
+        ])
+      );
+
+      $location = DB::table('locations')
+        ->where('legacyId', $primaryLocation['id'])
+        ->first();
+
+      $this->logDbOperation('locations', 'upsert', [
+        'legacyId' => $primaryLocation['id'],
+        'location_id' => $location->id
+      ]);
+
+      return $location;
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing primary location", [
+        'participant_id' => $participantId,
+        'legacyId' => $primaryLocation['id'],
+        'error' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
+  /**
+   * Process and create/update additional locations
+   *
+   * @param int $participantId
+   * @param array $locations
+   */
+  private function processAdditionalLocations($participantId, $locations)
+  {
+    try {
+      $additionalLocations = collect($locations)->filter(function ($location) {
+        return $location['isPrimary'] === 0;
+      });
+
+      foreach ($additionalLocations as $location) {
+        $locationData = [
+          'tcrcId' => $location['id'],
+          'participant_id' => $participantId,
+          'agencyName' => $location['agencyName'],
+          'businessStartDate' => $location['businessStartDate'] ?? null,
+          'address' => $location['address'],
+          'city' => $location['city'],
+          'state' => $location['state'],
+          'zipCode' => $location['zipCode'],
+          'phone' => $location['phone'],
+          'fax' => $location['fax'],
+          'legacyId' => $location['id'],
+          'isPrimary' => false,
+          'isMailing' => $location['isMailing'] ?? false,
+          'updated_at' => now()
+        ];
+
+        DB::table('locations')->updateOrInsert(
+          [
+            'tcrcId' => $location['id'],
+          ],
+          array_merge($locationData, [
+            'created_at' => DB::raw('COALESCE(created_at, NOW())')
+          ])
+        );
+
+        $this->logDbOperation('locations', 'upsert', [
+          'tcrcId' => $location['id'],
+        ]);
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing additional locations", [
+        'participant_id' => $participantId,
+        'error' => $e->getMessage()
+      ]);
+      throw $e;
+    }
+  }
+
+  /**
+   * Process and create contact records
+   */
+  private function processContacts($participantId, $contacts)
+  {
+    foreach ($contacts as $contact) {
+      //dd($contact);
+      $contactData = [
+        'tcrcId' => $contact['id'],
+        'participant_id' => $participantId,
+        'firstName' => $contact['firstName'],
+        'middleName' => $contact['middleName'] ?? null,
+        'lastName' => $contact['lastName'],
+        'contactTitle' => $contact['title'] ?? null,
+        'emailAddress' => $contact['email'],
+        'phoneNumber' => $contact['phone'],
+        'faxNumber' => $contact['fax'] ?? null,
+        'isInactive' => $contact['isInactive'] ?? false,
+        'primaryContact' => $contact['isPrimary'] ?? false,
+        'created_at' => now(),
+        'updated_at' => now()
+      ];
+
+      DB::table('contact_information')->updateOrInsert(
+        [
+          'tcrcId' => $contact['id'],
+          'emailAddress' => $contact['email']
+        ],
+        $contactData
+      );
+
+      $this->logDbOperation('contact_information', 'upsert', [
+        'tcrcId' => $contact['id'],
+        'email' => $contact['email']
+      ]);
+    }
+  }
+
+
+  private function processSotRecords($participantId, $sotRecords)
+  {
+    try {
+      foreach ($sotRecords as $sot) {
+
+        $existingSot = DB::table('sot')
+          ->where(function ($query) use ($sot) {
+            $query->where('sotId', $sot['sotId'])
+              ->orWhere('tcrcId', $sot['id']);
+          })
+          ->first();
+
+        $sotData = [
+          'tcrcId' => $sot['id'],
+          'participant_id' => $participantId,
+          'sotId' => $sot['sotId'],
+          'sotOrgId' => $sot['sotOrgId'] ?? '0',
+          'registrationExpirationDate' => $sot['expirationDate'],
+          'sotApprovedDate' => $sot['approvedDate'],
+          'sotStatus' => $sot['status'] ?? 'pending',
+          'isInitialFiling' => isset($sot['isInitialFiling']) ? (bool)$sot['isInitialFiling'] : false,
+          'note' => $sot['note'] ?? '',
+          'manualCorrection' => isset($sot['manualCorrection']) ? (bool)$sot['manualCorrection'] : false,
+          'legacyId' => $sot['id'],
+          'updated_at' => now()
+        ];
+
+        if ($existingSot) {
+
+          DB::table('sot')
+            ->where(function ($query) use ($sot) {
+              $query->where('sotId', $sot['sotId'])
+                ->orWhere('tcrcId', $sot['id']);
+            })
+            ->update($sotData);
+
+          $this->logDbOperation('sot', 'update', [
+            'sotId' => $sot['sotId'],
+            'tcrcId' => $sot['id'],
+            'participant_id' => $participantId
+          ]);
+
+          $this->logger->info("Updated existing SOT record", [
+            'sotId' => $sot['sotId'],
+            'tcrcId' => $sot['id'],
+            'participant_id' => $participantId
+          ]);
+        } else {
+
+          $sotData['created_at'] = now();
+
+          try {
+            DB::table('sot')->insert($sotData);
+
+            $this->logDbOperation('sot', 'insert', [
+              'sotId' => $sot['sotId'],
+              'tcrcId' => $sot['id'],
+              'participant_id' => $participantId
+            ]);
+
+            $this->logger->info("Created new SOT record", [
+              'sotId' => $sot['sotId'],
+              'tcrcId' => $sot['id'],
+              'participant_id' => $participantId
+            ]);
+          } catch (\Illuminate\Database\QueryException $e) {
+
+            if ($e->errorInfo[1] === 1062) { // Duplicate entry error
+              $this->logger->warning("Duplicate SOT record detected, attempting update", [
+                'sotId' => $sot['sotId'],
+                'tcrcId' => $sot['id'],
+                'participant_id' => $participantId
+              ]);
+
+              // Try to update instead
+              DB::table('sot')
+                ->where(function ($query) use ($sot) {
+                  $query->where('sotId', $sot['sotId'])
+                    ->orWhere('tcrcId', $sot['id']);
+                })
+                ->update($sotData);
+            } else {
+              throw $e; // Re-throw if it's not a duplicate entry error
+            }
+          }
+        }
+      }
+
+      return true;
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing SOT record", [
+        'participant_id' => $participantId,
+        'sotId' => $sot['sotId'] ?? null,
+        'tcrcId' => $sot['id'] ?? null,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      throw $e;
+    }
+  }
+
+
+  private function verifySotRecords($participantId, $craftSotRecords)
+  {
+    $laravelSotRecords = DB::table('sot')
+      ->where('participant_id', $participantId)
+      ->get();
+
+    $mismatches = [];
+
+    // Compare counts
+    if (count($craftSotRecords) !== $laravelSotRecords->count()) {
+      $mismatches[] = [
+        'type' => 'count',
+        'craft' => count($craftSotRecords),
+        'laravel' => $laravelSotRecords->count()
+      ];
+    }
+
+    // Compare individual records
+    foreach ($craftSotRecords as $craftSot) {
+      $laravelSot = $laravelSotRecords->firstWhere('sotId', $craftSot['sotId']);
+
+      if (!$laravelSot) {
+        $mismatches[] = [
+          'type' => 'missing',
+          'sotId' => $craftSot['sotId']
+        ];
+        continue;
+      }
+
+      // Compare key fields
+      $fieldsToCompare = [
+        'sotOrgId',
+        'registrationExpirationDate',
+        'sotApprovedDate',
+        'sotStatus',
+        'isInitialFiling'
+      ];
+
+      foreach ($fieldsToCompare as $field) {
+        $craftValue = $craftSot[$field] ?? null;
+        $laravelValue = $laravelSot->$field ?? null;
+
+        if ($craftValue != $laravelValue) {
+          $mismatches[] = [
+            'type' => 'field_mismatch',
+            'sotId' => $craftSot['sotId'],
+            'field' => $field,
+            'craft' => $craftValue,
+            'laravel' => $laravelValue
+          ];
+        }
+      }
+    }
+
+    return $mismatches;
+  }
+
+  /**
+   * Process and create DBA names
+   */
+  private function processDbaNames($participantId, $dbaNames)
+  {
+    // First, remove all existing DBA names for this participant
+    DB::table('dba_names')->where('participant_id', $participantId)->delete();
+
+    // Then insert all DBA names
+    foreach ($dbaNames as $dbaName) {
+      DB::table('dba_names')->insert([
+        'participant_id' => $participantId,
+        'name' => $dbaName,
+        'created_at' => now(),
+        'updated_at' => now()
+      ]);
+    }
+  }
+
+  /**
+   * Format participant data for display in dry run
+   */
+  private function formatParticipantDataForDisplay($craftData)
+  {
+    return [
+      ['Business Name', $craftData['legalBusinessName']],
+      ['TCRC ID', $craftData['tcrcId']],
+      ['SOT ID', $craftData['sotId']],
+      ['Email', $craftData['email']],
+      ['Status', $craftData['participantStatus']],
+      ['Business Owner', "{$craftData['businessOwner']['firstName']} {$craftData['businessOwner']['lastName']}"],
+      ['Contact Count', count($craftData['contacts'])],
+      ['Location Count', count($craftData['locations'])],
+      ['SOT Record Count', count($craftData['sotRecords'])],
+      ['Created Date', $craftData['metadata']['dateCreated']],
+      ['Updated Date', $craftData['metadata']['dateUpdated']]
+    ];
+  }
+
+
+  private function migrateUser($userId, $isDryRun)
+  {
+    try {
+      // Fetch user from Craft
+      $craftUser = $this->fetchCraftUser($userId);
+
+      if (!$craftUser) {
+        $this->warn("No user found in Craft for ID: $userId");
+        return null;
+      }
+
+      if ($isDryRun) {
+        $userGroup = $this->determineUserGroup($craftUser);
+        $this->displayUserDryRun($craftUser, $userGroup);
+        return ['user_id' => $userId];
+      }
+
+      // Prepare user data
+      $userData = $this->prepareUserData($craftUser);
+
+      try {
+        DB::beginTransaction();
+
+        // Attempt to find existing user by ID or email
+        $existingUser = DB::table('users')
+          ->where('id', $craftUser->id)
+          ->orWhere('email', $craftUser->email)
+          ->first();
+
+        if ($existingUser) {
+          if ($existingUser->id != $craftUser->id && $existingUser->email == $craftUser->email) {
+            $message = "Email conflict detected: {$craftUser->email} already exists with different ID";
+            Log::warning($message, [
+              'craft_user_id' => $craftUser->id,
+              'existing_user_id' => $existingUser->id
+            ]);
+            throw new \Exception($message);
+          }
+
+          // Update existing user
+          DB::table('users')
+            ->where('id', $existingUser->id)
+            ->update($userData);
+
+          $userId = $existingUser->id;
+          $this->logDbOperation('users', 'update', [
+            'id' => $userId,
+            'email' => $userData['email']
+          ]);
+        } else {
+          // Insert new user
+          $userId = DB::table('users')->insertGetId($userData);
+          $this->logDbOperation('users', 'insert', [
+            'id' => $userId,
+            'email' => $userData['email']
+          ]);
+        }
+
+        // Handle user roles
+        $userGroup = $this->determineUserGroup($craftUser);
+        $this->assignUserRole($userId, $userGroup);
+
+        // Handle additional user attributes
+        //$this->handleUserAttributes($userId, $craftUser);
+
+        DB::commit();
+
+        $this->logger->info("Successfully migrated user: {$craftUser->email}");
+        return ['user_id' => $userId];
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw new \Exception("Failed to migrate user: " . $e->getMessage());
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error migrating user data: " . $e->getMessage());
+      $this->logger->error("User migration error", [
+        'userId' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch user data from Craft
+   */
+  private function fetchCraftUser($userId)
+  {
+    return DB::connection('craft')
+      ->table('users as u')
+      ->join('elements as e', 'u.id', '=', 'e.id')
+      ->where('u.id', $userId)
+      ->where('e.enabled', 1)
+      ->whereNull('e.dateDeleted')
+      ->select([
+        'u.id',
+        'u.username',
+        'u.firstName',
+        'u.lastName',
+        'u.email',
+        'u.password',
+        'u.admin',
+        'u.locked',
+        'u.suspended',
+        'u.pending',
+        'u.lastLoginDate',
+        'u.dateCreated',
+        'u.dateUpdated'
+      ])
+      ->first();
+  }
+
+  /**
+   * Prepare user data for insertion/update
+   */
+  private function prepareUserData($craftUser)
+  {
+    return [
+      'id' => $craftUser->id,
+      'name' => trim($craftUser->firstName . ' ' . $craftUser->lastName),
+      'email' => $craftUser->email,
+      'username' => $craftUser->username,
+      'firstName' => $craftUser->firstName,
+      'lastName' => $craftUser->lastName,
+      'password' => $craftUser->password ?? Hash::make('password'),
+      'email_verified_at' => !$craftUser->pending ? $craftUser->dateCreated : null,
+      'user_group' => $this->determineUserGroup($craftUser),
+      'lastLoginDate' => $craftUser->lastLoginDate,
+      'created_at' => $craftUser->dateCreated,
+      'updated_at' => $craftUser->dateUpdated,
+      'status' => $this->determineUserStatus($craftUser)
+    ];
+  }
+
+  /**
+   * Determine user status based on Craft user properties
+   */
+  private function determineUserStatus($craftUser)
+  {
+    if ($craftUser->suspended) return 'suspended';
+    if ($craftUser->locked) return 'locked';
+    if ($craftUser->pending) return 'pending';
+    return 'active';
+  }
+
+  /**
+   * Handle additional user attributes
+   */
+  private function handleUserAttributes($userId, $craftUser)
+  {
+    // Handle user preferences
+    DB::table('user_preferences')->updateOrInsert(
+      ['user_id' => $userId],
+      [
+        'email_notifications' => true,
+        'created_at' => now(),
+        'updated_at' => now()
+      ]
+    );
+
+    // Handle user settings
+    DB::table('user_settings')->updateOrInsert(
+      ['user_id' => $userId],
+      [
+        'timezone' => config('app.timezone'),
+        'language' => 'en',
+        'created_at' => now(),
+        'updated_at' => now()
+      ]
+    );
+  }
+
+
+  private function determineUserGroup($craftUser)
+  {
+    if ($craftUser->admin) {
+      return 'TCRC Admin';
+    }
+    try {
+      // Get user group from Craft
+      $userGroup = DB::connection('craft')
+        ->table('usergroups_users as ugu')
+        ->join('usergroups as ug', 'ugu.groupId', '=', 'ug.id')
+        ->where('ugu.userId', $craftUser->id)
+        ->select('ug.name', 'ug.handle')
+        ->first();
+
+      if (!$userGroup) {
+        return 'Participant';
+      }
+      $validGroups = [
+        'Board Member',
+        'Claimant',
+        'Participant',
+        'SOT',
+        'TCRC Admin'
+      ];
+
+      return in_array($userGroup->name, $validGroups)
+        ? $userGroup->name
+        : 'Participant';
+    } catch (\Exception $e) {
+      $this->logger->error("Error determining user group", [
+        'userId' => $craftUser->id,
+        'error' => $e->getMessage()
+      ]);
+      return 'Participant'; // Default fallback
+    }
+  }
+
+  private function assignUserRole($userId, $userGroup)
+  {
+    try {
+      // First, remove any existing roles
+      DB::table('model_has_roles')
+        ->where('model_type', 'App\Models\User')
+        ->where('model_id', $userId)
+        ->delete();
+
+      // Get the role ID from the roles table
+      $role = DB::table('roles')
+        ->where('name', $userGroup)
+        ->first();
+
+      if (!$role) {
+        Log::warning("Role not found for user group: $userGroup");
+        return false;
+      }
+
+      // Assign the new role
+      DB::table('model_has_roles')->insert([
+        'role_id' => $role->id,
+        'model_type' => 'App\Models\User',
+        'model_id' => $userId
+      ]);
+
+      return true;
+    } catch (\Exception $e) {
+      $this->logger->error("Error assigning user role", [
+        'userId' => $userId,
+        'userGroup' => $userGroup,
+        'error' => $e->getMessage()
+      ]);
+      return false;
+    }
+  }
+
+  private function displayUserDryRun($user, $userGroup)
+  {
+    $this->line("\nUser ID: " . $user->id);
+    $this->table(
+      ['Field', 'Value'],
+      [
+        ['Name', trim($user->firstName . ' ' . $user->lastName)],
+        ['Username', $user->username],
+        ['Email', $user->email],
+        ['User Group', $userGroup],
+        ['Status', $this->getUserStatus($user)],
+        ['Last Login', $user->lastLoginDate ?? 'Never'],
+        ['Created', $user->dateCreated]
+      ]
+    );
+  }
+
+  private function getUserStatus($user)
+  {
+    if ($user->suspended) return 'Suspended';
+    if ($user->locked) return 'Locked';
+    if ($user->pending) return 'Pending';
+    return 'Active';
+  }
+
+
+  protected function verifyUserData($craftUser, $laravelUser)
+  {
+    if (!$craftUser || !$laravelUser) {
+      $this->logger->error("Cannot verify user data - missing data from one or both sources");
+      return false;
+    }
+
+    $this->logger->info("Starting user data verification");
+    $mismatches = [];
+
+    $fieldsToCheck = [
+      'email' => 'Email',
+      'username' => 'Username',
+      'firstName' => 'First Name',
+      'lastName' => 'Last Name',
+      'password' => 'Password Hash'
+    ];
+
+    foreach ($fieldsToCheck as $field => $label) {
+      if ($craftUser->$field !== $laravelUser->$field) {
+        $mismatches[] = [
+          'field' => $label,
+          'craft_value' => $craftUser->$field,
+          'laravel_value' => $laravelUser->$field
+        ];
+      }
+    }
+
+    // Check dates
+    $craftCreated = date('Y-m-d H:i:s', strtotime($craftUser->dateCreated));
+    $laravelCreated = date('Y-m-d H:i:s', strtotime($laravelUser->created_at));
+    if ($craftCreated !== $laravelCreated) {
+      $mismatches[] = [
+        'field' => 'Created Date',
+        'craft_value' => $craftCreated,
+        'laravel_value' => $laravelCreated
+      ];
+    }
+
+    if (!empty($mismatches)) {
+      $this->logger->warning("User data verification failed", [
+        'mismatches' => $mismatches,
+        'user_id' => $craftUser->id
+      ]);
+      return false;
+    }
+
+    $this->logger->info("User data verification passed");
+    return true;
+  }
+
+
+  protected function migrateClaimsData($userId, $isDryRun)
+  {
+    $this->logger->info("Starting claims migration", [
+      'user_id' => $userId,
+      'dry_run' => $isDryRun
+    ]);
+
+    try {
+      // Fetch claims data from Craft
+      $craftClaims = $this->getCraftClaimsData($userId);
+
+      if ($craftClaims->isEmpty()) {
+        $this->logger->info("No claims found in Craft for user ID: $userId");
+        return true;
+      }
+
+      if ($isDryRun) {
+        $this->logger->info("Would migrate " . $craftClaims->count() . " claims");
+        foreach ($craftClaims as $claim) {
+          $this->displayClaimDryRun($claim);
+        }
+        return true;
+      }
+
+      $successCount = 0;
+      $failureCount = 0;
+
+      // Process each claim individually with its own transaction
+      foreach ($craftClaims as $craftClaim) {
+        DB::beginTransaction();
+
+        try {
+          $participantId = $craftClaim['participantId'] ?? null;
+
+          // Process main claim
+          $claim = $this->processClaimMigration($craftClaim, $participantId);
+
+          if ($claim) {
+            // Log successful operation
+            $this->logger->info("Successfully migrated claim", [
+              'claim_id' => $craftClaim['claimId'],
+              'participant_id' => $participantId
+            ]);
+
+            $successCount++;
+            DB::commit();
+          } else {
+            throw new \Exception("Failed to process claim migration");
+          }
+
+        } catch (\Exception $e) {
+          DB::rollBack();
+
+          $failureCount++;
+          $this->logger->error("Failed to migrate individual claim", [
+            'claim_id' => $craftClaim['claimId'] ?? 'unknown',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+          ]);
+
+          // Continue with next claim instead of stopping entire process
+          continue;
+        }
+      }
+
+      // Log final results
+      $this->logger->info("Claims migration completed", [
+        'total_claims' => $craftClaims->count(),
+        'successful' => $successCount,
+        'failed' => $failureCount
+      ]);
+
+      return $failureCount === 0;
+
+    } catch (\Exception $e) {
+      $this->logger->error("Fatal error during claims migration", [
+        'user_id' => $userId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+
+      return false;
+    }
+  }
+
+
+  private function processClaimMigration($craftClaim, $participantId)
+  {
+    try {
+      // 1. Create or update the main claim record
+      $claim = $this->createOrUpdateClaim($craftClaim, $participantId);
+      if (!$claim) {
+        throw new \Exception("Failed to create/update claim record");
+      }
+
+      // 2. Process passengers
+      if (!empty($craftClaim['passengers'])) {
+        $this->processPassengers($claim->id, $craftClaim['passengers']);
+      }
+
+      if (!empty($craftClaim['craftId'])) {
+        $this->processPaymentProofs($claim->id, $craftClaim['craftId']);
+      }
+
+
+      if (!empty($craftClaim['collaterals'])) {
+        $this->processCollaterals($claim->id, $craftClaim['collaterals']);
+      }
+
+
+      if (!empty($craftClaim['craftId'])) {
+        $this->processClaimNotes($claim->id, $craftClaim['craftId']);
+      }
+
+
+      if (!empty($craftClaim['craftId'])) {
+        $this->processInsurance($claim->id, $craftClaim['craftId']);
+      }
+
+      if (!empty($craftClaim['craftId'])) {
+        $this->processReimbursement($claim->id, $craftClaim['craftId']);
+      }
+
+      if (!empty($craftClaim['craftId'])) {
+        $this->processClaimHistory($claim->id, $craftClaim['craftId']);
+      }
+
+
+      $this->logger->info("Successfully processed claim: " . $craftClaim['claimId']);
+      return $claim;
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing claim migration", [
+        'claim_id' => $craftClaim['claimId'] ?? 'unknown',
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+
+      throw $e;
+    }
+  }
+
+
+  private function processClaimHistory($claimId, $craftClaimId)
+  {
+    try {
+      $this->logger->info("Processing claim history", [
+        'claim_id' => $claimId,
+        'craft_claim_id' => $craftClaimId
+      ]);
+
+      // Get history records from Craft
+      $craftHistory = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('matrixcontent_claimshistory as mch', 'mb.id', '=', 'mch.elementId')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->where('mb.ownerId', $craftClaimId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mb.id as tcrcId',
+          'mch.field_blockHistory_notes',
+          'mch.field_blockHistory_receivedCheckClearedDate',
+          'mch.field_blockHistory_receivedCheckAmount',
+          'mch.field_blockHistory_approvedCheckAmount',
+          'mch.field_blockHistory_receivedCheckDate',
+          'mch.field_blockHistory_approvedCheckNumber',
+          'mch.field_blockHistory_approvedCheckDate',
+          'mch.field_blockHistory_feeRefundAmount',
+          'mch.field_blockHistory_receivedCheckNumber',
+          'mch.field_blockHistory_receivedCheckBouncedDate',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->get();
+
+      DB::beginTransaction();
+      try {
+        foreach ($craftHistory as $history) {
+          $historyData = [
+            'claim_id' => $claimId,
+            'tcrcId' => $history->tcrcId,
+            'notes' => $history->field_blockHistory_notes,
+            'approvedCheckNumber' => $history->field_blockHistory_approvedCheckNumber,
+            'approvedCheckAmount' => $this->formatDecimal($history->field_blockHistory_approvedCheckAmount),
+            'approvedCheckDate' => $history->field_blockHistory_approvedCheckDate,
+            'feeRefundAmount' => $this->formatDecimal($history->field_blockHistory_feeRefundAmount),
+            'receivedCheckNumber' => $history->field_blockHistory_receivedCheckNumber,
+            'receivedCheckAmount' => $this->formatDecimal($history->field_blockHistory_receivedCheckAmount),
+            'receivedCheckDate' => $history->field_blockHistory_receivedCheckDate,
+            'receivedCheckClearedDate' => $history->field_blockHistory_receivedCheckClearedDate,
+            'receivedCheckBouncedDate' => $history->field_blockHistory_receivedCheckBouncedDate,
+            'updated_at' => $history->dateUpdated
+          ];
+
+          // Check if history record exists
+          $existingHistory = DB::table('claims_history')
+            ->where('tcrcId', $history->tcrcId)
+            ->first();
+
+          if ($existingHistory) {
+            DB::table('claims_history')
+              ->where('tcrcId', $history->tcrcId)
+              ->update($historyData);
+
+            $this->logDbOperation('claims_history', 'update', [
+              'tcrcId' => $history->tcrcId,
+              'claim_id' => $claimId
+            ]);
+          } else {
+            $historyData['created_at'] = $history->dateCreated;
+
+            DB::table('claims_history')->insert($historyData);
+
+            $this->logDbOperation('claims_history', 'insert', [
+              'tcrcId' => $history->tcrcId,
+              'claim_id' => $claimId
+            ]);
+          }
+        }
+
+        DB::commit();
+        return true;
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw $e;
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing claim history", [
+        'claim_id' => $claimId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
+    }
+  }
+
+  private function processWithErrorHandling($operation, $callback)
+  {
+    try {
+      return $callback();
+    } catch (\Exception $e) {
+      $this->logger->error("Error in {$operation}", [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
+    }
+  }
+
+  private function processInsurance($claimId, $craftClaimId)
+  {
+    try {
+      $this->logger->info("Processing insurance information", [
+        'claim_id' => $claimId,
+        'craft_claim_id' => $craftClaimId
+      ]);
+
+      // Get insurance info from Craft
+      $insuranceInfo = DB::connection('craft')
+        ->table('content as c')
+        ->where('c.elementId', $craftClaimId)
+        ->select([
+          'c.elementId as tcrcId',
+          'c.field_insurancePurchaseDate',
+          'c.field_insurancePurchaseAmount',
+          'c.field_insurancePurchasedFrom',
+          'c.field_insurer',
+          'c.field_insurerFirstName',
+          'c.field_insurerLastName',
+          'c.field_insurerAddress',
+          'c.field_insurerCity',
+          'c.field_insurerState',
+          'c.field_insurerZipCode',
+          'c.field_insuranceSellerFirstName',
+          'c.field_insuranceSellerLastName',
+          'c.field_insuranceSellerAddress',
+          'c.field_insuranceSellerCity',
+          'c.field_insuranceSellerState',
+          'c.field_insuranceSellerZipCode',
+          'c.dateCreated',
+          'c.dateUpdated'
+        ])
+        ->first();
+
+      if (!$insuranceInfo) {
+        $this->logger->info("No insurance information found", [
+          'claim_id' => $claimId,
+          'craft_claim_id' => $craftClaimId
+        ]);
+        return true;
+      }
+
+      DB::beginTransaction();
+      try {
+        //dd($insuranceInfo);
+        $insuranceData = [
+          'tcrcId' => $insuranceInfo->tcrcId,
+          'claim_id' => $claimId,
+          'purchase_date' => $insuranceInfo->field_insurancePurchaseDate ?? null,
+          'purchase_amount' => $insuranceInfo->field_insurancePurchaseAmount ?? null,
+          'purchased_from' => $insuranceInfo->field_insurancePurchasedFrom,
+          'insurer_name' => $insuranceInfo->field_insurer,
+          'insurer_first_name' => $insuranceInfo->field_insurerFirstName,
+          'insurer_last_name' => $insuranceInfo->field_insurerLastName,
+          'insurer_address' => $insuranceInfo->field_insurerAddress,
+          'insurer_city' => $insuranceInfo->field_insurerCity,
+          'insurer_state' => $insuranceInfo->field_insurerState,
+          'insurer_zip_code' => $insuranceInfo->field_insurerZipCode,
+          'seller_first_name' => $insuranceInfo->field_insuranceSellerFirstName,
+          'seller_last_name' => $insuranceInfo->field_insuranceSellerLastName,
+          'seller_address' => $insuranceInfo->field_insuranceSellerAddress,
+          'seller_city' => $insuranceInfo->field_insuranceSellerCity,
+          'seller_state' => $insuranceInfo->field_insuranceSellerState,
+          'seller_zip_code' => $insuranceInfo->field_insuranceSellerZipCode,
+          'updated_at' => now()
+        ];
+
+        // Check if insurance record exists by tcrcId or claim_id
+        $existingInsurance = DB::table('insurances')
+          ->where(function ($query) use ($insuranceInfo, $claimId) {
+            $query->where('tcrcId', $insuranceInfo->tcrcId)
+              ->orWhere('claim_id', $claimId);
+          })
+          ->first();
+
+        if ($existingInsurance) {
+          // Handle potential conflicts
+          if ($existingInsurance->claim_id != $claimId &&
+            $existingInsurance->tcrcId == $insuranceInfo->tcrcId) {
+            $this->logger->warning("Insurance record conflict detected", [
+              'tcrcId' => $insuranceInfo->tcrcId,
+              'existing_claim_id' => $existingInsurance->claim_id,
+              'new_claim_id' => $claimId
+            ]);
+          }
+
+          // Update existing record
+          DB::table('insurances')
+            ->where('id', $existingInsurance->id)
+            ->update($insuranceData);
+
+          $this->logDbOperation('insurances', 'update', [
+            'id' => $existingInsurance->id,
+            'tcrcId' => $insuranceInfo->tcrcId,
+            'claim_id' => $claimId
+          ]);
+
+          $this->logger->info("Updated existing insurance record", [
+            'id' => $existingInsurance->id,
+            'tcrcId' => $insuranceInfo->tcrcId
+          ]);
+        } else {
+          // Insert new record
+          $insuranceData['created_at'] = $insuranceInfo->dateCreated ?? now();
+
+          $insuranceId = DB::table('insurances')->insertGetId($insuranceData);
+
+          $this->logDbOperation('insurances', 'insert', [
+            'id' => $insuranceId,
+            'tcrcId' => $insuranceInfo->tcrcId,
+            'claim_id' => $claimId
+          ]);
+
+          $this->logger->info("Created new insurance record", [
+            'id' => $insuranceId,
+            'tcrcId' => $insuranceInfo->tcrcId
+          ]);
+        }
+
+        // Verify the operation
+        $verifyInsurance = DB::table('insurances')
+          ->where('claim_id', $claimId)
+          ->first();
+
+        if (!$verifyInsurance) {
+          throw new \Exception("Failed to verify insurance record after save");
+        }
+
+        DB::commit();
+
+        return true;
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw new \Exception("Transaction failed: " . $e->getMessage());
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing insurance information", [
+        'claim_id' => $claimId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      throw $e;
+    }
+  }
+
+
+  private function processPaymentProofs($claimId, $craftClaimId)
+  {
+    try {
+      // Get super table blocks
+      $superTableBlocks = DB::connection('craft')
+        ->table('supertableblocks')
+        ->where('ownerId', $craftClaimId)
+        ->get();
+
+      if ($superTableBlocks->isEmpty()) {
+        $this->logger->info("No payment proofs found for claim ID: $claimId");
+        return true;
+      }
+
+      // Get payment proofs
+      $paymentProofs = DB::connection('craft')
+        ->table('stc_paymentproof')
+        ->whereIn('elementId', $superTableBlocks->pluck('id'))
+        ->get();
+
+      if ($paymentProofs->isEmpty()) {
+        $this->logger->info("No payment proof records found for claim ID: $claimId");
+        return true;
+      }
+
+      DB::beginTransaction();
+      try {
+        foreach ($paymentProofs as $proof) {
+          $paymentData = [
+            'paymentable_type' => 'App\Models\Claim',
+            'paymentable_id' => $claimId,
+            'legacyId' => $proof->elementId,
+            'paymentTypeName' => $proof->field_paymentForm,
+            'paymentForType' => 'claim_payment',
+            'paidDate' => $proof->field_paymentDate,
+            'createDate' => $proof->field_paymentDate,
+            'subtotalAmount' => $proof->field_paymentAmount,
+            'totalAmount' => $proof->field_paymentAmount,
+            'payment_status' => 'completed',
+            'payment_meta' => json_encode([
+              'source' => 'payment_proof',
+              'original_form' => $proof->field_paymentForm
+            ]),
+            'updated_at' => now()
+          ];
+
+          // Check if payment history record already exists
+          $existingPayment = DB::table('payment_history')
+            ->where('paymentable_type', 'App\Models\Claim')
+            ->where('paymentable_id', $claimId)
+            ->where('legacyId', $proof->elementId)
+            ->first();
+
+          if ($existingPayment) {
+            // Update existing record
+            DB::table('payment_history')
+              ->where('id', $existingPayment->id)
+              ->update($paymentData);
+
+            $this->logDbOperation('payment_history', 'update', [
+              'id' => $existingPayment->id,
+              'claim_id' => $claimId,
+              'amount' => $proof->field_paymentAmount,
+              'type' => 'payment_proof'
+            ]);
+          } else {
+            // Insert new record
+            $paymentData['created_at'] = now();
+
+            DB::table('payment_history')->insert($paymentData);
+
+            $this->logDbOperation('payment_history', 'insert', [
+              'claim_id' => $claimId,
+              'amount' => $proof->field_paymentAmount,
+              'type' => 'payment_proof'
+            ]);
+          }
+        }
+
+        DB::commit();
+
+        $this->logger->info("Successfully processed payment proofs", [
+          'claim_id' => $claimId,
+          'count' => $paymentProofs->count()
+        ]);
+
+        return true;
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw $e;
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing payment proofs", [
+        'claim_id' => $claimId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
+    }
+  }
+
+  /**
+   * Create or update main claim record
+   */
+  private function createOrUpdateClaim($craftClaim, $participantId = null)
+  {
+    //dd($craftClaim, $participantId);
+    try {
+      if ($participantId != null) {
+        $participant = DB::table('participants')
+          ->where('id', $participantId)
+          ->first();
+
+        if (!$participant) {
+          $this->logger->warning("Participant with ID $participantId not found, setting participant to null");
+          $participantId = null;
+        }
+      }
+
+
+      //dd($participantId, $craftClaim);
+
+      $claimData = [
+        'participant' => $participantId,
+        //'userId' => $participant->userId ?? null,
+        'userId' => $craftClaim['userId'] ?? null,
+        'claimId' => $craftClaim['claimId'],
+
+
+        'craftDbId' => $craftClaim['craftId'],
+        'tcrcId' => $craftClaim['craftId'],
+
+
+        'claimStatus' => $craftClaim['status'],
+        'paymentStatus' => $craftClaim['paymentStatus'],
+        'firstName' => $craftClaim['claimant']['firstName'],
+        'middleName' => $craftClaim['claimant']['middleName'],
+        'lastName' => $craftClaim['claimant']['lastName'],
+        'email' => $craftClaim['claimant']['email'],
+        'address' => $craftClaim['claimant']['address'],
+        'city' => $craftClaim['claimant']['city'],
+        'state' => $craftClaim['claimant']['state'],
+        'zipCode' => $craftClaim['claimant']['zipCode'],
+        'primaryPhone' => $craftClaim['claimant']['primaryPhone'],
+        'secondaryPhone' => $craftClaim['claimant']['secondaryPhone'],
+        'createDate' => $craftClaim['details']['createDate'],
+        'claimAmountTotal' => $craftClaim['details']['claimAmount'],
+        'claimAmountBasis' => $craftClaim['details']['basis'],
+        'departureDate' => $craftClaim['details']['departureDate'],
+        'returnDate' => $craftClaim['details']['returnDate'],
+        'servicesPurchased' => $craftClaim['details']['servicesPurchased'],
+        'hasInsurance' => $craftClaim['details']['hasInsurance'],
+        'hasReimbursementSource' => $craftClaim['details']['hasReimbursement'],
+        'created_at' => $craftClaim['metadata']['dateCreated'],
+        'updated_at' => $craftClaim['metadata']['dateUpdated']
+      ];
+
+      // Check if claim already exists
+      $existingClaim = DB::table('claims')
+        ->where('claimId', $craftClaim['claimId'])
+        ->first();
+
+      if ($existingClaim) {
+        // Update existing claim
+        DB::table('claims')
+          ->where('claimId', $craftClaim['claimId'])
+          ->update($claimData);
+
+
+        $this->logDbOperation('claims', 'update', [
+          'claimId' => $craftClaim['claimId']
+        ]);
+
+        return DB::table('claims')
+          ->where('claimId', $craftClaim['claimId'])
+          ->first();
+      } else {
+        // Insert new claim
+        $claimId = DB::table('claims')->insertGetId($claimData);
+        $this->logDbOperation('claims', 'insert', [
+          'id' => $claimId,
+          'claimId' => $craftClaim['claimId']
+        ]);
+        return DB::table('claims')->where('id', $claimId)->first();
+      }
+
+    } catch (\Exception $e) {
+      throw new \Exception("Failed to create/update claim: " . $e->getMessage());
+    }
+  }
+
+  /**
+   * Process passengers for a claim
+   */
+  private function processPassengers($claimId, $passengers)
+  {
+    // First remove existing passengers
+    DB::table('passengers')->where('claim_id', $claimId)->delete();
+
+    foreach ($passengers as $passenger) {
+      DB::table('passengers')->insert([
+        'claim_id' => $claimId,
+        'firstName' => $passenger['col1'],
+        'middleName' => $passenger['col2'] ?? null,
+        'lastName' => $passenger['col3']
+      ]);
+    }
+  }
+
+
+  /**
+   * Process collaterals for a claim
+   */
+  private function processCollaterals($claimId, $collaterals)
+  {
+    foreach ($collaterals as $collateral) {
+      //dd($collateral);
+      $collateralData = [
+        'claim_id' => $claimId,
+        'fileName' => $collateral->field_collaterals_fileName,
+        'fileDescription' => $collateral->field_collaterals_fileDescription ?? null,
+        'createDate' => $collateral->field_collaterals_createDate,
+        'fileUrl' => null,
+        'file_path' => $this->processCollateralFile($collateral)
+      ];
+
+      DB::table('collaterals')->updateOrInsert(
+        [
+          'claim_id' => $claimId,
+          'fileName' => $collateral->field_collaterals_fileName,
+        ],
+        $collateralData
+      );
+    }
+  }
+
+
+  private function processReimbursement($claimId, $craftClaimId)
+  {
+    try {
+      $this->logger->info("Processing reimbursement information", [
+        'claim_id' => $claimId,
+        'craft_claim_id' => $craftClaimId
+      ]);
+
+      // Get reimbursement info from Craft content table
+      $reimbursementInfo = DB::connection('craft')
+        ->table('content')
+        ->where('elementId', $craftClaimId)
+        ->select([
+          'elementId as tcrcId',
+          'field_hasReimbursementSource',
+          'field_reimbursementSource',
+          'field_reimbursementDetails',
+          'dateCreated',
+          'dateUpdated'
+        ])
+        ->first();
+
+      if (!$reimbursementInfo) {
+        $this->logger->warning("No reimbursement data found", [
+          'claim_id' => $claimId
+        ]);
+        return false;
+      }
+
+      DB::beginTransaction();
+      try {
+        $reimbursement = Reimbursement::firstOrNew(
+          ['claim_id' => $claimId],
+          [
+            'tcrcId' => $reimbursementInfo->tcrcId,
+            'source' => $reimbursementInfo->field_reimbursementSource,
+            'details' => $reimbursementInfo->field_reimbursementDetails,
+            'created_at' => $reimbursementInfo->dateCreated
+          ]
+        );
+
+        // Update if existing
+        if ($reimbursement->exists) {
+          $reimbursement->update([
+            'source' => $reimbursementInfo->field_reimbursementSource,
+            'details' => $reimbursementInfo->field_reimbursementDetails,
+            'updated_at' => $reimbursementInfo->dateUpdated
+          ]);
+
+          $this->logDbOperation('reimbursements', 'update', [
+            'id' => $reimbursement->id,
+            'claim_id' => $claimId
+          ]);
+        } else {
+          $reimbursement->save();
+
+          $this->logDbOperation('reimbursements', 'insert', [
+            'id' => $reimbursement->id,
+            'claim_id' => $claimId
+          ]);
+        }
+
+        // Get field ID for reimbursement documents
+        $fieldId = DB::connection('craft')
+          ->table('fields')
+          ->where('handle', 'reimbursementDocuments')
+          ->value('id');
+
+        if ($fieldId) {
+          // Get related assets through relations table
+          $assets = DB::connection('craft')
+            ->table('assets')
+            ->join('elements', 'assets.id', '=', 'elements.id')
+            ->join('volumes', 'assets.volumeId', '=', 'volumes.id')
+            ->join('relations', function ($join) use ($craftClaimId, $fieldId) {
+              $join->on('assets.id', '=', 'relations.targetId')
+                ->where('relations.sourceId', '=', $craftClaimId)
+                ->where('relations.fieldId', '=', $fieldId);
+            })
+            ->where('elements.enabled', 1)
+            ->whereNull('elements.dateDeleted')
+            ->select([
+              'assets.id',
+              'assets.filename',
+              'assets.dateCreated',
+              'volumes.url as volumePath'
+            ])
+            ->get();
+
+          if ($assets->isNotEmpty()) {
+            // Clear existing media first
+            $reimbursement->clearMediaCollection('reimbursement_documents');
+
+            foreach ($assets as $asset) {
+              $craftFilePath = $this->getCraftFilePath($asset);
+
+              if ($craftFilePath && file_exists($craftFilePath)) {
+                try {
+                  $reimbursement
+                    ->addMedia($craftFilePath)
+                    ->preservingOriginal()
+                    ->withCustomProperties([
+                      'craft_asset_id' => $asset->id,
+                      'original_filename' => $asset->filename,
+                      'original_created_date' => $asset->dateCreated
+                    ])
+                    ->toMediaCollection('reimbursement_documents');
+
+                  $this->logDbOperation('media', 'insert', [
+                    'reimbursement_id' => $reimbursement->id,
+                    'filename' => $asset->filename
+                  ]);
+                } catch (\Exception $e) {
+                  $this->logger->warning("Failed to process asset", [
+                    'asset_id' => $asset->id,
+                    'filename' => $asset->filename,
+                    'error' => $e->getMessage()
+                  ]);
+                }
+              }
+            }
+          }
+        }
+
+        DB::commit();
+
+        $this->logger->info("Successfully processed reimbursement", [
+          'claim_id' => $claimId,
+          'reimbursement_id' => $reimbursement->id,
+          'document_count' => $assets->count() ?? 0
+        ]);
+
+        return true;
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw new \Exception("Transaction failed: " . $e->getMessage());
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing reimbursement information", [
+        'claim_id' => $claimId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
+    }
+  }
+
+  private function getCraftFilePath($asset)
+  {
+    try {
+      $basePath = config('craft.basePath', storage_path('craft'));
+      return $basePath . '/' . trim($asset->volumePath, '/') . '/' . $asset->filename;
+    } catch (\Exception $e) {
+      $this->logger->error("Error getting Craft file path", [
+        'asset_id' => $asset->id,
+        'error' => $e->getMessage()
+      ]);
+      return null;
+    }
+  }
+
+  /**
+   * Verification method for reimbursements with media
+   */
+  private function verifyReimbursementData($craftClaimId, $laravelClaimId)
+  {
+    $mismatches = [];
+
+    // Get Craft data
+    $craftReimbursement = DB::connection('craft')
+      ->table('content')
+      ->where('elementId', $craftClaimId)
+      ->select([
+        'elementId as tcrcId',
+        'field_hasReimbursementSource',
+        'field_reimbursementSource',
+        'field_reimbursementDetails'
+      ])
+      ->first();
+
+    // Get Laravel data
+    $laravelReimbursement = Reimbursement::with('media')
+      ->where('claim_id', $laravelClaimId)
+      ->first();
+
+    if (!$craftReimbursement->field_hasReimbursementSource && $laravelReimbursement) {
+      $mismatches[] = [
+        'type' => 'unexpected_record',
+        'message' => 'Laravel has reimbursement record when Craft indicates none'
+      ];
+      return $mismatches;
+    }
+
+    if ($craftReimbursement->field_hasReimbursementSource && !$laravelReimbursement) {
+      $mismatches[] = [
+        'type' => 'missing_record',
+        'message' => 'Missing reimbursement record in Laravel'
+      ];
+      return $mismatches;
+    }
+
+    if ($craftReimbursement->field_hasReimbursementSource && $laravelReimbursement) {
+      // Check basic fields
+      $fieldsToCompare = [
+        'tcrcId' => 'tcrcId',
+        'source' => 'field_reimbursementSource',
+        'details' => 'field_reimbursementDetails'
+      ];
+
+      foreach ($fieldsToCompare as $laravelField => $craftField) {
+        if ($laravelReimbursement->$laravelField != $craftReimbursement->$craftField) {
+          $mismatches[] = [
+            'field' => $laravelField,
+            'craft_value' => $craftReimbursement->$craftField,
+            'laravel_value' => $laravelReimbursement->$laravelField
+          ];
+        }
+      }
+
+      // Verify documents
+      $craftDocuments = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('matrixcontent_reimbursementdocuments as mrd', 'mb.id', '=', 'mrd.elementId')
+        ->where('mb.ownerId', $craftClaimId)
+        ->count();
+
+      $laravelDocuments = $laravelReimbursement->getMedia('documents')->count();
+
+      if ($craftDocuments !== $laravelDocuments) {
+        $mismatches[] = [
+          'type' => 'document_count_mismatch',
+          'craft_count' => $craftDocuments,
+          'laravel_count' => $laravelDocuments
+        ];
+      }
+    }
+
+    return $mismatches;
+  }
+
+  private function processCollateralFile($collateral)
+  {
+    // TODO: Implement file handling logic
+    // This would involve:
+    // 1. Downloading the file from Craft's storage
+    // 2. Storing it in Laravel's storage system
+    // 3. Returning the new file path
+    //return $collateral['fileUrl'] ?? null;
+    return null;
+  }
+
+  /**
+   * Display claim information for dry run
+   */
+  private function displayClaimDryRun($claim)
+  {
+    $this->line("\nClaim ID: " . $claim['claimId']);
+    $this->table(
+      ['Field', 'Value'],
+      [
+        ['Status', $claim['status']],
+        ['Payment Status', $claim['paymentStatus']],
+        ['Claimant', "{$claim['claimant']['firstName']} {$claim['claimant']['lastName']}"],
+        ['Email', $claim['claimant']['email']],
+        ['Claim Amount', number_format($claim['details']['claimAmount'], 2)],
+        ['Create Date', $claim['details']['createDate']],
+        ['Passenger Count', count($claim['passengers'])],
+        ['Payment Count', count($claim['payments'])],
+        ['Collateral Count', count($claim['collaterals'])],
+        ['Has Insurance', $claim['details']['hasInsurance'] ? 'Yes' : 'No'],
+        ['Has Reimbursement', $claim['details']['hasReimbursement'] ? 'Yes' : 'No']
+      ]
+    );
+  }
+
+
+  private function getParticipantNotes($participantId)
+  {
+    return DB::connection('craft')
+      ->table('matrixblocks as mb')
+      ->join('matrixcontent_notes as mn', 'mb.id', '=', 'mn.elementId')
+      ->where('mb.ownerId', $participantId)
+      ->select([
+        'mn.id as id',
+        'mn.field_note_note as note',
+        'mn.field_note_date as date',
+        'mb.dateCreated',
+        'mb.dateUpdated'
+      ])
+      ->orderBy('mn.field_note_date', 'desc')
+      ->get();
+  }
+
+
+  private function processParticipantNotes($participantId, $craftParticipantId)
+  {
+    try {
+      $this->logger->info("Processing participant notes", [
+        'participant_id' => $participantId,
+        'craft_id' => $craftParticipantId
+      ]);
+
+      // Get notes from Craft
+      $craftNotes = DB::connection('craft')
+        ->table('matrixblocks as mb')
+        ->join('matrixcontent_notes as mn', 'mb.id', '=', 'mn.elementId')
+        ->join('elements as e', 'mb.id', '=', 'e.id')
+        ->where('mb.ownerId', $craftParticipantId)
+        ->where('e.enabled', 1)
+        ->where('e.archived', 0)
+        ->whereNull('e.dateDeleted')
+        ->select([
+          'mn.id',
+          'mn.field_note_note as note',
+          'mn.field_note_date as date',
+          'mb.dateCreated',
+          'mb.dateUpdated'
+        ])
+        ->orderBy('mn.field_note_date', 'desc')
+        ->get();
+
+      if ($craftNotes->isEmpty()) {
+        $this->logger->info("No notes found for participant", [
+          'participant_id' => $participantId
+        ]);
+        return true;
+      }
+
+      // Begin transaction
+      DB::beginTransaction();
+
+      try {
+        // Get existing notes for comparison
+        $existingNotes = DB::table('participant_notes')
+          ->where('participant_id', $participantId)
+          ->get()
+          ->keyBy('tcrcId');
+
+        $processedCount = 0;
+        $updatedCount = 0;
+        $insertedCount = 0;
+
+        foreach ($craftNotes as $craftNote) {
+          // Prepare note data
+          $noteData = [
+            'participant_id' => $participantId,
+            'tcrcId' => $craftNote->id,
+            'note' => $craftNote->note,
+            'date' => $craftNote->date,
+            'updated_at' => $craftNote->dateUpdated
+          ];
+
+          // Check if note exists
+          if (isset($existingNotes[$craftNote->id])) {
+            // Compare and update if needed
+            $existingNote = $existingNotes[$craftNote->id];
+            $needsUpdate = $existingNote->note !== $craftNote->note ||
+              $existingNote->date !== $craftNote->date ||
+              $existingNote->updated_at !== $craftNote->dateUpdated;
+
+            if ($needsUpdate) {
+              DB::table('participant_notes')
+                ->where('tcrcId', $craftNote->id)
+                ->where('participant_id', $participantId)
+                ->update($noteData);
+
+              $updatedCount++;
+
+              $this->logDbOperation('participant_notes', 'update', [
+                'tcrcId' => $craftNote->id,
+                'participant_id' => $participantId
+              ]);
             }
           } else {
-            Future.successful(Redirect(routes.Application.login()))
-          }
-        }(ec)
+            // Insert new note
+            $noteData['created_at'] = $craftNote->dateCreated;
 
-      case None => Future.successful(Redirect(routes.Application.login()))
+            DB::table('participant_notes')->insert($noteData);
+            $insertedCount++;
+
+            $this->logDbOperation('participant_notes', 'insert', [
+              'tcrcId' => $craftNote->id,
+              'participant_id' => $participantId
+            ]);
+          }
+
+          $processedCount++;
+        }
+
+        // Clean up any notes that no longer exist in Craft
+        $craftNoteIds = $craftNotes->pluck('id')->toArray();
+        $deletedCount = DB::table('participant_notes')
+          ->where('participant_id', $participantId)
+          ->whereNotIn('tcrcId', $craftNoteIds)
+          ->delete();
+
+        if ($deletedCount > 0) {
+          $this->logDbOperation('participant_notes', 'delete', [
+            'participant_id' => $participantId,
+            'count' => $deletedCount
+          ]);
+        }
+
+        DB::commit();
+
+        $this->logger->info("Successfully processed participant notes", [
+          'participant_id' => $participantId,
+          'total_processed' => $processedCount,
+          'updated' => $updatedCount,
+          'inserted' => $insertedCount,
+          'deleted' => $deletedCount
+        ]);
+
+        return true;
+
+      } catch (\Exception $e) {
+        DB::rollBack();
+        throw $e;
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error("Error processing participant notes", [
+        'participant_id' => $participantId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+      ]);
+      return false;
     }
   }
 
-
-
-  def exportToExcel: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-
-    val selectedUser = request.session.get("selectedUser").flatMap(id => Try(id.toLong).toOption)
-    val selectedExam = request.session.get("selectedExam").flatMap(id => Try(id.toLong).toOption)
-
-    Logger.info(s"user Form data: ${selectedUser}")
-    Logger.info(s"exam Form data: ${selectedExam}")
-
-    // This should match your method to get the data. Adjust accordingly.
-    val questionPacksFuture: Future[Seq[(QuestionPack, User, ExamModel, Question)]] =
-      questionPacksDAO.searchQuestionPacks(selectedUser, selectedExam)
-
-    questionPacksFuture.map { questionPacks =>
-      val workbook = new XSSFWorkbook()
-      try {
-        val sheet = workbook.createSheet("Student Answers")
-        val headerTitles = Seq("Numbering", "User", "Exam", "Question", "User Answer", "Correct Answer")
-
-        ExcelUtils.createHeaderRow(sheet, headerTitles)
-        ExcelUtils.populateDataRows(sheet, questionPacks)
-        ExcelUtils.autoSizeColumns(sheet, headerTitles.length)
-
-        val excelByteArray = ExcelUtils.getExcelByteArray(workbook)
-
-        Ok(excelByteArray).as("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-          .withHeaders("Content-Disposition" -> "attachment; filename=student_answers.xlsx")
-      } catch {
-        case e: Exception =>
-          workbook.close() // Ensure resources are released
-          InternalServerError("An error occurred while generating the Excel file.")
-      }
-    }(ec)
+  private function getClaimNotes($claimId)
+  {
+    return DB::connection('craft')
+      ->table('matrixblocks as mb')
+      ->join('matrixcontent_notes as mn', 'mb.id', '=', 'mn.elementId')
+      ->where('mb.ownerId', $claimId)
+      ->select([
+        'mn.field_note_note as note',
+        'mn.field_note_date as date',
+        'mb.dateCreated',
+        'mb.dateUpdated'
+      ])
+      ->orderBy('mn.field_note_date', 'desc')
+      ->get();
   }
 
 
-  def refresh: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
-    Redirect(routes.Admin.studentAnswers()).withNewSession
+  private function processClaimNotes($claimId, $craftClaimId)
+  {
+    // Get notes from Craft
+    $notes = $this->getClaimNotes($craftClaimId);
+
+    foreach ($notes as $note) {
+      DB::table('notes')->updateOrInsert(
+        [
+          'claim_id' => $claimId,
+          'created_at' => $note->dateCreated,
+          'note' => $note->note
+        ],
+        [
+          'updated_at' => $note->dateUpdated
+        ]
+      );
+    }
   }
 }
