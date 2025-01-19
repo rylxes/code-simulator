@@ -1,0 +1,59 @@
+{
+    "darwin": {
+        "applications": [
+            {
+                "name": "Google Chrome",
+                "process_name": "Google Chrome",
+                "bundle_id": "com.google.Chrome"
+            },
+            {
+                "name": "IntelliJ IDEA",
+                "process_name": "IntelliJ IDEA",
+                "bundle_id": "com.jetbrains.intellij"
+            },
+            {
+                "name": "Sublime Text",
+                "process_name": "Sublime Text",
+                "bundle_id": "com.sublimetext.4"
+            }
+        ]
+    },
+    "win32": {
+        "applications": [
+            {
+                "name": "Google Chrome",
+                "process_name": "chrome.exe",
+                "window_class": "Chrome_WidgetWin_1"
+            },
+            {
+                "name": "IntelliJ IDEA",
+                "process_name": "idea64.exe",
+                "window_class": "SunAwtFrame"
+            },
+            {
+                "name": "Sublime Text",
+                "process_name": "sublime_text.exe",
+                "window_class": "PX_WINDOW_CLASS"
+            }
+        ]
+    },
+    "linux": {
+        "applications": [
+            {
+                "name": "Google Chrome",
+                "process_name": "chrome",
+                "window_class": "Google-chrome"
+            },
+            {
+                "name": "IntelliJ IDEA",
+                "process_name": "idea.sh",
+                "window_class": "jetbrains-idea"
+            },
+            {
+                "name": "Sublime Text",
+                "process_name": "sublime_text",
+                "window_class": "sublime_text"
+            }
+        ]
+    }
+}

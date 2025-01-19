@@ -1,0 +1,200 @@
+package controllers
+
+import models.`trait`.{ExamModel, Question, QuestionPack, User}
+
+import javax.inject._
+import play.api.mvc._
+
+import scala.concurrent.{ExecutionContext, Future}
+import models.dao.{ExamsDAO, QuestionPacksDAO, QuestionsDAO, UsersDAO}
+import play.api.Logger
+import play.filters.csrf.{AddCSRFToken, CSRF, CSRFAddToken, CSRFCheck}
+import play.mvc.Http.Context.Implicit.ctx
+import views.html.admin.{AdminDashboard, CreateQuestion, StudentAudit}
+import org.apache.poi.xssf.usermodel.{XSSFSheet, XSSFWorkbook}
+import play.api.data.Form
+import play.api.data.Forms.{mapping, text}
+import play.api.i18n.{Lang, Messages, MessagesImpl}
+import utils.{ExcelUtils, QuestionForm, QuestionUtil}
+import play.api.data.Forms._
+import play.api.libs.json.Json
+
+import scala.util.Try
+import scala.collection.JavaConverters._
+
+
+@Singleton
+class Admin @Inject()(
+                       cc: MessagesControllerComponents,
+                       usersDAO: UsersDAO,
+                       questionUtil: QuestionUtil,
+                       examsDAO: ExamsDAO,
+                       questionPacksDAO: QuestionPacksDAO,
+                       questionDao: QuestionsDAO,
+                       addToken: CSRFAddToken,
+                       checkToken: CSRFCheck,
+                     )
+                     (implicit ec: ExecutionContext) extends MessagesAbstractController(cc) {
+
+  @AddCSRFToken
+  def adminDashboard: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+    validateUser(request).flatMap { result =>
+      if (result.header.status == OK) {
+        val userEmailOpt = request.session.get("user_email")
+        userEmailOpt match {
+          case Some(email) =>
+            usersDAO.isAdmin(email).flatMap { isAdmin =>
+              if (isAdmin) {
+                Future.successful(Ok(views.html.admin.AdminDashboard("Admin Dashboard")(request.flash)))
+              } else {
+                Future.successful(Redirect(routes.Application.login()))
+              }
+            }(ec)
+
+          case None => Future.successful(Redirect(routes.Application.login()))
+        }
+      } else {
+        Future.successful(result)
+      }
+    }
+  }
+
+
+  def isLoggedIn(request: Request[AnyContent]): Boolean = {
+    request.session.get("user_email").isDefined
+  }
+
+  def validateUser(request: Request[AnyContent]): Future[Result] = {
+    if (isLoggedIn(request)) {
+      Future.successful(Ok("User is logged in"))
+    } else {
+      Future.successful(Redirect(routes.Application.login()))
+    }
+  }
+
+
+  def logout: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+    Future.successful {
+      Redirect(routes.Application.adminLogin()).withNewSession
+    }
+  }
+
+  @AddCSRFToken
+  def studentAnswers: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+    studentAnswerPage(1)(request)
+  }
+
+
+  @AddCSRFToken
+  def studentQuestions: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+    studentAnswerPage(1)(request)
+  }
+
+
+  @AddCSRFToken
+  def studentAnswerPage(page: Int): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+    validateUser(request).flatMap { result =>
+      if (result.header.status == OK) {
+        val userEmailOpt = request.session.get("user_email")
+        userEmailOpt match {
+          case Some(email) =>
+            usersDAO.isAdmin(email).flatMap { isAdmin =>
+              if (isAdmin) {
+                val questionPacksFuture = questionPacksDAO.listQuestionPacks(page, pageSize = 100)
+                val examsFuture = examsDAO.listAllExams()
+                val nonAdminUsersFuture = usersDAO.listNonAdminUsers()
+                val token = CSRF.getToken.get
+                for {
+                  questionPacks <- questionPacksFuture
+                  exams <- examsFuture
+                  nonAdminUsers <- nonAdminUsersFuture
+                } yield {
+                  Ok(views.html.admin.StudentAudit("Student Answers", token, questionPacks, exams, nonAdminUsers, Option.empty, Option.empty)(request.flash))
+                }
+              } else Future.successful(Redirect(routes.Application.login()))
+            }(ec)
+
+          case None => Future.successful(Redirect(routes.Application.login()))
+        }
+      } else Future.successful(result)
+    }
+  }
+
+
+
+  @AddCSRFToken
+  def searchStudentAnswers: Action[AnyContent] = Action.async { implicit request =>
+    val userEmailOpt = request.session.get("user_email")
+    userEmailOpt match {
+      case Some(email) =>
+        usersDAO.isAdmin(email).flatMap { isAdmin =>
+          if (isAdmin) {
+            val formData = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+            val user = formData.get("user").map(_.head).flatMap(id => Try(id.toLong).toOption)
+            val exam = formData.get("exam").map(_.head).flatMap(id => Try(id.toLong).toOption)
+
+            Logger.info(s"user Form data: ${user}")
+            Logger.info(s"exam Form data: ${exam}")
+
+            val questionPacksFuture = questionPacksDAO.searchQuestionPacks(user, exam, page = 1, pageSize = 100)
+            val examsFuture = examsDAO.listAllExams()
+            val nonAdminUsersFuture = usersDAO.listNonAdminUsers()
+            val token = CSRF.getToken.get
+            for {
+              questionPacks <- questionPacksFuture
+              exams <- examsFuture
+              nonAdminUsers <- nonAdminUsersFuture
+            } yield {
+              Ok(views.html.admin.StudentAudit("Student Answers", token, questionPacks, exams, nonAdminUsers, user, exam)(request.flash))
+                .addingToSession("selectedUser" -> user.getOrElse("").toString, "selectedExam" -> exam.getOrElse("").toString)
+            }
+          } else {
+            Future.successful(Redirect(routes.Application.login()))
+          }
+        }(ec)
+
+      case None => Future.successful(Redirect(routes.Application.login()))
+    }
+  }
+
+
+
+  def exportToExcel: Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+
+    val selectedUser = request.session.get("selectedUser").flatMap(id => Try(id.toLong).toOption)
+    val selectedExam = request.session.get("selectedExam").flatMap(id => Try(id.toLong).toOption)
+
+    Logger.info(s"user Form data: ${selectedUser}")
+    Logger.info(s"exam Form data: ${selectedExam}")
+
+    // This should match your method to get the data. Adjust accordingly.
+    val questionPacksFuture: Future[Seq[(QuestionPack, User, ExamModel, Question)]] =
+      questionPacksDAO.searchQuestionPacks(selectedUser, selectedExam)
+
+    questionPacksFuture.map { questionPacks =>
+      val workbook = new XSSFWorkbook()
+      try {
+        val sheet = workbook.createSheet("Student Answers")
+        val headerTitles = Seq("Numbering", "User", "Exam", "Question", "User Answer", "Correct Answer")
+
+        ExcelUtils.createHeaderRow(sheet, headerTitles)
+        ExcelUtils.populateDataRows(sheet, questionPacks)
+        ExcelUtils.autoSizeColumns(sheet, headerTitles.length)
+
+        val excelByteArray = ExcelUtils.getExcelByteArray(workbook)
+
+        Ok(excelByteArray).as("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+          .withHeaders("Content-Disposition" -> "attachment; filename=student_answers.xlsx")
+      } catch {
+        case e: Exception =>
+          workbook.close() // Ensure resources are released
+          InternalServerError("An error occurred while generating the Excel file.")
+      }
+    }(ec)
+  }
+
+
+  def refresh: Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+    Redirect(routes.Admin.studentAnswers()).withNewSession
+  }
+}
