@@ -75,7 +75,7 @@ class AppConfig:
 
     def _get_config_path(self) -> str:
         """Get the path to the configuration file."""
-        config_dir = os.path.join(os.path.dirname(__file__), 'config')
+        config_dir = os.path.join(os.path.dirname(__file__), 'resources')
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
         return os.path.join(config_dir, 'applications.json')
@@ -92,7 +92,7 @@ class AppConfig:
             # If config doesn't exist or platform not found, use defaults
             return self._create_default_config()
         except Exception as e:
-            logger.error(f"Error loading config: {e}")
+            logger.error(f"Error loading config3: {e}")
             return self._create_default_config()
 
     def _create_default_config(self) -> Dict:

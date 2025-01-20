@@ -3,13 +3,14 @@ import logging
 import os
 import random
 import sys
-import time
+import json
 from typing import Optional
 
 import pyautogui
 
 from .app_switcher import AppSwitcher
 from .config import AppConfig
+from .language_formatter import FormatterFactory
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,96 @@ class ActionSimulator:
         self._configure_pyautogui()
         self.app_config = AppConfig()
         self.app_switcher = AppSwitcher(self.app_config)
+        self.formatter_factory = FormatterFactory()
+        self.formatter = None
+
+        # Load configuration
+        self.config = self._load_config()
+        self._setup_from_config()
+
+        # Keep track of the original indentation for each line
+        self.original_indentations = {}
+
+    def _setup_from_config(self):
+        """Set up instance variables from loaded configuration."""
+        try:
+            # Set up code formatting settings
+            code_config = self.config.get('code', {})
+            self.language = code_config.get('language', 'python')
+            self.indent_size = code_config.get('indent_size', 4)
+            self.max_line_length = code_config.get('max_line_length', 80)
+
+            # Set up typing speed settings
+            typing_config = self.config.get('typing_speed', {})
+            self.typing_speed = {
+                'min': typing_config.get('min', 0.03),
+                'max': typing_config.get('max', 0.07),
+                'line_break': tuple(typing_config.get('line_break', [0.5, 1.0])),
+                'mistake_rate': typing_config.get('mistake_rate', 0.07)
+            }
+
+            logger.info("Successfully configured simulation settings")
+        except Exception as e:
+            logger.error(f"Error setting up configuration: {e}")
+            # Use default values if configuration fails
+            self._setup_default_config()
+
+    def _setup_default_config(self):
+        """Set up default configuration if loading fails."""
+        logger.warning("Using default configuration settings")
+        self.language = 'python'
+        self.indent_size = 4
+        self.max_line_length = 80
         self.typing_speed = {
-            "min": 0.05,
-            "max": 0.15,
-            "line_break": (1.0, 2.0),
-            "mistake_rate": 0.09,
+            'min': 0.03,
+            'max': 0.07,
+            'line_break': (0.5, 1.0),
+            'mistake_rate': 0.07
         }
+
+    def _get_config_path(self) -> str:
+        """Get the path to the config.json file in resources directory."""
+        config_path = os.path.join(os.path.dirname(__file__), 'resources', 'config.json')
+        if not os.path.exists(config_path):
+            logger.error(f"Config file not found at {config_path}")
+            raise FileNotFoundError(f"Config file not found at {config_path}")
+        return config_path
+
+    def _load_config(self) -> dict:
+        """Load configuration from config.json file."""
+        try:
+            with open(self._get_config_path(), 'r') as f:
+                config = json.load(f)
+                logger.info("Successfully loaded configuration")
+                return config
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing config file: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading config1: {e}")
+            raise
+
+    def load_config(self):
+        """Load configuration from the config file."""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), 'resources', 'config.json')
+            logger.info(f"Loading config from: {config_path}")
+            with open(config_path, "r") as f:
+                config = json.load(f)
+                code_config = config.get('code', {})
+                self.language = code_config.get("language", "unknown")
+                self.indent_size = code_config.get("indent_size", 4)
+                self.max_line_length = code_config.get("max_line_length", 80)
+        except FileNotFoundError:
+            logger.error(f"Config file not found: {config_path}")
+            self.language = "unknown"
+            self.indent_size = 4
+            self.max_line_length = 80
+        except Exception as e:
+            logger.error(f"Error loading config: {e}")
+            self.language = "unknown"
+            self.indent_size = 4
+            self.max_line_length = 80
 
     def _configure_pyautogui(self):
         """Configure PyAutoGUI settings."""
@@ -59,7 +144,7 @@ class ActionSimulator:
             # Calculate mistake time
             expected_mistakes = int(total_chars * self.typing_speed["mistake_rate"])
             mistake_time = expected_mistakes * (
-                0.2 + 0.1
+                    0.2 + 0.1
             )  # 0.2s pause + 0.1s correction
 
             # Calculate line break time
@@ -138,6 +223,12 @@ class ActionSimulator:
 
             # If file_path is provided, simulate typing from file
             if file_path:
+                # Load configuration and create formatter based on the specified language
+                self.load_config()
+                self.formatter = self.formatter_factory.create_formatter(
+                    self.language, self.indent_size
+                )
+
                 # Calculate and show estimated time before starting
                 timing_details = await self.calculate_typing_time(file_path)
                 if timing_details:
@@ -148,7 +239,12 @@ class ActionSimulator:
                 # Try to find a default code file
                 default_file = self._get_default_code_file()
                 if default_file:
-                    # Calculate and show estimated time before starting
+                    # Load configuration and create formatter based on the specified language
+                    self.load_config()
+                    self.formatter = self.formatter_factory.create_formatter(
+                        self.language, self.indent_size
+                    )
+
                     timing_details = await self.calculate_typing_time(default_file)
                     if timing_details:
                         # Give user a moment to read the estimate
@@ -238,25 +334,37 @@ class ActionSimulator:
     async def _simulate_code_typing(self, file_path: str):
         """Simulate typing code from a file with realistic timing and occasional mistakes."""
         try:
+            # Create a formatter based on the configured language
+            self.formatter = self.formatter_factory.create_formatter(
+                self.language, self.indent_size
+            )
+
             with open(file_path, "r") as file:
                 lines = file.readlines()
+
+            # Store original indentations
+            self.original_indentations = {
+                i: len(line) - len(line.lstrip()) for i, line in enumerate(lines)
+            }
 
             logger.info(f"Started typing code from {file_path}")
             self.text_box.value += f"Started typing code...\n"
 
-            for line in lines:
+            for i, line in enumerate(lines):
                 if not self.loop_flag:
                     break
 
-                line = line.rstrip()  # Remove trailing whitespace
-                if not line:  # Handle empty lines
+                # Use original indentation
+                line = " " * self.original_indentations[i] + line.strip()
+
+                if not line:
                     pyautogui.press("enter")
-                    await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
+                    await asyncio.sleep(
+                        random.uniform(*self.typing_speed["line_break"])
+                    )
                     continue
 
-                await self._type_line_with_simulation(line)
-
-                # Add a natural pause between lines
+                await self._type_line_with_simulation(line, i)
                 await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
 
         except FileNotFoundError:
@@ -266,27 +374,119 @@ class ActionSimulator:
             logger.error(f"Error during code typing: {e}")
             self.text_box.value += f"Error during code typing: {e}\n"
 
-    async def _type_line_with_simulation(self, line: str):
-        """Type a single line with realistic simulation of typing behavior."""
+    async def _type_line_with_simulation(self, line: str, line_num: int):
+        """Type a single line with formatting and realistic simulation."""
+
+        # Use the language-specific formatter if available
+        if self.formatter:
+            line = self.formatter.format_line(line)
+
+        # Remove any leading/trailing whitespace (important for accurate typing)
+        line = line.strip()
+
+        # Wrap Long Lines (if necessary)
+        if len(line) > self.max_line_length:
+            await self._wrap_long_line(line, line_num)
+            return
+
+        # Handle Comments
+        if "//" in line:
+            line = line.split("//")[0] + " //" + line.split("//")[1].strip()
+        elif "#" in line:  # Python comments
+            line = line.split("#")[0] + " #" + line.split("#")[1].strip()
+
+        # Typing Simulation
+        # Restore original indentation
+        line = " " * self.original_indentations[line_num] + line
         for char in line:
             if not self.loop_flag:
                 break
 
-            # Simulate occasional typing mistake
             if random.random() < self.typing_speed["mistake_rate"]:
                 await self._simulate_typing_mistake(char)
 
-            # Type the actual character
-            pyautogui.write(char)
-
-            # Random delay between keystrokes
+            self._type_character(char)
             await asyncio.sleep(
                 random.uniform(self.typing_speed["min"], self.typing_speed["max"])
             )
 
-        # Press enter at the end of the line
         pyautogui.press("enter")
         logger.info(f"Typed line: {line}")
+
+    async def _wrap_long_line(self, line: str, line_num: int, depth: int = 0):
+        """
+        Wrap a long line at a suitable breaking point, taking into account
+        the current indentation level and language-specific formatting.
+
+        Args:
+            line: The line to wrap
+            line_num: The line number being processed
+            depth: Current recursion depth (default: 0)
+        """
+        # Prevent infinite recursion
+        if depth > 10:  # Maximum reasonable number of line wraps
+            logger.warning(f"Maximum line wrap depth reached for line {line_num}")
+            await self._type_line_with_simulation(line, line_num)
+            return
+
+        current_indent = self.formatter.indent_style * self.formatter.indent_level
+
+        # If line is within limit, type it directly
+        if len(line) <= self.max_line_length:
+            await self._type_line_with_simulation(line, line_num)
+            return
+
+        # Find appropriate break points
+        break_points = [
+            ('(', ')'),
+            (',', None),
+            (' ', None)
+        ]
+
+        break_point = -1
+        for start, end in break_points:
+            if end:
+                # For matched pairs like parentheses
+                open_pos = line.rfind(start, 0, self.max_line_length)
+                if open_pos != -1:
+                    corresponding_close = line.find(end, open_pos)
+                    if corresponding_close != -1 and corresponding_close < self.max_line_length:
+                        break_point = corresponding_close
+                        break
+            else:
+                # For single characters like comma or space
+                pos = line.rfind(start, 0, self.max_line_length)
+                if pos != -1:
+                    break_point = pos
+                    break
+
+        if break_point != -1:
+            # Split and handle the line parts
+            first_part = line[:break_point + 1].rstrip()
+            second_part = current_indent + line[break_point + 1:].lstrip()
+
+            # Type first part
+            await self._type_line_with_simulation(first_part, line_num)
+
+            # Recursively handle second part with increased depth
+            await self._wrap_long_line(second_part, line_num, depth + 1)
+        else:
+            # If no good break point found, force break at max length
+            logger.warning(f"No suitable break point found for line {line_num}, forcing break")
+            first_part = line[:self.max_line_length]
+            second_part = current_indent + line[self.max_line_length:].lstrip()
+
+            await self._type_line_with_simulation(first_part, line_num)
+            await self._wrap_long_line(second_part, line_num, depth + 1)
+
+    def _type_character(self, char: str):
+        """Type a single character or handle special characters."""
+        if char == "\t":
+            pyautogui.press("tab")
+        elif char == "\n":
+            pyautogui.press("enter")
+        else:
+            pyautogui.write(char)
 
     async def _simulate_typing_mistake(self, correct_char: str):
         """Simulate a typing mistake and correction."""
@@ -313,7 +513,6 @@ class ActionSimulator:
                     break
                 await action()
             await asyncio.sleep(random.uniform(0.3, 0.7))
-
     async def _random_cursor_move(self):
         """Perform random cursor movement."""
         x = random.randint(100, 1000)
@@ -326,6 +525,18 @@ class ActionSimulator:
         scroll_amount = random.randint(-100, 100)
         pyautogui.scroll(scroll_amount)
         logger.info(f"Scrolled {scroll_amount}")
+
+        await asyncio.sleep(0.5)
+
+        # Relative Mouse Move (Example values)
+        pyautogui.move(100, 50, duration=0.5)  # Move right 100, down 50
+        logger.info("Moved mouse relatively by (100, 50).")
+        await asyncio.sleep(0.5)
+
+        # Another Relative Mouse Move (Example values)
+        pyautogui.move(-50, -25, duration=0.5)  # Move left 50, up 25
+        logger.info("Moved mouse relatively by (-50, -25).")
+        await asyncio.sleep(0.5)
 
     async def _middle_click(self):
         """Perform middle click."""
