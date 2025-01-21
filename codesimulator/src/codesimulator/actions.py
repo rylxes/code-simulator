@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 import random
 import sys
@@ -11,8 +10,7 @@ import pyautogui
 from .app_switcher import AppSwitcher
 from .config import AppConfig
 from .language_formatter import FormatterFactory
-
-logger = logging.getLogger(__name__)
+from .logging_config import logger
 
 
 class ActionSimulator:

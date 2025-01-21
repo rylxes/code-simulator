@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import sys
 
 import toga
@@ -8,14 +7,8 @@ from toga.style.pack import COLUMN
 
 from .actions import ActionSimulator
 from .key_handler import GlobalKeyHandler
+from .logging_config import logger
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger(__name__)
 
 
 class CodeSimulator(toga.App):

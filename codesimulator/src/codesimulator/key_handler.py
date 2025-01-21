@@ -1,10 +1,6 @@
 import asyncio
-import logging
-import sys
 from platform import system
-from typing import Optional
-
-logger = logging.getLogger(__name__)
+from .logging_config import logger
 
 
 class GlobalKeyHandler:

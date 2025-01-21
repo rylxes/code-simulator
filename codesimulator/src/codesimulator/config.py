@@ -1,10 +1,9 @@
 import sys
 import json
 import os
-import logging
-from typing import Dict, List
 
-logger = logging.getLogger(__name__)
+from typing import Dict, List
+from .logging_config import logger
 
 DEFAULT_APPS = {
     'darwin': {  # macOS

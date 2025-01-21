@@ -1,0 +1,15 @@
+2025-01-21 20:50:41,465 - codesimulator - INFO - Successfully loaded configuration
+2025-01-21 20:50:41,465 - codesimulator - INFO - Successfully configured simulation settings
+2025-01-21 20:50:41,475 - codesimulator - INFO - MacOS key handler initialized successfully
+2025-01-21 20:50:41,475 - codesimulator - INFO - Application started successfully.
+2025-01-21 20:50:58,139 - codesimulator - INFO - Simulation started successfully.
+2025-01-21 20:50:58,255 - codesimulator - INFO - Switched to Google Chrome
+2025-01-21 20:50:59,418 - codesimulator - INFO - Clicked at screen center
+2025-01-21 20:50:59,921 - codesimulator - INFO - Loading config from: /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/config.json
+2025-01-21 20:50:59,927 - codesimulator - INFO - Estimated typing time: 3h 13m 31s
+2025-01-21 20:51:01,935 - codesimulator - INFO - Started typing code from /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/code.txt
+2025-01-21 20:51:02,805 - codesimulator - INFO - Typed line: ?php
+2025-01-21 20:51:03,762 - codesimulator - INFO - Typed line:  
+2025-01-21 20:51:07,138 - codesimulator - INFO - Simulation stopped successfully.
+2025-01-21 20:51:07,142 - codesimulator - INFO - Simulation cancelled
+2025-01-21 20:51:07,142 - codesimulator - INFO - Simulation ended

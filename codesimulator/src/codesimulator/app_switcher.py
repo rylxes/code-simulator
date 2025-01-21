@@ -1,10 +1,8 @@
 import sys
-import logging
 import subprocess
 from typing import Optional, List, Dict
 import random
-
-logger = logging.getLogger(__name__)
+from .logging_config import logger
 
 
 class AppSwitcher:
