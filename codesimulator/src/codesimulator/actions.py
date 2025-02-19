@@ -11,6 +11,7 @@ from .app_switcher import AppSwitcher
 from .config import AppConfig
 from .language_formatter import FormatterFactory
 from .logging_config import logger
+from .mouse import MouseController
 
 
 class ActionSimulator:
@@ -25,6 +26,7 @@ class ActionSimulator:
         self.app_switcher = AppSwitcher(self.app_config)
         self.formatter_factory = FormatterFactory()
         self.formatter = None
+        self.mouse_controller = MouseController()
 
         # Load configuration
         self.config = self._load_config()
@@ -67,7 +69,7 @@ class ActionSimulator:
             'min': 0.03,
             'max': 0.07,
             'line_break': (0.5, 1.0),
-            'mistake_rate': 0.07
+            'mistake_rate': 0.07,
         }
 
     def _get_config_path(self) -> str:
@@ -219,45 +221,41 @@ class ActionSimulator:
         try:
             await self._perform_initial_setup()
 
-            # If file_path is provided, simulate typing from file
+            # Start background mouse movement, excluding typing area
+            typing_area = (100, 100, 800, 600)  # Example coordinates
+            self.mouse_controller.start(excluded_zone=typing_area)
+
             if file_path:
-                # Load configuration and create formatter based on the specified language
                 self.load_config()
                 self.formatter = self.formatter_factory.create_formatter(
                     self.language, self.indent_size
                 )
-
-                # Calculate and show estimated time before starting
                 timing_details = await self.calculate_typing_time(file_path)
                 if timing_details:
-                    # Give user a moment to read the estimate
                     await asyncio.sleep(2)
                 await self._simulate_code_typing(file_path)
             else:
-                # Try to find a default code file
                 default_file = self._get_default_code_file()
                 if default_file:
-                    # Load configuration and create formatter based on the specified language
                     self.load_config()
                     self.formatter = self.formatter_factory.create_formatter(
                         self.language, self.indent_size
                     )
-
                     timing_details = await self.calculate_typing_time(default_file)
                     if timing_details:
-                        # Give user a moment to read the estimate
                         await asyncio.sleep(2)
                     await self._simulate_code_typing(default_file)
                 else:
-                    # Fall back to random actions if no code file is found
                     await self._simulate_random_actions()
 
             await self._cleanup_simulation()
+
         except asyncio.CancelledError:
             logger.info("Simulation cancelled")
         except Exception as e:
             logger.error(f"Error in simulation: {e}")
         finally:
+            self.mouse_controller.stop()  # Stop mouse movement
             self._handle_simulation_end()
 
     def _get_default_code_file(self) -> Optional[str]:
@@ -273,7 +271,7 @@ class ActionSimulator:
 
     async def _perform_initial_setup(self):
         """Perform initial simulation setup."""
-        self.switch_window()
+        #self.switch_window()
         await asyncio.sleep(1)
         self.click_center_screen()
         await asyncio.sleep(0.5)
@@ -511,6 +509,7 @@ class ActionSimulator:
                     break
                 await action()
             await asyncio.sleep(random.uniform(0.3, 0.7))
+
     async def _random_cursor_move(self):
         """Perform random cursor movement."""
         x = random.randint(100, 1000)
@@ -545,17 +544,18 @@ class ActionSimulator:
     async def _window_switch_action(self):
         """Perform window switching action."""
         if random.random() < 0.2:
-            self.switch_window()
+            #self.switch_window()
             await asyncio.sleep(0.5)
-            self.switch_window(reverse=True)
+            #self.switch_window(reverse=True)
 
     async def _cleanup_simulation(self):
         """Clean up after simulation."""
-        self.switch_window(reverse=True)
+        #self.switch_window(reverse=True)
         await asyncio.sleep(0.5)
 
     def _handle_simulation_end(self):
         """Handle simulation end state."""
         self.loop_flag = False
+        self.mouse_controller.stop()  # Ensure mouse movement is stopped
         self.text_box.value += "Simulation ended\n"
         logger.info("Simulation ended")

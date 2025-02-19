@@ -1,18 +1,21 @@
 import asyncio
 import sys
-
 import toga
 from toga.style import Pack
 from toga.style.pack import COLUMN
-
 from .actions import ActionSimulator
 from .key_handler import GlobalKeyHandler
 from .logging_config import logger
 
 
-
 class CodeSimulator(toga.App):
     """Main application class for the code simulation."""
+
+    def __init__(self):
+        super().__init__(
+            formal_name="Code Simulator",  # Set the formal name here
+            app_id="com.example.codesimulator"  # Optional: Set an app ID
+        )
 
     def startup(self):
         """Initialize and show the Toga application."""
@@ -45,7 +48,6 @@ class CodeSimulator(toga.App):
             on_press=self.start_simulation,
             style=Pack(padding=5)
         )
-
         self.stop_button = toga.Button(
             "Stop Simulation",
             on_press=self.stop_simulation,
@@ -69,15 +71,12 @@ class CodeSimulator(toga.App):
             'Start Simulation',
             shortcut=toga.Key.MOD_1 + 's'
         )
-
         cmd_x = toga.Command(
             self.stop_simulation,
             'Stop Simulation',
             shortcut=toga.Key.MOD_1 + 'x'
         )
-
         self.commands.add(cmd_s, cmd_x)
-
         self.main_window.show()
 
     def setup_components(self):
@@ -96,12 +95,22 @@ class CodeSimulator(toga.App):
 
                 if not self.simulation_task:
                     self.simulation_task = asyncio.create_task(
-                        self.action_simulator.simulate_typing()
+                        self.run_continuous_simulation()
                     )
                 logger.info("Simulation started successfully.")
             except Exception as e:
                 logger.error(f"Error starting simulation: {e}")
                 await self.stop_simulation(widget)
+
+    async def run_continuous_simulation(self):
+        """Run the simulation continuously until explicitly stopped."""
+        while self.action_simulator.loop_flag:
+            try:
+                await self.action_simulator.simulate_typing()
+                self.text_box.value += "\nSimulation reached the end. Restarting...\n"
+            except Exception as e:
+                logger.error(f"Error during simulation: {e}")
+                break
 
     async def stop_simulation(self, widget):
         """Stop the running simulation."""

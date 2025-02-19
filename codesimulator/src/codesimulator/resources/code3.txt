@@ -1,0 +1,3476 @@
+name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push
+
+
+
+
+
+
+          name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # triggers only on version tags (e.g. v1.0.0)
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      # (Optional) Step 3: Setup Python environment
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # Step 4: Install project dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # (Optional) Step 5: Run any pre-build scripts if needed
+      - name: Build Project
+        run: npm run build
+
+      # Step 6: Package Windows Installer using electron-builder
+      - name: Package Installer
+        run: npx electron-builder --win --x64
+        env:
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+          # (Additional environment variables for signing or code signing can be added here)
+
+      # Step 7: Upload built installer as an artifact
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: dist/*.exe  # adjust to match your actual output artifact
+
+      # Step 8: Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload installer to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/YourInstaller.exe  # update this to the actual installer name
+          asset_name: YourInstaller.exe
+          asset_content_type: application/octet-stream
+
+      # Step 10: Update release.md with link to installer
+      - name: Update release.md
+        run: |
+          # Assume release.md contains a placeholder line like "Latest release: <LINK>"
+          # and that the installer asset URL can be constructed from the release.
+          echo "Updating release.md with the new installer link..."
+          INSTALLER_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/YourInstaller.exe"
+          # Use sed or PowerShell to update the file (example below using PowerShell):
+          powershell -Command "(Get-Content release.md) -replace '<LINK>', '$INSTALLER_URL' | Set-Content release.md"
+          # Commit and push the updated release.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release.md
+          git commit -m "Update release.md with installer link for ${{ github.ref_name }}"
+          git push

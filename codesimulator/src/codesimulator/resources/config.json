@@ -2,11 +2,11 @@
     "code": {
         "language": "php",
         "indent_size": 2,
-        "max_line_length": 50
+        "max_line_length": 80
     },
     "typing_speed": {
-        "min": 0.03,
-        "max": 0.07,
+        "min": 0.15,
+        "max": 0.25,
         "line_break": [0.5, 1.0],
         "mistake_rate": 0.09
     }
