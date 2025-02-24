@@ -39634,3 +39634,1791 @@
 2025-02-19 20:43:46,789 - codesimulator - INFO - Successfully configured simulation settings
 2025-02-19 20:43:46,800 - codesimulator - INFO - MacOS key handler initialized successfully
 2025-02-19 20:43:46,800 - codesimulator - INFO - Application started successfully.
+2025-02-19 20:44:34,703 - codesimulator - INFO - Simulation started successfully.
+2025-02-19 20:44:35,872 - codesimulator - INFO - Clicked at screen center
+2025-02-19 20:44:36,381 - codesimulator - INFO - Loading config from: /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/config.json
+2025-02-19 20:44:36,384 - codesimulator - INFO - Estimated typing time: 7h 50m 29s
+2025-02-19 20:44:37,416 - codesimulator - DEBUG - Moved mouse to (1404, 750)
+2025-02-19 20:44:38,393 - codesimulator - INFO - Started typing code from /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/code3.txt
+2025-02-19 20:44:50,492 - codesimulator - DEBUG - Moved mouse to (899, 255)
+2025-02-19 20:44:52,000 - codesimulator - INFO - Typed line: name: Release Windows Installer
+2025-02-19 20:44:53,443 - codesimulator - INFO - Typed line:  
+2025-02-19 20:44:55,237 - codesimulator - INFO - Typed line: on:
+2025-02-19 20:44:58,279 - codesimulator - INFO - Typed line:   push:
+2025-02-19 20:45:02,315 - codesimulator - INFO - Typed line:     tags:
+2025-02-19 20:45:06,528 - codesimulator - DEBUG - Moved mouse to (58, 629)
+2025-02-19 20:45:16,043 - codesimulator - DEBUG - Moved mouse to (907, 138)
+2025-02-19 20:45:27,720 - codesimulator - DEBUG - Moved mouse to (790, 656)
+2025-02-19 20:45:33,046 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-19 20:45:34,678 - codesimulator - DEBUG - Moved mouse to (533, 758)
+2025-02-19 20:45:34,810 - codesimulator - INFO - Typed line:  
+2025-02-19 20:45:37,281 - codesimulator - INFO - Typed line: jobs:
+2025-02-19 20:45:43,159 - codesimulator - INFO - Typed line:   release:
+2025-02-19 20:45:47,860 - codesimulator - DEBUG - Moved mouse to (606, 741)
+2025-02-19 20:45:56,654 - codesimulator - DEBUG - Moved mouse to (314, 955)
+2025-02-19 20:45:57,407 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-19 20:46:01,532 - codesimulator - INFO - Typed line:     steps:
+2025-02-19 20:46:07,260 - codesimulator - DEBUG - Moved mouse to (1148, 635)
+2025-02-19 20:46:17,628 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-19 20:46:20,414 - codesimulator - DEBUG - Moved mouse to (149, 698)
+2025-02-19 20:46:31,429 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-19 20:46:32,856 - codesimulator - DEBUG - Moved mouse to (1118, 379)
+2025-02-19 20:46:39,794 - codesimulator - DEBUG - Moved mouse to (18, 464)
+2025-02-19 20:46:51,268 - codesimulator - DEBUG - Moved mouse to (1146, 789)
+2025-02-19 20:46:51,393 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-19 20:46:52,688 - codesimulator - INFO - Typed line:  
+2025-02-19 20:47:03,853 - codesimulator - DEBUG - Moved mouse to (1143, 122)
+2025-02-19 20:47:09,965 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-19 20:47:16,584 - codesimulator - DEBUG - Moved mouse to (1324, 423)
+2025-02-19 20:47:21,208 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-19 20:47:23,947 - codesimulator - DEBUG - Moved mouse to (1476, 932)
+2025-02-19 20:47:29,797 - codesimulator - DEBUG - Moved mouse to (1191, 483)
+2025-02-19 20:47:36,347 - codesimulator - DEBUG - Moved mouse to (1328, 134)
+2025-02-19 20:47:37,157 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-19 20:47:43,084 - codesimulator - INFO - Typed line:         with:
+2025-02-19 20:47:45,680 - codesimulator - DEBUG - Moved mouse to (1296, 981)
+2025-02-19 20:47:55,693 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-19 20:47:57,490 - codesimulator - DEBUG - Moved mouse to (1030, 363)
+2025-02-19 20:48:05,532 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-19 20:48:06,746 - codesimulator - INFO - Typed line:  
+2025-02-19 20:48:10,145 - codesimulator - DEBUG - Moved mouse to (94, 874)
+2025-02-19 20:48:22,207 - codesimulator - DEBUG - Moved mouse to (878, 632)
+2025-02-19 20:48:30,513 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-19 20:48:37,496 - codesimulator - DEBUG - Moved mouse to (438, 647)
+2025-02-19 20:48:40,733 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-19 20:48:48,719 - codesimulator - DEBUG - Moved mouse to (1285, 57)
+2025-02-19 20:49:00,087 - codesimulator - DEBUG - Moved mouse to (875, 352)
+2025-02-19 20:49:00,536 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-19 20:49:06,672 - codesimulator - DEBUG - Moved mouse to (1169, 514)
+2025-02-19 20:49:07,113 - codesimulator - INFO - Typed line:         with:
+2025-02-19 20:49:15,795 - codesimulator - DEBUG - Moved mouse to (1303, 32)
+2025-02-19 20:49:20,101 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-19 20:49:21,359 - codesimulator - INFO - Typed line:  
+2025-02-19 20:49:31,265 - codesimulator - DEBUG - Moved mouse to (433, 814)
+2025-02-19 20:49:39,584 - codesimulator - DEBUG - Moved mouse to (1186, 64)
+2025-02-19 20:49:40,656 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-19 20:49:50,220 - codesimulator - DEBUG - Moved mouse to (49, 970)
+2025-02-19 20:49:54,880 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-19 20:49:58,635 - codesimulator - DEBUG - Moved mouse to (1224, 109)
+2025-02-19 20:50:06,068 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-19 20:50:07,269 - codesimulator - INFO - Typed line:  
+2025-02-19 20:50:13,308 - codesimulator - DEBUG - Moved mouse to (1150, 247)
+2025-02-19 20:50:28,161 - codesimulator - DEBUG - Moved mouse to (1120, 405)
+2025-02-19 20:50:35,564 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-19 20:50:40,736 - codesimulator - DEBUG - Moved mouse to (940, 871)
+2025-02-19 20:50:45,999 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-19 20:50:55,822 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-19 20:50:56,753 - codesimulator - DEBUG - Moved mouse to (355, 659)
+2025-02-19 20:50:57,181 - codesimulator - INFO - Typed line:  
+2025-02-19 20:51:03,702 - codesimulator - DEBUG - Moved mouse to (857, 564)
+2025-02-19 20:51:17,117 - codesimulator - DEBUG - Moved mouse to (1046, 174)
+2025-02-19 20:51:24,320 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-19 20:51:31,575 - codesimulator - DEBUG - Moved mouse to (705, 674)
+2025-02-19 20:51:37,771 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-19 20:51:47,325 - codesimulator - DEBUG - Moved mouse to (829, 271)
+2025-02-19 20:51:58,496 - codesimulator - DEBUG - Moved mouse to (904, 485)
+2025-02-19 20:51:58,906 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-19 20:52:04,401 - codesimulator - DEBUG - Moved mouse to (1381, 428)
+2025-02-19 20:52:04,837 - codesimulator - INFO - Typed line:         env:
+2025-02-19 20:52:14,655 - codesimulator - DEBUG - Moved mouse to (223, 25)
+2025-02-19 20:52:26,609 - codesimulator - DEBUG - Moved mouse to (91, 632)
+2025-02-19 20:52:33,029 - codesimulator - DEBUG - Moved mouse to (884, 938)
+2025-02-19 20:52:34,980 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-19 20:52:47,404 - codesimulator - DEBUG - Moved mouse to (130, 738)
+2025-02-19 20:53:00,470 - codesimulator - DEBUG - Moved mouse to (819, 637)
+2025-02-19 20:53:09,420 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-19 20:53:12,492 - codesimulator - DEBUG - Moved mouse to (1268, 459)
+2025-02-19 20:53:15,686 - codesimulator - INFO - Typed line:           here)
+2025-02-19 20:53:17,056 - codesimulator - INFO - Typed line:  
+2025-02-19 20:53:20,701 - codesimulator - DEBUG - Moved mouse to (1316, 99)
+2025-02-19 20:53:31,968 - codesimulator - DEBUG - Moved mouse to (1160, 437)
+2025-02-19 20:53:38,561 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-19 20:53:39,424 - codesimulator - DEBUG - Moved mouse to (1500, 804)
+2025-02-19 20:53:47,693 - codesimulator - DEBUG - Moved mouse to (896, 911)
+2025-02-19 20:53:54,872 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-19 20:53:59,824 - codesimulator - DEBUG - Moved mouse to (888, 576)
+2025-02-19 20:54:08,458 - codesimulator - DEBUG - Moved mouse to (43, 705)
+2025-02-19 20:54:13,637 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-19 20:54:19,126 - codesimulator - INFO - Typed line:         with:
+2025-02-19 20:54:21,476 - codesimulator - DEBUG - Moved mouse to (306, 789)
+2025-02-19 20:54:32,199 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-19 20:54:35,037 - codesimulator - DEBUG - Moved mouse to (955, 406)
+2025-02-19 20:54:42,461 - codesimulator - DEBUG - Moved mouse to (876, 114)
+2025-02-19 20:54:54,881 - codesimulator - DEBUG - Moved mouse to (255, 99)
+2025-02-19 20:55:03,517 - codesimulator - DEBUG - Moved mouse to (1147, 562)
+2025-02-19 20:55:03,999 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-19 20:55:05,005 - codesimulator - INFO - Typed line:  
+2025-02-19 20:55:09,765 - codesimulator - DEBUG - Moved mouse to (1350, 839)
+2025-02-19 20:55:18,342 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-19 20:55:22,885 - codesimulator - DEBUG - Moved mouse to (718, 713)
+2025-02-19 20:55:32,279 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-19 20:55:36,290 - codesimulator - DEBUG - Moved mouse to (156, 833)
+2025-02-19 20:55:44,239 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-19 20:55:47,586 - codesimulator - DEBUG - Moved mouse to (1499, 459)
+2025-02-19 20:55:58,247 - codesimulator - DEBUG - Moved mouse to (1445, 799)
+2025-02-19 20:56:01,832 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-19 20:56:07,292 - codesimulator - DEBUG - Moved mouse to (236, 921)
+2025-02-19 20:56:09,267 - codesimulator - INFO - Typed line:         env:
+2025-02-19 20:56:15,149 - codesimulator - DEBUG - Moved mouse to (1222, 296)
+2025-02-19 20:56:30,898 - codesimulator - DEBUG - Moved mouse to (292, 739)
+2025-02-19 20:56:31,373 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 20:56:37,556 - codesimulator - INFO - Typed line:         with:
+2025-02-19 20:56:42,393 - codesimulator - DEBUG - Moved mouse to (1126, 428)
+2025-02-19 20:56:51,862 - codesimulator - DEBUG - Moved mouse to (1253, 666)
+2025-02-19 20:56:55,474 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-19 20:56:59,019 - codesimulator - DEBUG - Moved mouse to (1332, 880)
+2025-02-19 20:57:05,240 - codesimulator - DEBUG - Moved mouse to (666, 881)
+2025-02-19 20:57:11,054 - codesimulator - DEBUG - Moved mouse to (309, 839)
+2025-02-19 20:57:17,095 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-19 20:57:25,182 - codesimulator - DEBUG - Moved mouse to (894, 419)
+2025-02-19 20:57:26,294 - codesimulator - INFO - Typed line:           draft: false
+2025-02-19 20:57:34,023 - codesimulator - DEBUG - Moved mouse to (860, 194)
+2025-02-19 20:57:38,368 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-19 20:57:39,636 - codesimulator - INFO - Typed line:  
+2025-02-19 20:57:46,759 - codesimulator - DEBUG - Moved mouse to (639, 869)
+2025-02-19 20:57:59,757 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-19 20:58:02,433 - codesimulator - DEBUG - Moved mouse to (1213, 347)
+2025-02-19 20:58:12,905 - codesimulator - DEBUG - Moved mouse to (1480, 110)
+2025-02-19 20:58:13,604 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-19 20:58:23,929 - codesimulator - DEBUG - Moved mouse to (370, 639)
+2025-02-19 20:58:34,918 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-19 20:58:37,901 - codesimulator - DEBUG - Moved mouse to (805, 274)
+2025-02-19 20:58:41,801 - codesimulator - INFO - Typed line:         env:
+2025-02-19 20:58:46,330 - codesimulator - DEBUG - Moved mouse to (2, 949)
+2025-02-19 20:58:55,300 - codesimulator - DEBUG - Moved mouse to (44, 188)
+2025-02-19 20:59:04,997 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 20:59:10,215 - codesimulator - DEBUG - Moved mouse to (1069, 861)
+2025-02-19 20:59:11,650 - codesimulator - INFO - Typed line:         with:
+2025-02-19 20:59:20,293 - codesimulator - DEBUG - Moved mouse to (900, 810)
+2025-02-19 20:59:30,337 - codesimulator - DEBUG - Moved mouse to (1095, 685)
+2025-02-19 20:59:39,009 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-19 20:59:43,857 - codesimulator - DEBUG - Moved mouse to (1451, 462)
+2025-02-19 20:59:52,216 - codesimulator - DEBUG - Moved mouse to (177, 980)
+2025-02-19 21:00:04,601 - codesimulator - DEBUG - Moved mouse to (1102, 545)
+2025-02-19 21:00:16,680 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-19 21:00:19,870 - codesimulator - DEBUG - Moved mouse to (187, 965)
+2025-02-19 21:00:34,862 - codesimulator - DEBUG - Moved mouse to (1311, 853)
+2025-02-19 21:00:34,997 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-19 21:00:44,303 - codesimulator - DEBUG - Moved mouse to (1509, 700)
+2025-02-19 21:00:56,489 - codesimulator - DEBUG - Moved mouse to (1403, 894)
+2025-02-19 21:00:58,244 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-19 21:00:59,259 - codesimulator - INFO - Typed line:  
+2025-02-19 21:01:10,826 - codesimulator - DEBUG - Moved mouse to (823, 924)
+2025-02-19 21:01:21,045 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-19 21:01:23,535 - codesimulator - DEBUG - Moved mouse to (997, 743)
+2025-02-19 21:01:32,822 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-19 21:01:36,904 - codesimulator - DEBUG - Moved mouse to (11, 602)
+2025-02-19 21:01:40,246 - codesimulator - INFO - Typed line:         run: |
+2025-02-19 21:01:50,984 - codesimulator - DEBUG - Moved mouse to (983, 60)
+2025-02-19 21:01:58,232 - codesimulator - DEBUG - Moved mouse to (402, 944)
+2025-02-19 21:02:13,545 - codesimulator - DEBUG - Moved mouse to (1235, 796)
+2025-02-19 21:02:16,382 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-19 21:02:28,974 - codesimulator - DEBUG - Moved mouse to (892, 104)
+2025-02-19 21:02:41,247 - codesimulator - DEBUG - Moved mouse to (1177, 516)
+2025-02-19 21:02:51,275 - codesimulator - DEBUG - Moved mouse to (64, 457)
+2025-02-19 21:02:51,770 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-19 21:03:02,614 - codesimulator - DEBUG - Moved mouse to (618, 89)
+2025-02-19 21:03:16,189 - codesimulator - DEBUG - Moved mouse to (1336, 900)
+2025-02-19 21:03:18,889 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-19 21:03:24,688 - codesimulator - DEBUG - Moved mouse to (854, 401)
+2025-02-19 21:03:38,221 - codesimulator - DEBUG - Moved mouse to (698, 617)
+2025-02-19 21:03:46,975 - codesimulator - DEBUG - Moved mouse to (1261, 131)
+2025-02-19 21:03:55,139 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-19 21:03:59,091 - codesimulator - DEBUG - Moved mouse to (1165, 975)
+2025-02-19 21:04:05,020 - codesimulator - DEBUG - Moved mouse to (1173, 846)
+2025-02-19 21:04:17,400 - codesimulator - DEBUG - Moved mouse to (81, 462)
+2025-02-19 21:04:21,177 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-19 21:04:26,398 - codesimulator - DEBUG - Moved mouse to (1437, 4)
+2025-02-19 21:04:40,074 - codesimulator - DEBUG - Moved mouse to (1252, 0)
+2025-02-19 21:04:46,561 - codesimulator - DEBUG - Moved mouse to (703, 17)
+2025-02-19 21:04:55,738 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-19 21:05:00,922 - codesimulator - DEBUG - Moved mouse to (363, 766)
+2025-02-19 21:05:12,211 - codesimulator - DEBUG - Moved mouse to (759, 932)
+2025-02-19 21:05:18,370 - codesimulator - DEBUG - Moved mouse to (1330, 410)
+2025-02-19 21:05:19,460 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-19 21:05:27,956 - codesimulator - DEBUG - Moved mouse to (1481, 220)
+2025-02-19 21:05:40,340 - codesimulator - DEBUG - Moved mouse to (23, 24)
+2025-02-19 21:05:49,887 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-19 21:05:54,310 - codesimulator - DEBUG - Moved mouse to (372, 871)
+2025-02-19 21:06:06,805 - codesimulator - DEBUG - Moved mouse to (988, 578)
+2025-02-19 21:06:13,348 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-19 21:06:17,312 - codesimulator - DEBUG - Moved mouse to (246, 749)
+2025-02-19 21:06:29,525 - codesimulator - DEBUG - Moved mouse to (806, 654)
+2025-02-19 21:06:35,664 - codesimulator - DEBUG - Moved mouse to (984, 165)
+2025-02-19 21:06:37,380 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-19 21:06:49,448 - codesimulator - DEBUG - Moved mouse to (23, 597)
+2025-02-19 21:07:04,061 - codesimulator - DEBUG - Moved mouse to (1119, 572)
+2025-02-19 21:07:08,661 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-19 21:07:10,392 - codesimulator - DEBUG - Moved mouse to (1045, 159)
+2025-02-19 21:07:19,671 - codesimulator - DEBUG - Moved mouse to (14, 729)
+2025-02-19 21:07:21,809 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-19 21:07:31,920 - codesimulator - DEBUG - Moved mouse to (657, 659)
+2025-02-19 21:07:41,238 - codesimulator - DEBUG - Moved mouse to (977, 978)
+2025-02-19 21:07:48,390 - codesimulator - DEBUG - Moved mouse to (971, 768)
+2025-02-19 21:07:58,438 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-19 21:08:01,129 - codesimulator - DEBUG - Moved mouse to (1431, 910)
+2025-02-19 21:08:04,495 - codesimulator - INFO - Typed line:           }}"
+2025-02-19 21:08:12,190 - codesimulator - INFO - Typed line:           git push
+2025-02-19 21:08:13,181 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:14,848 - codesimulator - DEBUG - Moved mouse to (940, 522)
+2025-02-19 21:08:14,971 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:16,431 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:17,590 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:19,272 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:20,899 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:22,188 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:23,220 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:25,047 - codesimulator - DEBUG - Moved mouse to (1403, 839)
+2025-02-19 21:08:25,172 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:26,358 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:39,520 - codesimulator - DEBUG - Moved mouse to (1054, 65)
+2025-02-19 21:08:43,738 - codesimulator - INFO - Typed line:           name: Release Windows Installer
+2025-02-19 21:08:45,197 - codesimulator - INFO - Typed line:  
+2025-02-19 21:08:46,235 - codesimulator - DEBUG - Moved mouse to (688, 38)
+2025-02-19 21:08:47,976 - codesimulator - INFO - Typed line: on:
+2025-02-19 21:08:51,878 - codesimulator - INFO - Typed line:   push:
+2025-02-19 21:08:55,570 - codesimulator - INFO - Typed line:     tags:
+2025-02-19 21:08:59,406 - codesimulator - DEBUG - Moved mouse to (1406, 13)
+2025-02-19 21:09:07,179 - codesimulator - DEBUG - Moved mouse to (272, 632)
+2025-02-19 21:09:17,935 - codesimulator - DEBUG - Moved mouse to (1261, 494)
+2025-02-19 21:09:23,028 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-19 21:09:24,117 - codesimulator - INFO - Typed line:  
+2025-02-19 21:09:26,461 - codesimulator - INFO - Typed line: jobs:
+2025-02-19 21:09:31,522 - codesimulator - DEBUG - Moved mouse to (133, 852)
+2025-02-19 21:09:31,986 - codesimulator - INFO - Typed line:   release:
+2025-02-19 21:09:43,299 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-19 21:09:45,361 - codesimulator - DEBUG - Moved mouse to (1397, 142)
+2025-02-19 21:09:48,781 - codesimulator - INFO - Typed line:     steps:
+2025-02-19 21:09:59,660 - codesimulator - DEBUG - Moved mouse to (1092, 378)
+2025-02-19 21:10:06,777 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-19 21:10:12,971 - codesimulator - DEBUG - Moved mouse to (1394, 68)
+2025-02-19 21:10:20,175 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-19 21:10:25,258 - codesimulator - DEBUG - Moved mouse to (422, 886)
+2025-02-19 21:10:35,159 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-19 21:10:36,551 - codesimulator - INFO - Typed line:  
+2025-02-19 21:10:40,200 - codesimulator - DEBUG - Moved mouse to (1210, 294)
+2025-02-19 21:10:48,743 - codesimulator - DEBUG - Moved mouse to (1094, 492)
+2025-02-19 21:10:56,295 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-19 21:11:01,229 - codesimulator - DEBUG - Moved mouse to (1397, 773)
+2025-02-19 21:11:06,375 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-19 21:11:08,974 - codesimulator - DEBUG - Moved mouse to (1443, 154)
+2025-02-19 21:11:18,389 - codesimulator - DEBUG - Moved mouse to (1439, 59)
+2025-02-19 21:11:21,155 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-19 21:11:26,416 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:11:33,846 - codesimulator - DEBUG - Moved mouse to (1167, 115)
+2025-02-19 21:11:39,535 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-19 21:11:45,098 - codesimulator - DEBUG - Moved mouse to (1043, 970)
+2025-02-19 21:11:49,559 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-19 21:11:50,911 - codesimulator - INFO - Typed line:  
+2025-02-19 21:11:55,494 - codesimulator - DEBUG - Moved mouse to (822, 362)
+2025-02-19 21:12:08,558 - codesimulator - DEBUG - Moved mouse to (4, 157)
+2025-02-19 21:12:10,676 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-19 21:12:20,916 - codesimulator - DEBUG - Moved mouse to (505, 769)
+2025-02-19 21:12:21,380 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-19 21:12:34,581 - codesimulator - DEBUG - Moved mouse to (553, 700)
+2025-02-19 21:12:34,823 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-19 21:12:40,952 - codesimulator - DEBUG - Moved mouse to (1489, 887)
+2025-02-19 21:12:41,732 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:12:55,500 - codesimulator - DEBUG - Moved mouse to (1254, 675)
+2025-02-19 21:12:56,236 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-19 21:12:57,381 - codesimulator - INFO - Typed line:  
+2025-02-19 21:13:06,934 - codesimulator - DEBUG - Moved mouse to (1078, 894)
+2025-02-19 21:13:14,815 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-19 21:13:17,597 - codesimulator - DEBUG - Moved mouse to (1001, 39)
+2025-02-19 21:13:27,161 - codesimulator - DEBUG - Moved mouse to (241, 902)
+2025-02-19 21:13:31,155 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-19 21:13:37,148 - codesimulator - DEBUG - Moved mouse to (1349, 899)
+2025-02-19 21:13:43,105 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-19 21:13:44,585 - codesimulator - INFO - Typed line:  
+2025-02-19 21:13:46,529 - codesimulator - DEBUG - Moved mouse to (1254, 807)
+2025-02-19 21:13:58,312 - codesimulator - DEBUG - Moved mouse to (700, 31)
+2025-02-19 21:14:12,606 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-19 21:14:13,857 - codesimulator - DEBUG - Moved mouse to (168, 44)
+2025-02-19 21:14:24,136 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-19 21:14:28,843 - codesimulator - DEBUG - Moved mouse to (1036, 592)
+2025-02-19 21:14:35,982 - codesimulator - DEBUG - Moved mouse to (839, 301)
+2025-02-19 21:14:36,691 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-19 21:14:37,785 - codesimulator - INFO - Typed line:  
+2025-02-19 21:14:42,440 - codesimulator - DEBUG - Moved mouse to (58, 440)
+2025-02-19 21:14:48,957 - codesimulator - DEBUG - Moved mouse to (61, 301)
+2025-02-19 21:14:56,443 - codesimulator - DEBUG - Moved mouse to (1230, 496)
+2025-02-19 21:15:02,894 - codesimulator - DEBUG - Moved mouse to (1065, 617)
+2025-02-19 21:15:04,670 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-19 21:15:13,167 - codesimulator - DEBUG - Moved mouse to (1429, 664)
+2025-02-19 21:15:17,467 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-19 21:15:28,503 - codesimulator - DEBUG - Moved mouse to (994, 357)
+2025-02-19 21:15:36,304 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-19 21:15:38,993 - codesimulator - DEBUG - Moved mouse to (1103, 887)
+2025-02-19 21:15:41,749 - codesimulator - INFO - Typed line:         env:
+2025-02-19 21:15:50,221 - codesimulator - DEBUG - Moved mouse to (877, 305)
+2025-02-19 21:16:00,145 - codesimulator - DEBUG - Moved mouse to (1265, 571)
+2025-02-19 21:16:08,394 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-19 21:16:11,895 - codesimulator - DEBUG - Moved mouse to (894, 980)
+2025-02-19 21:16:25,408 - codesimulator - DEBUG - Moved mouse to (1235, 95)
+2025-02-19 21:16:33,046 - codesimulator - DEBUG - Moved mouse to (1457, 643)
+2025-02-19 21:16:40,206 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-19 21:16:45,902 - codesimulator - INFO - Typed line:           here)
+2025-02-19 21:16:47,264 - codesimulator - DEBUG - Moved mouse to (1168, 709)
+2025-02-19 21:16:47,390 - codesimulator - INFO - Typed line:  
+2025-02-19 21:16:57,749 - codesimulator - DEBUG - Moved mouse to (852, 18)
+2025-02-19 21:17:07,134 - codesimulator - DEBUG - Moved mouse to (1188, 212)
+2025-02-19 21:17:10,786 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-19 21:17:19,716 - codesimulator - DEBUG - Moved mouse to (520, 830)
+2025-02-19 21:17:25,498 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-19 21:17:30,462 - codesimulator - DEBUG - Moved mouse to (1392, 323)
+2025-02-19 21:17:37,150 - codesimulator - DEBUG - Moved mouse to (1398, 539)
+2025-02-19 21:17:44,338 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-19 21:17:46,146 - codesimulator - DEBUG - Moved mouse to (1382, 721)
+2025-02-19 21:17:51,072 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:17:59,377 - codesimulator - DEBUG - Moved mouse to (964, 96)
+2025-02-19 21:18:06,513 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-19 21:18:14,823 - codesimulator - DEBUG - Moved mouse to (1326, 692)
+2025-02-19 21:18:27,302 - codesimulator - DEBUG - Moved mouse to (224, 646)
+2025-02-19 21:18:38,257 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-19 21:18:39,291 - codesimulator - INFO - Typed line:  
+2025-02-19 21:18:40,758 - codesimulator - DEBUG - Moved mouse to (1277, 696)
+2025-02-19 21:18:53,439 - codesimulator - DEBUG - Moved mouse to (227, 670)
+2025-02-19 21:18:56,522 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-19 21:18:59,977 - codesimulator - DEBUG - Moved mouse to (1030, 65)
+2025-02-19 21:19:08,911 - codesimulator - DEBUG - Moved mouse to (1039, 536)
+2025-02-19 21:19:11,764 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-19 21:19:22,100 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-19 21:19:22,856 - codesimulator - DEBUG - Moved mouse to (1153, 306)
+2025-02-19 21:19:32,787 - codesimulator - DEBUG - Moved mouse to (806, 118)
+2025-02-19 21:19:38,390 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-19 21:19:42,675 - codesimulator - DEBUG - Moved mouse to (693, 771)
+2025-02-19 21:19:44,152 - codesimulator - INFO - Typed line:         env:
+2025-02-19 21:19:56,649 - codesimulator - DEBUG - Moved mouse to (1413, 753)
+2025-02-19 21:20:06,462 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 21:20:10,163 - codesimulator - DEBUG - Moved mouse to (1049, 587)
+2025-02-19 21:20:14,006 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:20:20,081 - codesimulator - DEBUG - Moved mouse to (1078, 45)
+2025-02-19 21:20:26,844 - codesimulator - DEBUG - Moved mouse to (443, 648)
+2025-02-19 21:20:29,356 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-19 21:20:35,417 - codesimulator - DEBUG - Moved mouse to (973, 132)
+2025-02-19 21:20:42,501 - codesimulator - DEBUG - Moved mouse to (1311, 809)
+2025-02-19 21:20:48,868 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-19 21:20:58,549 - codesimulator - DEBUG - Moved mouse to (1282, 21)
+2025-02-19 21:20:59,612 - codesimulator - INFO - Typed line:           draft: false
+2025-02-19 21:21:07,459 - codesimulator - DEBUG - Moved mouse to (676, 12)
+2025-02-19 21:21:10,732 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-19 21:21:11,699 - codesimulator - INFO - Typed line:  
+2025-02-19 21:21:18,726 - codesimulator - DEBUG - Moved mouse to (1070, 268)
+2025-02-19 21:21:27,786 - codesimulator - DEBUG - Moved mouse to (191, 868)
+2025-02-19 21:21:35,874 - codesimulator - DEBUG - Moved mouse to (1294, 599)
+2025-02-19 21:21:36,584 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-19 21:21:49,833 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-19 21:21:51,684 - codesimulator - DEBUG - Moved mouse to (920, 866)
+2025-02-19 21:22:01,451 - codesimulator - DEBUG - Moved mouse to (1039, 231)
+2025-02-19 21:22:07,278 - codesimulator - DEBUG - Moved mouse to (1449, 483)
+2025-02-19 21:22:09,654 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-19 21:22:14,503 - codesimulator - INFO - Typed line:         env:
+2025-02-19 21:22:18,084 - codesimulator - DEBUG - Moved mouse to (791, 698)
+2025-02-19 21:22:26,719 - codesimulator - DEBUG - Moved mouse to (1363, 89)
+2025-02-19 21:22:36,568 - codesimulator - DEBUG - Moved mouse to (716, 975)
+2025-02-19 21:22:39,139 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 21:22:43,561 - codesimulator - DEBUG - Moved mouse to (377, 9)
+2025-02-19 21:22:45,279 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:23:00,154 - codesimulator - DEBUG - Moved mouse to (1461, 961)
+2025-02-19 21:23:13,659 - codesimulator - DEBUG - Moved mouse to (1315, 339)
+2025-02-19 21:23:15,900 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-19 21:23:25,153 - codesimulator - DEBUG - Moved mouse to (1004, 386)
+2025-02-19 21:23:31,231 - codesimulator - DEBUG - Moved mouse to (1335, 45)
+2025-02-19 21:23:45,809 - codesimulator - DEBUG - Moved mouse to (350, 957)
+2025-02-19 21:23:52,427 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-19 21:23:59,083 - codesimulator - DEBUG - Moved mouse to (920, 200)
+2025-02-19 21:24:06,873 - codesimulator - DEBUG - Moved mouse to (1382, 522)
+2025-02-19 21:24:09,272 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-19 21:24:17,012 - codesimulator - DEBUG - Moved mouse to (1165, 323)
+2025-02-19 21:24:24,363 - codesimulator - DEBUG - Moved mouse to (598, 887)
+2025-02-19 21:24:33,264 - codesimulator - DEBUG - Moved mouse to (1392, 842)
+2025-02-19 21:24:33,972 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-19 21:24:35,162 - codesimulator - INFO - Typed line:  
+2025-02-19 21:24:39,757 - codesimulator - DEBUG - Moved mouse to (1201, 772)
+2025-02-19 21:24:52,898 - codesimulator - DEBUG - Moved mouse to (1334, 870)
+2025-02-19 21:24:57,258 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-19 21:25:00,017 - codesimulator - DEBUG - Moved mouse to (1274, 567)
+2025-02-19 21:25:06,761 - codesimulator - DEBUG - Moved mouse to (1418, 34)
+2025-02-19 21:25:10,851 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-19 21:25:15,160 - codesimulator - DEBUG - Moved mouse to (1190, 181)
+2025-02-19 21:25:18,399 - codesimulator - INFO - Typed line:         run: |
+2025-02-19 21:25:23,958 - codesimulator - DEBUG - Moved mouse to (1300, 32)
+2025-02-19 21:25:38,209 - codesimulator - DEBUG - Moved mouse to (1004, 972)
+2025-02-19 21:25:54,227 - codesimulator - DEBUG - Moved mouse to (623, 10)
+2025-02-19 21:25:55,467 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-19 21:26:01,802 - codesimulator - DEBUG - Moved mouse to (757, 656)
+2025-02-19 21:26:09,148 - codesimulator - DEBUG - Moved mouse to (1458, 881)
+2025-02-19 21:26:17,473 - codesimulator - DEBUG - Moved mouse to (217, 677)
+2025-02-19 21:26:25,174 - codesimulator - DEBUG - Moved mouse to (271, 861)
+2025-02-19 21:26:30,982 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-19 21:26:36,958 - codesimulator - DEBUG - Moved mouse to (1410, 179)
+2025-02-19 21:26:44,532 - codesimulator - DEBUG - Moved mouse to (1358, 288)
+2025-02-19 21:26:50,797 - codesimulator - DEBUG - Moved mouse to (908, 24)
+2025-02-19 21:27:01,165 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-19 21:27:06,331 - codesimulator - DEBUG - Moved mouse to (1250, 573)
+2025-02-19 21:27:18,192 - codesimulator - DEBUG - Moved mouse to (1317, 321)
+2025-02-19 21:27:34,069 - codesimulator - DEBUG - Moved mouse to (774, 607)
+2025-02-19 21:27:34,479 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-19 21:27:47,220 - codesimulator - DEBUG - Moved mouse to (1314, 500)
+2025-02-19 21:27:55,190 - codesimulator - DEBUG - Moved mouse to (812, 961)
+2025-02-19 21:27:57,671 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-19 21:28:02,954 - codesimulator - DEBUG - Moved mouse to (951, 492)
+2025-02-19 21:28:09,545 - codesimulator - DEBUG - Moved mouse to (793, 936)
+2025-02-19 21:28:19,535 - codesimulator - DEBUG - Moved mouse to (1034, 411)
+2025-02-19 21:28:34,526 - codesimulator - DEBUG - Moved mouse to (931, 640)
+2025-02-19 21:28:37,780 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-19 21:28:42,453 - codesimulator - DEBUG - Moved mouse to (1103, 758)
+2025-02-19 21:28:50,219 - codesimulator - DEBUG - Moved mouse to (1168, 557)
+2025-02-19 21:28:57,140 - codesimulator - DEBUG - Moved mouse to (1470, 922)
+2025-02-19 21:29:01,713 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-19 21:29:11,670 - codesimulator - DEBUG - Moved mouse to (961, 225)
+2025-02-19 21:29:23,513 - codesimulator - DEBUG - Moved mouse to (629, 956)
+2025-02-19 21:29:31,958 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-19 21:29:37,462 - codesimulator - DEBUG - Moved mouse to (95, 483)
+2025-02-19 21:29:48,680 - codesimulator - DEBUG - Moved mouse to (1110, 285)
+2025-02-19 21:29:52,865 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-19 21:29:59,663 - codesimulator - DEBUG - Moved mouse to (1106, 324)
+2025-02-19 21:30:06,826 - codesimulator - DEBUG - Moved mouse to (393, 869)
+2025-02-19 21:30:15,038 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-19 21:30:21,203 - codesimulator - DEBUG - Moved mouse to (248, 796)
+2025-02-19 21:30:27,817 - codesimulator - DEBUG - Moved mouse to (841, 727)
+2025-02-19 21:30:38,975 - codesimulator - DEBUG - Moved mouse to (196, 3)
+2025-02-19 21:30:45,329 - codesimulator - DEBUG - Moved mouse to (561, 697)
+2025-02-19 21:30:49,485 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-19 21:30:56,593 - codesimulator - DEBUG - Moved mouse to (1053, 129)
+2025-02-19 21:31:01,391 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-19 21:31:08,456 - codesimulator - DEBUG - Moved mouse to (37, 221)
+2025-02-19 21:31:23,764 - codesimulator - DEBUG - Moved mouse to (719, 863)
+2025-02-19 21:31:31,310 - codesimulator - DEBUG - Moved mouse to (340, 59)
+2025-02-19 21:31:40,681 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-19 21:31:47,509 - codesimulator - DEBUG - Moved mouse to (680, 931)
+2025-02-19 21:31:47,635 - codesimulator - INFO - Typed line:           }}"
+2025-02-19 21:31:56,453 - codesimulator - INFO - Typed line:           git push
+2025-02-19 21:31:57,800 - codesimulator - INFO - Typed line:  
+2025-02-19 21:31:58,974 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:01,150 - codesimulator - DEBUG - Moved mouse to (1482, 14)
+2025-02-19 21:32:01,563 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:02,934 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:04,351 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:05,340 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:06,488 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:07,680 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:08,860 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:10,782 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:11,865 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:12,609 - codesimulator - DEBUG - Moved mouse to (1185, 379)
+2025-02-19 21:32:21,347 - codesimulator - DEBUG - Moved mouse to (55, 238)
+2025-02-19 21:32:29,392 - codesimulator - DEBUG - Moved mouse to (957, 433)
+2025-02-19 21:32:31,806 - codesimulator - INFO - Typed line:           name: Release Windows Installer
+2025-02-19 21:32:33,239 - codesimulator - INFO - Typed line:  
+2025-02-19 21:32:35,249 - codesimulator - INFO - Typed line: on:
+2025-02-19 21:32:39,048 - codesimulator - INFO - Typed line:   push:
+2025-02-19 21:32:41,406 - codesimulator - DEBUG - Moved mouse to (1285, 714)
+2025-02-19 21:32:43,739 - codesimulator - INFO - Typed line:     tags:
+2025-02-19 21:32:55,121 - codesimulator - DEBUG - Moved mouse to (941, 230)
+2025-02-19 21:33:05,886 - codesimulator - DEBUG - Moved mouse to (759, 629)
+2025-02-19 21:33:09,168 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-19 21:33:10,480 - codesimulator - INFO - Typed line:  
+2025-02-19 21:33:13,745 - codesimulator - INFO - Typed line: jobs:
+2025-02-19 21:33:14,952 - codesimulator - DEBUG - Moved mouse to (1407, 363)
+2025-02-19 21:33:18,954 - codesimulator - INFO - Typed line:   release:
+2025-02-19 21:33:22,851 - codesimulator - DEBUG - Moved mouse to (1093, 978)
+2025-02-19 21:33:31,931 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-19 21:33:36,130 - codesimulator - INFO - Typed line:     steps:
+2025-02-19 21:33:37,256 - codesimulator - DEBUG - Moved mouse to (1115, 494)
+2025-02-19 21:33:48,388 - codesimulator - DEBUG - Moved mouse to (322, 82)
+2025-02-19 21:33:52,072 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-19 21:33:55,970 - codesimulator - DEBUG - Moved mouse to (912, 786)
+2025-02-19 21:34:03,810 - codesimulator - DEBUG - Moved mouse to (292, 952)
+2025-02-19 21:34:07,275 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-19 21:34:15,986 - codesimulator - DEBUG - Moved mouse to (38, 970)
+2025-02-19 21:34:21,564 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-19 21:34:22,948 - codesimulator - INFO - Typed line:  
+2025-02-19 21:34:32,061 - codesimulator - DEBUG - Moved mouse to (1240, 317)
+2025-02-19 21:34:41,515 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-19 21:34:46,501 - codesimulator - DEBUG - Moved mouse to (664, 629)
+2025-02-19 21:34:52,218 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-19 21:35:02,269 - codesimulator - DEBUG - Moved mouse to (940, 48)
+2025-02-19 21:35:08,140 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-19 21:35:14,743 - codesimulator - DEBUG - Moved mouse to (753, 949)
+2025-02-19 21:35:15,792 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:35:23,865 - codesimulator - DEBUG - Moved mouse to (1479, 356)
+2025-02-19 21:35:29,099 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-19 21:35:36,202 - codesimulator - DEBUG - Moved mouse to (869, 650)
+2025-02-19 21:35:40,299 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-19 21:35:41,460 - codesimulator - INFO - Typed line:  
+2025-02-19 21:35:51,110 - codesimulator - DEBUG - Moved mouse to (969, 773)
+2025-02-19 21:36:01,776 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-19 21:36:03,880 - codesimulator - DEBUG - Moved mouse to (84, 842)
+2025-02-19 21:36:13,259 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-19 21:36:17,643 - codesimulator - DEBUG - Moved mouse to (81, 539)
+2025-02-19 21:36:28,928 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-19 21:36:32,897 - codesimulator - DEBUG - Moved mouse to (438, 609)
+2025-02-19 21:36:35,589 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:36:41,935 - codesimulator - DEBUG - Moved mouse to (1304, 195)
+2025-02-19 21:36:48,586 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-19 21:36:49,874 - codesimulator - INFO - Typed line:  
+2025-02-19 21:36:51,805 - codesimulator - DEBUG - Moved mouse to (84, 875)
+2025-02-19 21:37:01,035 - codesimulator - DEBUG - Moved mouse to (194, 980)
+2025-02-19 21:37:06,941 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-19 21:37:08,616 - codesimulator - DEBUG - Moved mouse to (4, 871)
+2025-02-19 21:37:21,613 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-19 21:37:22,796 - codesimulator - DEBUG - Moved mouse to (800, 682)
+2025-02-19 21:37:31,934 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-19 21:37:33,150 - codesimulator - INFO - Typed line:  
+2025-02-19 21:37:35,755 - codesimulator - DEBUG - Moved mouse to (1349, 853)
+2025-02-19 21:37:44,336 - codesimulator - DEBUG - Moved mouse to (1382, 477)
+2025-02-19 21:37:51,026 - codesimulator - DEBUG - Moved mouse to (1265, 728)
+2025-02-19 21:37:59,234 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-19 21:38:00,344 - codesimulator - DEBUG - Moved mouse to (854, 201)
+2025-02-19 21:38:13,691 - codesimulator - DEBUG - Moved mouse to (7, 113)
+2025-02-19 21:38:13,816 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-19 21:38:21,208 - codesimulator - DEBUG - Moved mouse to (1343, 779)
+2025-02-19 21:38:26,431 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-19 21:38:27,544 - codesimulator - INFO - Typed line:  
+2025-02-19 21:38:33,488 - codesimulator - DEBUG - Moved mouse to (70, 64)
+2025-02-19 21:38:44,934 - codesimulator - DEBUG - Moved mouse to (390, 949)
+2025-02-19 21:38:54,437 - codesimulator - DEBUG - Moved mouse to (1051, 27)
+2025-02-19 21:38:59,842 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-19 21:39:05,770 - codesimulator - DEBUG - Moved mouse to (976, 724)
+2025-02-19 21:39:11,979 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-19 21:39:19,806 - codesimulator - DEBUG - Moved mouse to (309, 610)
+2025-02-19 21:39:28,508 - codesimulator - DEBUG - Moved mouse to (1509, 174)
+2025-02-19 21:39:34,780 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-19 21:39:40,274 - codesimulator - DEBUG - Moved mouse to (250, 858)
+2025-02-19 21:39:41,723 - codesimulator - INFO - Typed line:         env:
+2025-02-19 21:39:51,709 - codesimulator - DEBUG - Moved mouse to (1129, 32)
+2025-02-19 21:39:58,397 - codesimulator - DEBUG - Moved mouse to (29, 397)
+2025-02-19 21:40:10,301 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-19 21:40:14,313 - codesimulator - DEBUG - Moved mouse to (802, 844)
+2025-02-19 21:40:22,630 - codesimulator - DEBUG - Moved mouse to (1486, 265)
+2025-02-19 21:40:36,267 - codesimulator - DEBUG - Moved mouse to (74, 365)
+2025-02-19 21:40:44,456 - codesimulator - DEBUG - Moved mouse to (1054, 976)
+2025-02-19 21:40:49,143 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-19 21:40:51,353 - codesimulator - DEBUG - Moved mouse to (1022, 501)
+2025-02-19 21:40:55,970 - codesimulator - INFO - Typed line:           here)
+2025-02-19 21:40:57,367 - codesimulator - INFO - Typed line:  
+2025-02-19 21:41:02,845 - codesimulator - DEBUG - Moved mouse to (890, 431)
+2025-02-19 21:41:13,200 - codesimulator - DEBUG - Moved mouse to (990, 658)
+2025-02-19 21:41:17,713 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-19 21:41:23,186 - codesimulator - DEBUG - Moved mouse to (1231, 876)
+2025-02-19 21:41:30,568 - codesimulator - DEBUG - Moved mouse to (869, 277)
+2025-02-19 21:41:35,141 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-19 21:41:41,866 - codesimulator - DEBUG - Moved mouse to (886, 835)
+2025-02-19 21:41:52,175 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-19 21:41:55,522 - codesimulator - DEBUG - Moved mouse to (933, 205)
+2025-02-19 21:41:58,926 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:42:10,578 - codesimulator - DEBUG - Moved mouse to (917, 32)
+2025-02-19 21:42:11,430 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-19 21:42:16,711 - codesimulator - DEBUG - Moved mouse to (876, 440)
+2025-02-19 21:42:23,513 - codesimulator - DEBUG - Moved mouse to (995, 357)
+2025-02-19 21:42:33,418 - codesimulator - DEBUG - Moved mouse to (872, 972)
+2025-02-19 21:42:40,542 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-19 21:42:41,806 - codesimulator - INFO - Typed line:  
+2025-02-19 21:42:45,890 - codesimulator - DEBUG - Moved mouse to (46, 704)
+2025-02-19 21:42:54,575 - codesimulator - DEBUG - Moved mouse to (816, 624)
+2025-02-19 21:43:01,928 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-19 21:43:05,077 - codesimulator - DEBUG - Moved mouse to (1409, 448)
+2025-02-19 21:43:16,117 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-19 21:43:20,679 - codesimulator - DEBUG - Moved mouse to (13, 533)
+2025-02-19 21:43:29,810 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-19 21:43:34,599 - codesimulator - DEBUG - Moved mouse to (1388, 88)
+2025-02-19 21:43:49,803 - codesimulator - DEBUG - Moved mouse to (1399, 833)
+2025-02-19 21:43:50,281 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-19 21:43:55,216 - codesimulator - INFO - Typed line:         env:
+2025-02-19 21:44:02,735 - codesimulator - DEBUG - Moved mouse to (1449, 550)
+2025-02-19 21:44:12,686 - codesimulator - DEBUG - Moved mouse to (1401, 159)
+2025-02-19 21:44:17,472 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 21:44:21,457 - codesimulator - DEBUG - Moved mouse to (974, 556)
+2025-02-19 21:44:24,161 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:44:33,547 - codesimulator - DEBUG - Moved mouse to (1452, 343)
+2025-02-19 21:44:39,625 - codesimulator - DEBUG - Moved mouse to (914, 735)
+2025-02-19 21:44:40,052 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-19 21:44:46,440 - codesimulator - DEBUG - Moved mouse to (147, 764)
+2025-02-19 21:44:53,710 - codesimulator - DEBUG - Moved mouse to (1466, 894)
+2025-02-19 21:45:01,680 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-19 21:45:03,515 - codesimulator - DEBUG - Moved mouse to (1491, 778)
+2025-02-19 21:45:10,300 - codesimulator - INFO - Typed line:           draft: false
+2025-02-19 21:45:17,131 - codesimulator - DEBUG - Moved mouse to (65, 208)
+2025-02-19 21:45:22,040 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-19 21:45:23,251 - codesimulator - INFO - Typed line:  
+2025-02-19 21:45:33,039 - codesimulator - DEBUG - Moved mouse to (458, 742)
+2025-02-19 21:45:40,258 - codesimulator - DEBUG - Moved mouse to (1468, 183)
+2025-02-19 21:45:45,825 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-19 21:45:53,108 - codesimulator - DEBUG - Moved mouse to (815, 829)
+2025-02-19 21:46:01,625 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-19 21:46:02,693 - codesimulator - DEBUG - Moved mouse to (195, 655)
+2025-02-19 21:46:15,651 - codesimulator - DEBUG - Moved mouse to (1262, 757)
+2025-02-19 21:46:21,724 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-19 21:46:24,880 - codesimulator - DEBUG - Moved mouse to (1083, 570)
+2025-02-19 21:46:26,700 - codesimulator - INFO - Typed line:         env:
+2025-02-19 21:46:31,975 - codesimulator - DEBUG - Moved mouse to (1487, 482)
+2025-02-19 21:46:44,316 - codesimulator - DEBUG - Moved mouse to (413, 854)
+2025-02-19 21:46:48,138 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 21:46:54,616 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:47:00,672 - codesimulator - DEBUG - Moved mouse to (1233, 221)
+2025-02-19 21:47:14,151 - codesimulator - DEBUG - Moved mouse to (1082, 37)
+2025-02-19 21:47:20,738 - codesimulator - DEBUG - Moved mouse to (615, 806)
+2025-02-19 21:47:23,322 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-19 21:47:27,761 - codesimulator - DEBUG - Moved mouse to (1414, 780)
+2025-02-19 21:47:41,363 - codesimulator - DEBUG - Moved mouse to (924, 813)
+2025-02-19 21:47:50,563 - codesimulator - DEBUG - Moved mouse to (314, 925)
+2025-02-19 21:47:59,471 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-19 21:48:03,300 - codesimulator - DEBUG - Moved mouse to (419, 712)
+2025-02-19 21:48:14,084 - codesimulator - DEBUG - Moved mouse to (1500, 153)
+2025-02-19 21:48:17,291 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-19 21:48:25,899 - codesimulator - DEBUG - Moved mouse to (7, 252)
+2025-02-19 21:48:40,014 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-19 21:48:42,211 - codesimulator - DEBUG - Moved mouse to (906, 678)
+2025-02-19 21:48:42,336 - codesimulator - INFO - Typed line:  
+2025-02-19 21:48:57,353 - codesimulator - DEBUG - Moved mouse to (1324, 477)
+2025-02-19 21:49:06,642 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-19 21:49:12,351 - codesimulator - DEBUG - Moved mouse to (1412, 889)
+2025-02-19 21:49:19,691 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-19 21:49:23,726 - codesimulator - DEBUG - Moved mouse to (627, 734)
+2025-02-19 21:49:26,860 - codesimulator - INFO - Typed line:         run: |
+2025-02-19 21:49:36,192 - codesimulator - DEBUG - Moved mouse to (554, 688)
+2025-02-19 21:49:49,486 - codesimulator - DEBUG - Moved mouse to (629, 978)
+2025-02-19 21:50:01,152 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-19 21:50:03,992 - codesimulator - DEBUG - Moved mouse to (623, 714)
+2025-02-19 21:50:11,325 - codesimulator - DEBUG - Moved mouse to (279, 49)
+2025-02-19 21:50:17,905 - codesimulator - DEBUG - Moved mouse to (1121, 808)
+2025-02-19 21:50:25,614 - codesimulator - DEBUG - Moved mouse to (1231, 613)
+2025-02-19 21:50:34,732 - codesimulator - DEBUG - Moved mouse to (1082, 832)
+2025-02-19 21:50:35,520 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-19 21:50:48,684 - codesimulator - DEBUG - Moved mouse to (875, 228)
+2025-02-19 21:51:02,093 - codesimulator - DEBUG - Moved mouse to (901, 908)
+2025-02-19 21:51:04,225 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-19 21:51:18,260 - codesimulator - DEBUG - Moved mouse to (150, 43)
+2025-02-19 21:51:32,127 - codesimulator - DEBUG - Moved mouse to (930, 760)
+2025-02-19 21:51:37,818 - codesimulator - DEBUG - Moved mouse to (835, 690)
+2025-02-19 21:51:38,267 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-19 21:51:43,801 - codesimulator - DEBUG - Moved mouse to (851, 589)
+2025-02-19 21:51:51,701 - codesimulator - DEBUG - Moved mouse to (824, 894)
+2025-02-19 21:52:00,974 - codesimulator - DEBUG - Moved mouse to (1162, 907)
+2025-02-19 21:52:01,102 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-19 21:52:12,205 - codesimulator - DEBUG - Moved mouse to (1170, 642)
+2025-02-19 21:52:23,786 - codesimulator - DEBUG - Moved mouse to (465, 708)
+2025-02-19 21:52:29,771 - codesimulator - DEBUG - Moved mouse to (671, 768)
+2025-02-19 21:52:37,038 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-19 21:52:43,101 - codesimulator - DEBUG - Moved mouse to (1209, 86)
+2025-02-19 21:52:54,066 - codesimulator - DEBUG - Moved mouse to (1176, 291)
+2025-02-19 21:53:00,836 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-19 21:53:03,653 - codesimulator - DEBUG - Moved mouse to (279, 969)
+2025-02-19 21:53:12,646 - codesimulator - DEBUG - Moved mouse to (704, 900)
+2025-02-19 21:53:22,770 - codesimulator - DEBUG - Moved mouse to (879, 901)
+2025-02-19 21:53:31,079 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-19 21:53:33,369 - codesimulator - DEBUG - Moved mouse to (1353, 407)
+2025-02-19 21:53:49,150 - codesimulator - DEBUG - Moved mouse to (98, 304)
+2025-02-19 21:53:52,113 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-19 21:54:02,085 - codesimulator - DEBUG - Moved mouse to (696, 797)
+2025-02-19 21:54:12,895 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-19 21:54:16,181 - codesimulator - DEBUG - Moved mouse to (316, 955)
+2025-02-19 21:54:31,702 - codesimulator - DEBUG - Moved mouse to (1015, 806)
+2025-02-19 21:54:43,036 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-19 21:54:43,911 - codesimulator - DEBUG - Moved mouse to (466, 695)
+2025-02-19 21:54:54,192 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-19 21:54:59,647 - codesimulator - DEBUG - Moved mouse to (1446, 63)
+2025-02-19 21:55:11,047 - codesimulator - DEBUG - Moved mouse to (1335, 772)
+2025-02-19 21:55:22,557 - codesimulator - DEBUG - Moved mouse to (1252, 423)
+2025-02-19 21:55:29,566 - codesimulator - DEBUG - Moved mouse to (0, 441)
+2025-02-19 21:55:34,473 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-19 21:55:38,298 - codesimulator - DEBUG - Moved mouse to (130, 824)
+2025-02-19 21:55:40,381 - codesimulator - INFO - Typed line:           }}"
+2025-02-19 21:55:48,388 - codesimulator - INFO - Typed line:           git push
+2025-02-19 21:55:49,309 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:50,562 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:51,698 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:54,099 - codesimulator - DEBUG - Moved mouse to (1252, 803)
+2025-02-19 21:55:54,515 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:55,720 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:57,031 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:58,295 - codesimulator - INFO - Typed line:  
+2025-02-19 21:55:59,503 - codesimulator - INFO - Typed line:  
+2025-02-19 21:56:00,595 - codesimulator - INFO - Typed line:  
+2025-02-19 21:56:01,781 - codesimulator - INFO - Typed line:  
+2025-02-19 21:56:03,127 - codesimulator - INFO - Typed line:  
+2025-02-19 21:56:04,487 - codesimulator - INFO - Typed line:  
+2025-02-19 21:56:09,609 - codesimulator - DEBUG - Moved mouse to (1040, 71)
+2025-02-19 21:56:18,691 - codesimulator - DEBUG - Moved mouse to (1117, 782)
+2025-02-19 21:56:21,205 - codesimulator - INFO - Typed line:           name: Release Windows Installer
+2025-02-19 21:56:22,265 - codesimulator - INFO - Typed line:  
+2025-02-19 21:56:24,223 - codesimulator - INFO - Typed line: on:
+2025-02-19 21:56:27,737 - codesimulator - INFO - Typed line:   push:
+2025-02-19 21:56:30,936 - codesimulator - DEBUG - Moved mouse to (1379, 57)
+2025-02-19 21:56:32,758 - codesimulator - INFO - Typed line:     tags:
+2025-02-19 21:56:46,519 - codesimulator - DEBUG - Moved mouse to (348, 811)
+2025-02-19 21:56:57,666 - codesimulator - DEBUG - Moved mouse to (32, 894)
+2025-02-19 21:56:58,456 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-19 21:56:59,581 - codesimulator - INFO - Typed line:  
+2025-02-19 21:57:02,330 - codesimulator - INFO - Typed line: jobs:
+2025-02-19 21:57:06,765 - codesimulator - INFO - Typed line:   release:
+2025-02-19 21:57:11,522 - codesimulator - DEBUG - Moved mouse to (365, 958)
+2025-02-19 21:57:19,182 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-19 21:57:20,698 - codesimulator - DEBUG - Moved mouse to (54, 854)
+2025-02-19 21:57:24,244 - codesimulator - INFO - Typed line:     steps:
+2025-02-19 21:57:36,919 - codesimulator - DEBUG - Moved mouse to (1309, 90)
+2025-02-19 21:57:40,060 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-19 21:57:46,591 - codesimulator - DEBUG - Moved mouse to (888, 565)
+2025-02-19 21:57:53,791 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-19 21:57:59,570 - codesimulator - DEBUG - Moved mouse to (895, 409)
+2025-02-19 21:58:08,686 - codesimulator - DEBUG - Moved mouse to (216, 745)
+2025-02-19 21:58:09,781 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-19 21:58:11,141 - codesimulator - INFO - Typed line:  
+2025-02-19 21:58:18,186 - codesimulator - DEBUG - Moved mouse to (485, 759)
+2025-02-19 21:58:24,876 - codesimulator - DEBUG - Moved mouse to (226, 973)
+2025-02-19 21:58:28,840 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-19 21:58:31,195 - codesimulator - DEBUG - Moved mouse to (508, 732)
+2025-02-19 21:58:39,597 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-19 21:58:45,867 - codesimulator - DEBUG - Moved mouse to (61, 547)
+2025-02-19 21:58:55,487 - codesimulator - DEBUG - Moved mouse to (894, 555)
+2025-02-19 21:58:56,575 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-19 21:59:03,095 - codesimulator - INFO - Typed line:         with:
+2025-02-19 21:59:10,695 - codesimulator - DEBUG - Moved mouse to (388, 50)
+2025-02-19 21:59:16,037 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-19 21:59:19,392 - codesimulator - DEBUG - Moved mouse to (1286, 146)
+2025-02-19 21:59:25,807 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-19 21:59:27,062 - codesimulator - INFO - Typed line:  
+2025-02-19 21:59:30,294 - codesimulator - DEBUG - Moved mouse to (878, 264)
+2025-02-19 21:59:39,229 - codesimulator - DEBUG - Moved mouse to (535, 35)
+2025-02-19 21:59:49,673 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-19 21:59:51,219 - codesimulator - DEBUG - Moved mouse to (233, 744)
+2025-02-19 22:00:00,385 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-19 22:00:06,204 - codesimulator - DEBUG - Moved mouse to (1120, 659)
+2025-02-19 22:00:14,662 - codesimulator - DEBUG - Moved mouse to (1287, 25)
+2025-02-19 22:00:19,504 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-19 22:00:25,424 - codesimulator - DEBUG - Moved mouse to (1156, 126)
+2025-02-19 22:00:25,863 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:00:36,049 - codesimulator - DEBUG - Moved mouse to (254, 83)
+2025-02-19 22:00:41,742 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-19 22:00:43,151 - codesimulator - INFO - Typed line:  
+2025-02-19 22:00:50,083 - codesimulator - DEBUG - Moved mouse to (351, 651)
+2025-02-19 22:01:00,382 - codesimulator - DEBUG - Moved mouse to (910, 330)
+2025-02-19 22:01:02,130 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-19 22:01:08,329 - codesimulator - DEBUG - Moved mouse to (863, 855)
+2025-02-19 22:01:16,591 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-19 22:01:22,831 - codesimulator - DEBUG - Moved mouse to (1404, 482)
+2025-02-19 22:01:29,174 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-19 22:01:30,384 - codesimulator - INFO - Typed line:  
+2025-02-19 22:01:32,116 - codesimulator - DEBUG - Moved mouse to (1465, 245)
+2025-02-19 22:01:42,921 - codesimulator - DEBUG - Moved mouse to (73, 217)
+2025-02-19 22:01:51,339 - codesimulator - DEBUG - Moved mouse to (964, 890)
+2025-02-19 22:01:59,758 - codesimulator - DEBUG - Moved mouse to (1428, 607)
+2025-02-19 22:02:01,444 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-19 22:02:08,024 - codesimulator - DEBUG - Moved mouse to (1228, 839)
+2025-02-19 22:02:11,428 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-19 22:02:21,987 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-19 22:02:23,016 - codesimulator - INFO - Typed line:  
+2025-02-19 22:02:24,613 - codesimulator - DEBUG - Moved mouse to (72, 940)
+2025-02-19 22:02:37,569 - codesimulator - DEBUG - Moved mouse to (87, 617)
+2025-02-19 22:02:52,696 - codesimulator - DEBUG - Moved mouse to (40, 282)
+2025-02-19 22:02:53,137 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-19 22:02:59,809 - codesimulator - DEBUG - Moved mouse to (1469, 517)
+2025-02-19 22:03:06,787 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-19 22:03:10,813 - codesimulator - DEBUG - Moved mouse to (15, 492)
+2025-02-19 22:03:20,416 - codesimulator - DEBUG - Moved mouse to (981, 1)
+2025-02-19 22:03:29,495 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-19 22:03:34,243 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:03:35,569 - codesimulator - DEBUG - Moved mouse to (1415, 594)
+2025-02-19 22:03:51,647 - codesimulator - DEBUG - Moved mouse to (216, 676)
+2025-02-19 22:03:58,901 - codesimulator - DEBUG - Moved mouse to (262, 882)
+2025-02-19 22:04:04,666 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-19 22:04:12,255 - codesimulator - DEBUG - Moved mouse to (859, 889)
+2025-02-19 22:04:19,709 - codesimulator - DEBUG - Moved mouse to (528, 743)
+2025-02-19 22:04:31,704 - codesimulator - DEBUG - Moved mouse to (816, 246)
+2025-02-19 22:04:39,190 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-19 22:04:44,344 - codesimulator - INFO - Typed line:           here)
+2025-02-19 22:04:46,882 - codesimulator - DEBUG - Moved mouse to (260, 671)
+2025-02-19 22:04:47,007 - codesimulator - INFO - Typed line:  
+2025-02-19 22:04:59,509 - codesimulator - DEBUG - Moved mouse to (413, 792)
+2025-02-19 22:05:05,651 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-19 22:05:12,631 - codesimulator - DEBUG - Moved mouse to (276, 741)
+2025-02-19 22:05:20,370 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-19 22:05:23,427 - codesimulator - DEBUG - Moved mouse to (1191, 178)
+2025-02-19 22:05:30,645 - codesimulator - DEBUG - Moved mouse to (599, 702)
+2025-02-19 22:05:39,421 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-19 22:05:42,974 - codesimulator - DEBUG - Moved mouse to (244, 643)
+2025-02-19 22:05:45,364 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:05:55,480 - codesimulator - DEBUG - Moved mouse to (1408, 397)
+2025-02-19 22:06:02,789 - codesimulator - DEBUG - Moved mouse to (607, 645)
+2025-02-19 22:06:04,149 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-19 22:06:14,946 - codesimulator - DEBUG - Moved mouse to (1138, 482)
+2025-02-19 22:06:30,238 - codesimulator - DEBUG - Moved mouse to (1336, 642)
+2025-02-19 22:06:36,159 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-19 22:06:37,249 - codesimulator - INFO - Typed line:  
+2025-02-19 22:06:41,361 - codesimulator - DEBUG - Moved mouse to (1153, 926)
+2025-02-19 22:06:52,633 - codesimulator - DEBUG - Moved mouse to (450, 923)
+2025-02-19 22:06:55,204 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-19 22:07:04,050 - codesimulator - DEBUG - Moved mouse to (1485, 720)
+2025-02-19 22:07:10,552 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-19 22:07:12,923 - codesimulator - DEBUG - Moved mouse to (306, 816)
+2025-02-19 22:07:22,034 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-19 22:07:24,035 - codesimulator - DEBUG - Moved mouse to (969, 902)
+2025-02-19 22:07:34,864 - codesimulator - DEBUG - Moved mouse to (1437, 229)
+2025-02-19 22:07:38,803 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-19 22:07:43,527 - codesimulator - DEBUG - Moved mouse to (553, 653)
+2025-02-19 22:07:45,277 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:07:57,455 - codesimulator - DEBUG - Moved mouse to (290, 798)
+2025-02-19 22:08:04,835 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 22:08:10,224 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:08:13,204 - codesimulator - DEBUG - Moved mouse to (36, 47)
+2025-02-19 22:08:23,013 - codesimulator - DEBUG - Moved mouse to (1319, 183)
+2025-02-19 22:08:27,585 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-19 22:08:32,120 - codesimulator - DEBUG - Moved mouse to (723, 934)
+2025-02-19 22:08:46,734 - codesimulator - DEBUG - Moved mouse to (37, 690)
+2025-02-19 22:08:51,227 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-19 22:08:59,789 - codesimulator - DEBUG - Moved mouse to (1057, 461)
+2025-02-19 22:09:01,173 - codesimulator - INFO - Typed line:           draft: false
+2025-02-19 22:09:08,569 - codesimulator - DEBUG - Moved mouse to (1475, 83)
+2025-02-19 22:09:11,265 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-19 22:09:12,414 - codesimulator - INFO - Typed line:  
+2025-02-19 22:09:22,676 - codesimulator - DEBUG - Moved mouse to (1282, 498)
+2025-02-19 22:09:34,050 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-19 22:09:36,463 - codesimulator - DEBUG - Moved mouse to (1256, 389)
+2025-02-19 22:09:45,801 - codesimulator - DEBUG - Moved mouse to (601, 703)
+2025-02-19 22:09:48,061 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-19 22:09:59,508 - codesimulator - DEBUG - Moved mouse to (293, 605)
+2025-02-19 22:10:08,544 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-19 22:10:10,980 - codesimulator - DEBUG - Moved mouse to (1223, 340)
+2025-02-19 22:10:15,490 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:10:26,263 - codesimulator - DEBUG - Moved mouse to (1170, 85)
+2025-02-19 22:10:35,840 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 22:10:41,110 - codesimulator - DEBUG - Moved mouse to (274, 30)
+2025-02-19 22:10:41,907 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:10:55,725 - codesimulator - DEBUG - Moved mouse to (868, 862)
+2025-02-19 22:11:08,953 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-19 22:11:10,889 - codesimulator - DEBUG - Moved mouse to (6, 606)
+2025-02-19 22:11:24,554 - codesimulator - DEBUG - Moved mouse to (900, 221)
+2025-02-19 22:11:32,301 - codesimulator - DEBUG - Moved mouse to (1159, 423)
+2025-02-19 22:11:38,548 - codesimulator - DEBUG - Moved mouse to (1268, 68)
+2025-02-19 22:11:45,820 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-19 22:11:51,940 - codesimulator - DEBUG - Moved mouse to (865, 632)
+2025-02-19 22:12:01,558 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-19 22:12:05,247 - codesimulator - DEBUG - Moved mouse to (262, 791)
+2025-02-19 22:12:15,246 - codesimulator - DEBUG - Moved mouse to (182, 924)
+2025-02-19 22:12:23,781 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-19 22:12:25,142 - codesimulator - INFO - Typed line:  
+2025-02-19 22:12:31,435 - codesimulator - DEBUG - Moved mouse to (1455, 795)
+2025-02-19 22:12:43,921 - codesimulator - DEBUG - Moved mouse to (65, 685)
+2025-02-19 22:12:51,529 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-19 22:12:55,256 - codesimulator - DEBUG - Moved mouse to (992, 5)
+2025-02-19 22:13:06,116 - codesimulator - DEBUG - Moved mouse to (820, 767)
+2025-02-19 22:13:06,848 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-19 22:13:12,988 - codesimulator - INFO - Typed line:         run: |
+2025-02-19 22:13:19,184 - codesimulator - DEBUG - Moved mouse to (370, 853)
+2025-02-19 22:13:27,443 - codesimulator - DEBUG - Moved mouse to (1388, 260)
+2025-02-19 22:13:35,621 - codesimulator - DEBUG - Moved mouse to (23, 620)
+2025-02-19 22:13:49,050 - codesimulator - DEBUG - Moved mouse to (972, 967)
+2025-02-19 22:13:53,747 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-19 22:14:02,219 - codesimulator - DEBUG - Moved mouse to (96, 623)
+2025-02-19 22:14:11,882 - codesimulator - DEBUG - Moved mouse to (1005, 640)
+2025-02-19 22:14:20,691 - codesimulator - DEBUG - Moved mouse to (276, 645)
+2025-02-19 22:14:27,999 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-19 22:14:31,234 - codesimulator - DEBUG - Moved mouse to (715, 930)
+2025-02-19 22:14:44,982 - codesimulator - DEBUG - Moved mouse to (1426, 182)
+2025-02-19 22:14:54,616 - codesimulator - DEBUG - Moved mouse to (1290, 955)
+2025-02-19 22:14:57,273 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-19 22:15:08,781 - codesimulator - DEBUG - Moved mouse to (1110, 722)
+2025-02-19 22:15:23,942 - codesimulator - DEBUG - Moved mouse to (1011, 121)
+2025-02-19 22:15:30,995 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-19 22:15:37,203 - codesimulator - DEBUG - Moved mouse to (1045, 630)
+2025-02-19 22:15:45,362 - codesimulator - DEBUG - Moved mouse to (968, 720)
+2025-02-19 22:15:53,915 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-19 22:15:58,855 - codesimulator - DEBUG - Moved mouse to (479, 951)
+2025-02-19 22:16:06,764 - codesimulator - DEBUG - Moved mouse to (1481, 803)
+2025-02-19 22:16:17,518 - codesimulator - DEBUG - Moved mouse to (526, 21)
+2025-02-19 22:16:28,062 - codesimulator - DEBUG - Moved mouse to (1330, 383)
+2025-02-19 22:16:32,618 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-19 22:16:40,036 - codesimulator - DEBUG - Moved mouse to (813, 253)
+2025-02-19 22:16:47,199 - codesimulator - DEBUG - Moved mouse to (816, 874)
+2025-02-19 22:16:55,142 - codesimulator - DEBUG - Moved mouse to (1241, 460)
+2025-02-19 22:16:57,425 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-19 22:17:06,957 - codesimulator - DEBUG - Moved mouse to (793, 772)
+2025-02-19 22:17:20,536 - codesimulator - DEBUG - Moved mouse to (1348, 96)
+2025-02-19 22:17:26,654 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-19 22:17:28,815 - codesimulator - DEBUG - Moved mouse to (1265, 903)
+2025-02-19 22:17:39,446 - codesimulator - DEBUG - Moved mouse to (1353, 198)
+2025-02-19 22:17:49,742 - codesimulator - DEBUG - Moved mouse to (1369, 603)
+2025-02-19 22:17:50,151 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-19 22:18:02,361 - codesimulator - DEBUG - Moved mouse to (1093, 776)
+2025-02-19 22:18:10,795 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-19 22:18:12,247 - codesimulator - DEBUG - Moved mouse to (1356, 539)
+2025-02-19 22:18:26,246 - codesimulator - DEBUG - Moved mouse to (1344, 271)
+2025-02-19 22:18:40,150 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-19 22:18:41,781 - codesimulator - DEBUG - Moved mouse to (631, 770)
+2025-02-19 22:18:52,756 - codesimulator - DEBUG - Moved mouse to (1142, 822)
+2025-02-19 22:18:52,884 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-19 22:19:00,748 - codesimulator - DEBUG - Moved mouse to (932, 577)
+2025-02-19 22:19:16,997 - codesimulator - DEBUG - Moved mouse to (90, 172)
+2025-02-19 22:19:26,903 - codesimulator - DEBUG - Moved mouse to (1425, 958)
+2025-02-19 22:19:31,207 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-19 22:19:36,157 - codesimulator - INFO - Typed line:           }}"
+2025-02-19 22:19:38,926 - codesimulator - DEBUG - Moved mouse to (961, 325)
+2025-02-19 22:19:45,106 - codesimulator - INFO - Typed line:           git push
+2025-02-19 22:19:46,562 - codesimulator - DEBUG - Moved mouse to (1202, 743)
+2025-02-19 22:19:47,592 - codesimulator - INFO - Typed line:  
+2025-02-19 22:19:48,792 - codesimulator - INFO - Typed line:  
+2025-02-19 22:19:49,787 - codesimulator - INFO - Typed line:  
+2025-02-19 22:19:50,886 - codesimulator - INFO - Typed line:  
+2025-02-19 22:19:52,479 - codesimulator - INFO - Typed line:  
+2025-02-19 22:19:54,336 - codesimulator - INFO - Typed line:  
+2025-02-19 22:19:55,974 - codesimulator - DEBUG - Moved mouse to (818, 65)
+2025-02-19 22:19:56,986 - codesimulator - INFO - Typed line:  
+2025-02-19 22:20:10,203 - codesimulator - DEBUG - Moved mouse to (1422, 629)
+2025-02-19 22:20:13,603 - codesimulator - INFO - Typed line:           name: Release Windows Installer
+2025-02-19 22:20:14,987 - codesimulator - INFO - Typed line:  
+2025-02-19 22:20:16,677 - codesimulator - INFO - Typed line: on:
+2025-02-19 22:20:19,583 - codesimulator - INFO - Typed line:   push:
+2025-02-19 22:20:24,425 - codesimulator - INFO - Typed line:     tags:
+2025-02-19 22:20:25,677 - codesimulator - DEBUG - Moved mouse to (1197, 408)
+2025-02-19 22:20:38,519 - codesimulator - DEBUG - Moved mouse to (1435, 174)
+2025-02-19 22:20:52,938 - codesimulator - DEBUG - Moved mouse to (337, 920)
+2025-02-19 22:20:53,744 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-19 22:20:54,901 - codesimulator - INFO - Typed line:  
+2025-02-19 22:20:59,131 - codesimulator - INFO - Typed line: jobs:
+2025-02-19 22:21:03,759 - codesimulator - INFO - Typed line:   release:
+2025-02-19 22:21:08,886 - codesimulator - DEBUG - Moved mouse to (142, 62)
+2025-02-19 22:21:17,030 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-19 22:21:20,996 - codesimulator - DEBUG - Moved mouse to (374, 99)
+2025-02-19 22:21:21,850 - codesimulator - INFO - Typed line:     steps:
+2025-02-19 22:21:30,022 - codesimulator - DEBUG - Moved mouse to (1349, 595)
+2025-02-19 22:21:37,233 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-19 22:21:46,450 - codesimulator - DEBUG - Moved mouse to (60, 387)
+2025-02-19 22:21:50,654 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-19 22:22:01,765 - codesimulator - DEBUG - Moved mouse to (604, 762)
+2025-02-19 22:22:04,782 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-19 22:22:05,852 - codesimulator - INFO - Typed line:  
+2025-02-19 22:22:11,988 - codesimulator - DEBUG - Moved mouse to (197, 652)
+2025-02-19 22:22:22,058 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-19 22:22:23,943 - codesimulator - DEBUG - Moved mouse to (1314, 899)
+2025-02-19 22:22:33,853 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-19 22:22:38,869 - codesimulator - DEBUG - Moved mouse to (874, 853)
+2025-02-19 22:22:46,481 - codesimulator - DEBUG - Moved mouse to (1218, 948)
+2025-02-19 22:22:49,149 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-19 22:22:54,758 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:22:56,554 - codesimulator - DEBUG - Moved mouse to (554, 845)
+2025-02-19 22:23:09,055 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-19 22:23:11,960 - codesimulator - DEBUG - Moved mouse to (1272, 81)
+2025-02-19 22:23:19,602 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-19 22:23:21,436 - codesimulator - INFO - Typed line:  
+2025-02-19 22:23:23,710 - codesimulator - DEBUG - Moved mouse to (1449, 601)
+2025-02-19 22:23:32,178 - codesimulator - DEBUG - Moved mouse to (497, 838)
+2025-02-19 22:23:43,145 - codesimulator - DEBUG - Moved mouse to (78, 78)
+2025-02-19 22:23:45,887 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-19 22:23:53,891 - codesimulator - DEBUG - Moved mouse to (990, 330)
+2025-02-19 22:23:55,908 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-19 22:24:08,479 - codesimulator - DEBUG - Moved mouse to (1097, 34)
+2025-02-19 22:24:11,803 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-19 22:24:16,418 - codesimulator - DEBUG - Moved mouse to (564, 850)
+2025-02-19 22:24:18,157 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:24:30,848 - codesimulator - DEBUG - Moved mouse to (1421, 78)
+2025-02-19 22:24:33,084 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-19 22:24:34,245 - codesimulator - INFO - Typed line:  
+2025-02-19 22:24:40,286 - codesimulator - DEBUG - Moved mouse to (1260, 77)
+2025-02-19 22:24:47,148 - codesimulator - DEBUG - Moved mouse to (268, 858)
+2025-02-19 22:24:53,323 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-19 22:25:01,317 - codesimulator - DEBUG - Moved mouse to (959, 141)
+2025-02-19 22:25:07,659 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-19 22:25:10,984 - codesimulator - DEBUG - Moved mouse to (1069, 727)
+2025-02-19 22:25:17,064 - codesimulator - DEBUG - Moved mouse to (814, 707)
+2025-02-19 22:25:18,489 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-19 22:25:19,898 - codesimulator - INFO - Typed line:  
+2025-02-19 22:25:24,715 - codesimulator - DEBUG - Moved mouse to (1221, 71)
+2025-02-19 22:25:36,341 - codesimulator - DEBUG - Moved mouse to (497, 892)
+2025-02-19 22:25:47,790 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-19 22:25:50,941 - codesimulator - DEBUG - Moved mouse to (1059, 667)
+2025-02-19 22:25:59,957 - codesimulator - DEBUG - Moved mouse to (579, 71)
+2025-02-19 22:26:01,121 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-19 22:26:11,494 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-19 22:26:12,843 - codesimulator - INFO - Typed line:  
+2025-02-19 22:26:14,234 - codesimulator - DEBUG - Moved mouse to (903, 135)
+2025-02-19 22:26:23,503 - codesimulator - DEBUG - Moved mouse to (736, 949)
+2025-02-19 22:26:38,292 - codesimulator - DEBUG - Moved mouse to (1496, 570)
+2025-02-19 22:26:40,407 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-19 22:26:51,276 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-19 22:26:53,492 - codesimulator - DEBUG - Moved mouse to (32, 710)
+2025-02-19 22:27:06,384 - codesimulator - DEBUG - Moved mouse to (856, 643)
+2025-02-19 22:27:11,409 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-19 22:27:16,418 - codesimulator - DEBUG - Moved mouse to (103, 605)
+2025-02-19 22:27:17,904 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:27:23,791 - codesimulator - DEBUG - Moved mouse to (960, 971)
+2025-02-19 22:27:32,816 - codesimulator - DEBUG - Moved mouse to (52, 663)
+2025-02-19 22:27:44,324 - codesimulator - DEBUG - Moved mouse to (1221, 196)
+2025-02-19 22:27:46,523 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-19 22:27:51,931 - codesimulator - DEBUG - Moved mouse to (1132, 437)
+2025-02-19 22:28:00,488 - codesimulator - DEBUG - Moved mouse to (421, 885)
+2025-02-19 22:28:14,972 - codesimulator - DEBUG - Moved mouse to (1071, 77)
+2025-02-19 22:28:24,243 - codesimulator - DEBUG - Moved mouse to (512, 818)
+2025-02-19 22:28:24,732 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-19 22:28:30,399 - codesimulator - INFO - Typed line:           here)
+2025-02-19 22:28:31,874 - codesimulator - INFO - Typed line:  
+2025-02-19 22:28:36,152 - codesimulator - DEBUG - Moved mouse to (1335, 250)
+2025-02-19 22:28:48,708 - codesimulator - DEBUG - Moved mouse to (1433, 874)
+2025-02-19 22:28:53,797 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-19 22:28:56,614 - codesimulator - DEBUG - Moved mouse to (1192, 428)
+2025-02-19 22:29:03,909 - codesimulator - DEBUG - Moved mouse to (323, 964)
+2025-02-19 22:29:12,582 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-19 22:29:15,489 - codesimulator - DEBUG - Moved mouse to (768, 10)
+2025-02-19 22:29:22,615 - codesimulator - DEBUG - Moved mouse to (417, 960)
+2025-02-19 22:29:31,690 - codesimulator - DEBUG - Moved mouse to (904, 281)
+2025-02-19 22:29:32,549 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-19 22:29:38,037 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:29:39,119 - codesimulator - DEBUG - Moved mouse to (1236, 685)
+2025-02-19 22:29:48,749 - codesimulator - DEBUG - Moved mouse to (591, 797)
+2025-02-19 22:29:51,146 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-19 22:30:00,580 - codesimulator - DEBUG - Moved mouse to (932, 792)
+2025-02-19 22:30:16,200 - codesimulator - DEBUG - Moved mouse to (22, 728)
+2025-02-19 22:30:21,394 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-19 22:30:22,778 - codesimulator - INFO - Typed line:  
+2025-02-19 22:30:31,011 - codesimulator - DEBUG - Moved mouse to (449, 788)
+2025-02-19 22:30:39,908 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-19 22:30:43,240 - codesimulator - DEBUG - Moved mouse to (1302, 57)
+2025-02-19 22:30:50,441 - codesimulator - DEBUG - Moved mouse to (387, 937)
+2025-02-19 22:30:59,078 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-19 22:31:02,172 - codesimulator - DEBUG - Moved mouse to (1504, 513)
+2025-02-19 22:31:11,513 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-19 22:31:17,279 - codesimulator - DEBUG - Moved mouse to (15, 162)
+2025-02-19 22:31:25,219 - codesimulator - DEBUG - Moved mouse to (921, 894)
+2025-02-19 22:31:30,764 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-19 22:31:36,902 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:31:39,037 - codesimulator - DEBUG - Moved mouse to (1087, 53)
+2025-02-19 22:31:54,345 - codesimulator - DEBUG - Moved mouse to (52, 749)
+2025-02-19 22:31:59,216 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 22:32:04,188 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:32:07,292 - codesimulator - DEBUG - Moved mouse to (13, 39)
+2025-02-19 22:32:18,716 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-19 22:32:22,480 - codesimulator - DEBUG - Moved mouse to (1448, 769)
+2025-02-19 22:32:36,049 - codesimulator - DEBUG - Moved mouse to (1467, 57)
+2025-02-19 22:32:44,629 - codesimulator - DEBUG - Moved mouse to (283, 665)
+2025-02-19 22:32:46,581 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-19 22:32:55,044 - codesimulator - DEBUG - Moved mouse to (467, 718)
+2025-02-19 22:32:56,357 - codesimulator - INFO - Typed line:           draft: false
+2025-02-19 22:33:07,496 - codesimulator - DEBUG - Moved mouse to (1036, 386)
+2025-02-19 22:33:08,971 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-19 22:33:10,401 - codesimulator - INFO - Typed line:  
+2025-02-19 22:33:22,634 - codesimulator - DEBUG - Moved mouse to (959, 258)
+2025-02-19 22:33:30,908 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-19 22:33:38,221 - codesimulator - DEBUG - Moved mouse to (880, 848)
+2025-02-19 22:33:43,575 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-19 22:33:47,800 - codesimulator - DEBUG - Moved mouse to (367, 865)
+2025-02-19 22:33:57,610 - codesimulator - DEBUG - Moved mouse to (1179, 935)
+2025-02-19 22:34:01,472 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-19 22:34:06,599 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:34:09,730 - codesimulator - DEBUG - Moved mouse to (316, 928)
+2025-02-19 22:34:20,194 - codesimulator - DEBUG - Moved mouse to (269, 62)
+2025-02-19 22:34:29,047 - codesimulator - DEBUG - Moved mouse to (159, 977)
+2025-02-19 22:34:29,178 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 22:34:35,186 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:34:41,785 - codesimulator - DEBUG - Moved mouse to (981, 363)
+2025-02-19 22:34:53,110 - codesimulator - DEBUG - Moved mouse to (841, 464)
+2025-02-19 22:35:00,768 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-19 22:35:02,681 - codesimulator - DEBUG - Moved mouse to (998, 488)
+2025-02-19 22:35:10,233 - codesimulator - DEBUG - Moved mouse to (1322, 927)
+2025-02-19 22:35:18,619 - codesimulator - DEBUG - Moved mouse to (880, 326)
+2025-02-19 22:35:29,733 - codesimulator - DEBUG - Moved mouse to (94, 676)
+2025-02-19 22:35:36,672 - codesimulator - DEBUG - Moved mouse to (1378, 496)
+2025-02-19 22:35:37,819 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-19 22:35:44,562 - codesimulator - DEBUG - Moved mouse to (767, 928)
+2025-02-19 22:35:55,287 - codesimulator - DEBUG - Moved mouse to (1113, 340)
+2025-02-19 22:35:55,414 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-19 22:36:09,110 - codesimulator - DEBUG - Moved mouse to (1033, 305)
+2025-02-19 22:36:16,635 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-19 22:36:17,927 - codesimulator - INFO - Typed line:  
+2025-02-19 22:36:18,876 - codesimulator - DEBUG - Moved mouse to (1442, 416)
+2025-02-19 22:36:32,892 - codesimulator - DEBUG - Moved mouse to (1121, 166)
+2025-02-19 22:36:43,014 - codesimulator - DEBUG - Moved mouse to (529, 884)
+2025-02-19 22:36:43,141 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-19 22:36:52,249 - codesimulator - DEBUG - Moved mouse to (1050, 954)
+2025-02-19 22:36:57,689 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-19 22:37:04,852 - codesimulator - INFO - Typed line:         run: |
+2025-02-19 22:37:05,612 - codesimulator - DEBUG - Moved mouse to (767, 780)
+2025-02-19 22:37:14,003 - codesimulator - DEBUG - Moved mouse to (57, 814)
+2025-02-19 22:37:23,416 - codesimulator - DEBUG - Moved mouse to (1401, 772)
+2025-02-19 22:37:32,261 - codesimulator - DEBUG - Moved mouse to (923, 739)
+2025-02-19 22:37:40,582 - codesimulator - DEBUG - Moved mouse to (822, 287)
+2025-02-19 22:37:43,127 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-19 22:37:53,569 - codesimulator - DEBUG - Moved mouse to (1025, 442)
+2025-02-19 22:38:06,021 - codesimulator - DEBUG - Moved mouse to (1346, 471)
+2025-02-19 22:38:12,923 - codesimulator - DEBUG - Moved mouse to (920, 952)
+2025-02-19 22:38:15,938 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-19 22:38:20,017 - codesimulator - DEBUG - Moved mouse to (902, 226)
+2025-02-19 22:38:34,332 - codesimulator - DEBUG - Moved mouse to (90, 337)
+2025-02-19 22:38:42,561 - codesimulator - DEBUG - Moved mouse to (1019, 955)
+2025-02-19 22:38:48,146 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-19 22:38:55,742 - codesimulator - DEBUG - Moved mouse to (1085, 112)
+2025-02-19 22:39:08,779 - codesimulator - DEBUG - Moved mouse to (855, 946)
+2025-02-19 22:39:21,774 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-19 22:39:24,397 - codesimulator - DEBUG - Moved mouse to (258, 679)
+2025-02-19 22:39:33,462 - codesimulator - DEBUG - Moved mouse to (1457, 685)
+2025-02-19 22:39:45,310 - codesimulator - DEBUG - Moved mouse to (371, 979)
+2025-02-19 22:39:48,113 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-19 22:39:59,575 - codesimulator - DEBUG - Moved mouse to (319, 699)
+2025-02-19 22:40:09,945 - codesimulator - DEBUG - Moved mouse to (1022, 348)
+2025-02-19 22:40:24,283 - codesimulator - DEBUG - Moved mouse to (184, 719)
+2025-02-19 22:40:25,177 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-19 22:40:35,943 - codesimulator - DEBUG - Moved mouse to (730, 807)
+2025-02-19 22:40:50,390 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-19 22:40:51,322 - codesimulator - DEBUG - Moved mouse to (1219, 980)
+2025-02-19 22:40:57,958 - codesimulator - DEBUG - Moved mouse to (677, 870)
+2025-02-19 22:41:09,134 - codesimulator - DEBUG - Moved mouse to (891, 182)
+2025-02-19 22:41:19,869 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-19 22:41:23,370 - codesimulator - DEBUG - Moved mouse to (1219, 444)
+2025-02-19 22:41:33,547 - codesimulator - DEBUG - Moved mouse to (124, 771)
+2025-02-19 22:41:43,013 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-19 22:41:46,303 - codesimulator - DEBUG - Moved mouse to (332, 70)
+2025-02-19 22:41:56,773 - codesimulator - DEBUG - Moved mouse to (756, 825)
+2025-02-19 22:42:04,242 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-19 22:42:11,855 - codesimulator - DEBUG - Moved mouse to (945, 288)
+2025-02-19 22:42:19,075 - codesimulator - DEBUG - Moved mouse to (1197, 240)
+2025-02-19 22:42:31,506 - codesimulator - DEBUG - Moved mouse to (674, 59)
+2025-02-19 22:42:36,131 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-19 22:42:42,239 - codesimulator - DEBUG - Moved mouse to (984, 644)
+2025-02-19 22:42:47,059 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-19 22:42:54,149 - codesimulator - DEBUG - Moved mouse to (1174, 977)
+2025-02-19 22:43:02,590 - codesimulator - DEBUG - Moved mouse to (1123, 168)
+2025-02-19 22:43:08,570 - codesimulator - DEBUG - Moved mouse to (903, 387)
+2025-02-19 22:43:20,767 - codesimulator - DEBUG - Moved mouse to (1098, 279)
+2025-02-19 22:43:22,694 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-19 22:43:26,967 - codesimulator - INFO - Typed line:           }}"
+2025-02-19 22:43:29,800 - codesimulator - DEBUG - Moved mouse to (1196, 717)
+2025-02-19 22:43:34,607 - codesimulator - INFO - Typed line:           git push
+2025-02-19 22:43:35,869 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:36,546 - codesimulator - DEBUG - Moved mouse to (1313, 921)
+2025-02-19 22:43:37,037 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:38,081 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:39,333 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:40,414 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:41,999 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:43,037 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:44,284 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:45,332 - codesimulator - INFO - Typed line:  
+2025-02-19 22:43:49,435 - codesimulator - DEBUG - Moved mouse to (1391, 231)
+2025-02-19 22:44:02,736 - codesimulator - INFO - Typed line:           name: Release Windows Installer
+2025-02-19 22:44:03,958 - codesimulator - INFO - Typed line:  
+2025-02-19 22:44:04,703 - codesimulator - DEBUG - Moved mouse to (1076, 437)
+2025-02-19 22:44:05,939 - codesimulator - INFO - Typed line: on:
+2025-02-19 22:44:09,692 - codesimulator - INFO - Typed line:   push:
+2025-02-19 22:44:13,770 - codesimulator - INFO - Typed line:     tags:
+2025-02-19 22:44:20,263 - codesimulator - DEBUG - Moved mouse to (1481, 141)
+2025-02-19 22:44:29,288 - codesimulator - DEBUG - Moved mouse to (1429, 815)
+2025-02-19 22:44:35,850 - codesimulator - DEBUG - Moved mouse to (1008, 465)
+2025-02-19 22:44:40,936 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-19 22:44:42,337 - codesimulator - DEBUG - Moved mouse to (22, 308)
+2025-02-19 22:44:42,824 - codesimulator - INFO - Typed line:  
+2025-02-19 22:44:45,040 - codesimulator - INFO - Typed line: jobs:
+2025-02-19 22:44:50,671 - codesimulator - INFO - Typed line:   release:
+2025-02-19 22:44:56,687 - codesimulator - DEBUG - Moved mouse to (315, 38)
+2025-02-19 22:45:02,436 - codesimulator - DEBUG - Moved mouse to (566, 53)
+2025-02-19 22:45:03,436 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-19 22:45:07,868 - codesimulator - INFO - Typed line:     steps:
+2025-02-19 22:45:18,133 - codesimulator - DEBUG - Moved mouse to (1240, 963)
+2025-02-19 22:45:24,097 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-19 22:45:33,195 - codesimulator - DEBUG - Moved mouse to (107, 716)
+2025-02-19 22:45:38,344 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-19 22:45:46,287 - codesimulator - DEBUG - Moved mouse to (221, 832)
+2025-02-19 22:45:51,791 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-19 22:45:53,211 - codesimulator - INFO - Typed line:  
+2025-02-19 22:46:01,437 - codesimulator - DEBUG - Moved mouse to (156, 749)
+2025-02-19 22:46:09,127 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-19 22:46:15,823 - codesimulator - DEBUG - Moved mouse to (546, 734)
+2025-02-19 22:46:19,816 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-19 22:46:23,507 - codesimulator - DEBUG - Moved mouse to (1387, 203)
+2025-02-19 22:46:36,067 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-19 22:46:37,086 - codesimulator - DEBUG - Moved mouse to (1235, 885)
+2025-02-19 22:46:41,392 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:46:45,534 - codesimulator - DEBUG - Moved mouse to (1114, 792)
+2025-02-19 22:46:51,957 - codesimulator - DEBUG - Moved mouse to (1119, 160)
+2025-02-19 22:46:54,347 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-19 22:46:58,669 - codesimulator - DEBUG - Moved mouse to (267, 977)
+2025-02-19 22:47:04,748 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-19 22:47:05,894 - codesimulator - DEBUG - Moved mouse to (262, 812)
+2025-02-19 22:47:06,327 - codesimulator - INFO - Typed line:  
+2025-02-19 22:47:17,603 - codesimulator - DEBUG - Moved mouse to (146, 663)
+2025-02-19 22:47:26,303 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-19 22:47:27,974 - codesimulator - DEBUG - Moved mouse to (870, 65)
+2025-02-19 22:47:35,461 - codesimulator - DEBUG - Moved mouse to (1425, 797)
+2025-02-19 22:47:37,555 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-19 22:47:49,653 - codesimulator - DEBUG - Moved mouse to (1090, 87)
+2025-02-19 22:47:53,917 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-19 22:47:56,489 - codesimulator - DEBUG - Moved mouse to (1389, 28)
+2025-02-19 22:48:00,384 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:48:05,899 - codesimulator - DEBUG - Moved mouse to (624, 604)
+2025-02-19 22:48:14,967 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-19 22:48:16,425 - codesimulator - INFO - Typed line:  
+2025-02-19 22:48:20,351 - codesimulator - DEBUG - Moved mouse to (549, 38)
+2025-02-19 22:48:32,624 - codesimulator - DEBUG - Moved mouse to (1131, 771)
+2025-02-19 22:48:36,653 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-19 22:48:41,037 - codesimulator - DEBUG - Moved mouse to (494, 623)
+2025-02-19 22:48:48,344 - codesimulator - DEBUG - Moved mouse to (894, 83)
+2025-02-19 22:48:50,692 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-19 22:48:59,573 - codesimulator - DEBUG - Moved mouse to (1081, 503)
+2025-02-19 22:49:00,672 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-19 22:49:01,639 - codesimulator - INFO - Typed line:  
+2025-02-19 22:49:08,640 - codesimulator - DEBUG - Moved mouse to (922, 561)
+2025-02-19 22:49:14,247 - codesimulator - DEBUG - Moved mouse to (1015, 313)
+2025-02-19 22:49:25,300 - codesimulator - DEBUG - Moved mouse to (69, 788)
+2025-02-19 22:49:27,857 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-19 22:49:36,072 - codesimulator - DEBUG - Moved mouse to (195, 763)
+2025-02-19 22:49:38,292 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-19 22:49:47,939 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-19 22:49:50,499 - codesimulator - DEBUG - Moved mouse to (1339, 678)
+2025-02-19 22:49:50,624 - codesimulator - INFO - Typed line:  
+2025-02-19 22:49:58,096 - codesimulator - DEBUG - Moved mouse to (935, 688)
+2025-02-19 22:50:09,348 - codesimulator - DEBUG - Moved mouse to (230, 63)
+2025-02-19 22:50:16,904 - codesimulator - DEBUG - Moved mouse to (1216, 791)
+2025-02-19 22:50:18,918 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-19 22:50:31,081 - codesimulator - DEBUG - Moved mouse to (861, 423)
+2025-02-19 22:50:32,686 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-19 22:50:44,614 - codesimulator - DEBUG - Moved mouse to (958, 629)
+2025-02-19 22:50:51,872 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-19 22:50:55,181 - codesimulator - DEBUG - Moved mouse to (1391, 928)
+2025-02-19 22:50:57,307 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:51:03,371 - codesimulator - DEBUG - Moved mouse to (309, 22)
+2025-02-19 22:51:10,611 - codesimulator - DEBUG - Moved mouse to (280, 804)
+2025-02-19 22:51:24,123 - codesimulator - DEBUG - Moved mouse to (440, 836)
+2025-02-19 22:51:24,572 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-19 22:51:36,117 - codesimulator - DEBUG - Moved mouse to (999, 677)
+2025-02-19 22:51:46,183 - codesimulator - DEBUG - Moved mouse to (521, 30)
+2025-02-19 22:51:55,437 - codesimulator - DEBUG - Moved mouse to (1055, 742)
+2025-02-19 22:51:59,235 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-19 22:52:06,345 - codesimulator - DEBUG - Moved mouse to (257, 709)
+2025-02-19 22:52:07,030 - codesimulator - INFO - Typed line:           here)
+2025-02-19 22:52:07,979 - codesimulator - INFO - Typed line:  
+2025-02-19 22:52:18,838 - codesimulator - DEBUG - Moved mouse to (76, 420)
+2025-02-19 22:52:29,409 - codesimulator - DEBUG - Moved mouse to (888, 119)
+2025-02-19 22:52:29,873 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-19 22:52:44,443 - codesimulator - DEBUG - Moved mouse to (51, 361)
+2025-02-19 22:52:45,190 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-19 22:53:01,286 - codesimulator - DEBUG - Moved mouse to (1356, 670)
+2025-02-19 22:53:03,157 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-19 22:53:09,919 - codesimulator - DEBUG - Moved mouse to (63, 821)
+2025-02-19 22:53:10,810 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:53:23,455 - codesimulator - DEBUG - Moved mouse to (23, 786)
+2025-02-19 22:53:23,929 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-19 22:53:31,031 - codesimulator - DEBUG - Moved mouse to (82, 867)
+2025-02-19 22:53:43,385 - codesimulator - DEBUG - Moved mouse to (73, 71)
+2025-02-19 22:53:55,372 - codesimulator - DEBUG - Moved mouse to (89, 523)
+2025-02-19 22:53:56,745 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-19 22:53:57,919 - codesimulator - INFO - Typed line:  
+2025-02-19 22:54:02,740 - codesimulator - DEBUG - Moved mouse to (1447, 509)
+2025-02-19 22:54:12,977 - codesimulator - DEBUG - Moved mouse to (897, 695)
+2025-02-19 22:54:13,759 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-19 22:54:26,147 - codesimulator - DEBUG - Moved mouse to (87, 223)
+2025-02-19 22:54:27,655 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-19 22:54:39,729 - codesimulator - DEBUG - Moved mouse to (1446, 232)
+2025-02-19 22:54:40,873 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-19 22:54:48,439 - codesimulator - DEBUG - Moved mouse to (1254, 53)
+2025-02-19 22:54:55,949 - codesimulator - DEBUG - Moved mouse to (1406, 250)
+2025-02-19 22:54:56,079 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-19 22:55:00,563 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:55:03,119 - codesimulator - DEBUG - Moved mouse to (351, 819)
+2025-02-19 22:55:11,002 - codesimulator - DEBUG - Moved mouse to (1185, 822)
+2025-02-19 22:55:19,591 - codesimulator - DEBUG - Moved mouse to (1002, 664)
+2025-02-19 22:55:24,159 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 22:55:28,141 - codesimulator - DEBUG - Moved mouse to (1364, 232)
+2025-02-19 22:55:30,500 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:55:43,085 - codesimulator - DEBUG - Moved mouse to (1452, 719)
+2025-02-19 22:55:45,618 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-19 22:55:51,570 - codesimulator - DEBUG - Moved mouse to (1082, 467)
+2025-02-19 22:56:01,343 - codesimulator - DEBUG - Moved mouse to (880, 834)
+2025-02-19 22:56:05,542 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-19 22:56:15,068 - codesimulator - DEBUG - Moved mouse to (992, 302)
+2025-02-19 22:56:15,824 - codesimulator - INFO - Typed line:           draft: false
+2025-02-19 22:56:26,719 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-19 22:56:27,803 - codesimulator - INFO - Typed line:  
+2025-02-19 22:56:29,035 - codesimulator - DEBUG - Moved mouse to (1191, 56)
+2025-02-19 22:56:35,933 - codesimulator - DEBUG - Moved mouse to (1371, 227)
+2025-02-19 22:56:49,588 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-19 22:56:51,250 - codesimulator - DEBUG - Moved mouse to (1128, 664)
+2025-02-19 22:57:03,611 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-19 22:57:05,274 - codesimulator - DEBUG - Moved mouse to (1152, 359)
+2025-02-19 22:57:19,677 - codesimulator - DEBUG - Moved mouse to (1174, 222)
+2025-02-19 22:57:23,147 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-19 22:57:28,686 - codesimulator - INFO - Typed line:         env:
+2025-02-19 22:57:35,624 - codesimulator - DEBUG - Moved mouse to (97, 865)
+2025-02-19 22:57:48,781 - codesimulator - DEBUG - Moved mouse to (1433, 883)
+2025-02-19 22:57:51,732 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-19 22:57:57,217 - codesimulator - INFO - Typed line:         with:
+2025-02-19 22:57:59,467 - codesimulator - DEBUG - Moved mouse to (1125, 942)
+2025-02-19 22:58:15,018 - codesimulator - DEBUG - Moved mouse to (351, 896)
+2025-02-19 22:58:21,440 - codesimulator - DEBUG - Moved mouse to (39, 285)
+2025-02-19 22:58:24,301 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-19 22:58:33,027 - codesimulator - DEBUG - Moved mouse to (44, 251)
+2025-02-19 22:58:47,611 - codesimulator - DEBUG - Moved mouse to (1218, 598)
+2025-02-19 22:59:02,864 - codesimulator - DEBUG - Moved mouse to (81, 108)
+2025-02-19 22:59:04,829 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-19 22:59:17,536 - codesimulator - DEBUG - Moved mouse to (807, 936)
+2025-02-19 22:59:21,476 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-19 22:59:29,789 - codesimulator - DEBUG - Moved mouse to (1359, 657)
+2025-02-19 22:59:36,773 - codesimulator - DEBUG - Moved mouse to (328, 634)
+2025-02-19 22:59:42,697 - codesimulator - DEBUG - Moved mouse to (113, 624)
+2025-02-19 22:59:46,931 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-19 22:59:47,964 - codesimulator - INFO - Typed line:  
+2025-02-19 22:59:55,200 - codesimulator - DEBUG - Moved mouse to (1046, 206)
+2025-02-19 23:00:01,764 - codesimulator - DEBUG - Moved mouse to (567, 690)
+2025-02-19 23:00:09,379 - codesimulator - DEBUG - Moved mouse to (72, 776)
+2025-02-19 23:00:11,473 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-19 23:00:24,214 - codesimulator - DEBUG - Moved mouse to (1478, 537)
+2025-02-19 23:00:24,338 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-19 23:00:30,119 - codesimulator - INFO - Typed line:         run: |
+2025-02-19 23:00:40,969 - codesimulator - DEBUG - Moved mouse to (205, 659)
+2025-02-19 23:00:50,003 - codesimulator - DEBUG - Moved mouse to (1161, 873)
+2025-02-19 23:01:02,637 - codesimulator - DEBUG - Moved mouse to (1167, 516)
+2025-02-19 23:01:07,391 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-19 23:01:11,684 - codesimulator - DEBUG - Moved mouse to (887, 692)
+2025-02-19 23:01:26,649 - codesimulator - DEBUG - Moved mouse to (571, 743)
+2025-02-19 23:01:35,039 - codesimulator - DEBUG - Moved mouse to (1467, 718)
+2025-02-19 23:01:41,096 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-19 23:01:43,108 - codesimulator - DEBUG - Moved mouse to (1329, 565)
+2025-02-19 23:01:57,019 - codesimulator - DEBUG - Moved mouse to (822, 14)
+2025-02-19 23:02:07,374 - codesimulator - DEBUG - Moved mouse to (4, 408)
+2025-02-19 23:02:09,142 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-19 23:02:19,250 - codesimulator - DEBUG - Moved mouse to (358, 923)
+2025-02-19 23:02:28,039 - codesimulator - DEBUG - Moved mouse to (35, 113)
+2025-02-19 23:02:37,886 - codesimulator - DEBUG - Moved mouse to (1414, 354)
+2025-02-19 23:02:44,175 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-19 23:02:48,684 - codesimulator - DEBUG - Moved mouse to (826, 377)
+2025-02-19 23:02:58,843 - codesimulator - DEBUG - Moved mouse to (1419, 134)
+2025-02-19 23:03:05,586 - codesimulator - DEBUG - Moved mouse to (290, 656)
+2025-02-19 23:03:11,185 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-19 23:03:16,858 - codesimulator - DEBUG - Moved mouse to (991, 712)
+2025-02-19 23:03:31,425 - codesimulator - DEBUG - Moved mouse to (293, 69)
+2025-02-19 23:03:47,022 - codesimulator - DEBUG - Moved mouse to (344, 780)
+2025-02-19 23:03:49,379 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-19 23:03:55,984 - codesimulator - DEBUG - Moved mouse to (1406, 101)
+2025-02-19 23:04:07,590 - codesimulator - DEBUG - Moved mouse to (1144, 497)
+2025-02-19 23:04:13,719 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-19 23:04:19,185 - codesimulator - DEBUG - Moved mouse to (1370, 163)
+2025-02-19 23:04:31,727 - codesimulator - DEBUG - Moved mouse to (931, 151)
+2025-02-19 23:04:40,109 - codesimulator - DEBUG - Moved mouse to (33, 700)
+2025-02-19 23:04:45,263 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-19 23:04:51,931 - codesimulator - DEBUG - Moved mouse to (1449, 843)
+2025-02-19 23:04:58,746 - codesimulator - DEBUG - Moved mouse to (1196, 352)
+2025-02-19 23:05:10,645 - codesimulator - DEBUG - Moved mouse to (89, 42)
+2025-02-19 23:05:12,295 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-19 23:05:24,791 - codesimulator - DEBUG - Moved mouse to (271, 674)
+2025-02-19 23:05:31,824 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-19 23:05:36,734 - codesimulator - DEBUG - Moved mouse to (921, 675)
+2025-02-19 23:05:46,259 - codesimulator - DEBUG - Moved mouse to (1422, 433)
+2025-02-19 23:05:58,301 - codesimulator - DEBUG - Moved mouse to (1243, 800)
+2025-02-19 23:06:04,130 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-19 23:06:07,953 - codesimulator - DEBUG - Moved mouse to (392, 743)
+2025-02-19 23:06:15,734 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-19 23:06:19,683 - codesimulator - DEBUG - Moved mouse to (1261, 34)
+2025-02-19 23:06:27,692 - codesimulator - DEBUG - Moved mouse to (1434, 782)
+2025-02-19 23:06:38,485 - codesimulator - DEBUG - Moved mouse to (358, 645)
+2025-02-19 23:06:50,684 - codesimulator - DEBUG - Moved mouse to (1491, 170)
+2025-02-19 23:06:56,516 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-19 23:06:57,119 - codesimulator - DEBUG - Moved mouse to (1390, 404)
+2025-02-19 23:07:01,719 - codesimulator - INFO - Typed line:           }}"
+2025-02-19 23:07:09,297 - codesimulator - DEBUG - Moved mouse to (1511, 0)
+2025-02-19 23:07:09,339 - codesimulator - ERROR - Error during code typing: PyAutoGUI fail-safe triggered from mouse moving to a corner of the screen. To disable this fail-safe, set pyautogui.FAILSAFE to False. DISABLING FAIL-SAFE IS NOT RECOMMENDED.
+2025-02-19 23:07:10,122 - codesimulator - INFO - Simulation ended
+2025-02-20 14:06:56,438 - codesimulator - INFO - Successfully loaded configuration
+2025-02-20 14:06:56,439 - codesimulator - INFO - Successfully configured simulation settings
+2025-02-20 14:06:56,449 - codesimulator - INFO - MacOS key handler initialized successfully
+2025-02-20 14:06:56,449 - codesimulator - INFO - Application started successfully.
+2025-02-20 14:07:21,975 - codesimulator - INFO - Simulation started successfully.
+2025-02-20 14:07:23,157 - codesimulator - INFO - Clicked at screen center
+2025-02-20 14:07:23,664 - codesimulator - INFO - Loading config from: /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/config.json
+2025-02-20 14:07:23,674 - codesimulator - INFO - Estimated typing time: 7h 50m 29s
+2025-02-20 14:07:24,496 - codesimulator - DEBUG - Moved mouse to (1131, 120)
+2025-02-20 14:07:25,684 - codesimulator - INFO - Started typing code from /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/code3.txt
+2025-02-20 14:07:36,675 - codesimulator - DEBUG - Moved mouse to (22, 539)
+2025-02-20 14:07:39,908 - codesimulator - INFO - Typed line: name: Release Windows Installer
+2025-02-20 14:07:41,279 - codesimulator - INFO - Typed line:  
+2025-02-20 14:07:43,795 - codesimulator - INFO - Typed line: on:
+2025-02-20 14:07:46,934 - codesimulator - INFO - Typed line:   push:
+2025-02-20 14:07:51,102 - codesimulator - DEBUG - Moved mouse to (1494, 863)
+2025-02-20 14:07:52,554 - codesimulator - INFO - Typed line:     tags:
+2025-02-20 14:08:00,012 - codesimulator - DEBUG - Moved mouse to (1265, 21)
+2025-02-20 14:08:13,814 - codesimulator - DEBUG - Moved mouse to (875, 99)
+2025-02-20 14:08:19,917 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-20 14:08:21,861 - codesimulator - INFO - Typed line:  
+2025-02-20 14:08:23,539 - codesimulator - DEBUG - Moved mouse to (1363, 729)
+2025-02-20 14:08:25,431 - codesimulator - INFO - Typed line: jobs:
+2025-02-20 14:08:30,185 - codesimulator - DEBUG - Moved mouse to (907, 671)
+2025-02-20 14:08:31,808 - codesimulator - INFO - Typed line:   release:
+2025-02-20 14:08:41,642 - codesimulator - DEBUG - Moved mouse to (1096, 774)
+2025-02-20 14:08:43,618 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-20 14:08:48,096 - codesimulator - INFO - Typed line:     steps:
+2025-02-20 14:08:52,099 - codesimulator - DEBUG - Moved mouse to (1173, 565)
+2025-02-20 14:09:02,603 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-20 14:09:06,391 - codesimulator - DEBUG - Moved mouse to (1389, 861)
+2025-02-20 14:09:12,884 - codesimulator - DEBUG - Moved mouse to (1067, 872)
+2025-02-20 14:09:18,522 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-20 14:09:28,747 - codesimulator - DEBUG - Moved mouse to (1180, 37)
+2025-02-20 14:09:34,910 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-20 14:09:36,261 - codesimulator - INFO - Typed line:  
+2025-02-20 14:09:43,354 - codesimulator - DEBUG - Moved mouse to (1391, 737)
+2025-02-20 14:09:52,851 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-20 14:09:57,407 - codesimulator - DEBUG - Moved mouse to (1082, 641)
+2025-02-20 14:10:03,726 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-20 14:10:10,396 - codesimulator - DEBUG - Moved mouse to (1320, 422)
+2025-02-20 14:10:17,258 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-20 14:10:22,063 - codesimulator - DEBUG - Moved mouse to (1394, 294)
+2025-02-20 14:10:22,188 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:10:33,001 - codesimulator - DEBUG - Moved mouse to (991, 622)
+2025-02-20 14:10:33,426 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-20 14:10:41,759 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-20 14:10:42,710 - codesimulator - INFO - Typed line:  
+2025-02-20 14:10:46,277 - codesimulator - DEBUG - Moved mouse to (881, 958)
+2025-02-20 14:10:59,105 - codesimulator - DEBUG - Moved mouse to (165, 943)
+2025-02-20 14:11:05,495 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-20 14:11:08,490 - codesimulator - DEBUG - Moved mouse to (1429, 832)
+2025-02-20 14:11:16,103 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-20 14:11:17,230 - codesimulator - DEBUG - Moved mouse to (1448, 497)
+2025-02-20 14:11:27,373 - codesimulator - DEBUG - Moved mouse to (1162, 270)
+2025-02-20 14:11:30,178 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-20 14:11:35,865 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:11:38,820 - codesimulator - DEBUG - Moved mouse to (1189, 37)
+2025-02-20 14:11:48,285 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-20 14:11:49,353 - codesimulator - INFO - Typed line:  
+2025-02-20 14:11:52,636 - codesimulator - DEBUG - Moved mouse to (1030, 223)
+2025-02-20 14:12:04,897 - codesimulator - DEBUG - Moved mouse to (436, 857)
+2025-02-20 14:12:07,237 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-20 14:12:14,106 - codesimulator - DEBUG - Moved mouse to (1142, 886)
+2025-02-20 14:12:22,113 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-20 14:12:29,746 - codesimulator - DEBUG - Moved mouse to (3, 859)
+2025-02-20 14:12:33,625 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-20 14:12:34,624 - codesimulator - INFO - Typed line:  
+2025-02-20 14:12:39,084 - codesimulator - DEBUG - Moved mouse to (1351, 346)
+2025-02-20 14:12:51,251 - codesimulator - DEBUG - Moved mouse to (41, 866)
+2025-02-20 14:12:59,852 - codesimulator - DEBUG - Moved mouse to (1358, 713)
+2025-02-20 14:13:07,101 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-20 14:13:13,033 - codesimulator - DEBUG - Moved mouse to (99, 184)
+2025-02-20 14:13:20,581 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-20 14:13:24,107 - codesimulator - DEBUG - Moved mouse to (132, 958)
+2025-02-20 14:13:32,751 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-20 14:13:33,589 - codesimulator - DEBUG - Moved mouse to (66, 467)
+2025-02-20 14:13:34,104 - codesimulator - INFO - Typed line:  
+2025-02-20 14:13:43,932 - codesimulator - DEBUG - Moved mouse to (608, 672)
+2025-02-20 14:13:52,762 - codesimulator - DEBUG - Moved mouse to (1262, 258)
+2025-02-20 14:14:00,756 - codesimulator - DEBUG - Moved mouse to (1239, 170)
+2025-02-20 14:14:01,629 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-20 14:14:14,800 - codesimulator - DEBUG - Moved mouse to (719, 957)
+2025-02-20 14:14:15,244 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-20 14:14:25,089 - codesimulator - DEBUG - Moved mouse to (1390, 933)
+2025-02-20 14:14:35,836 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-20 14:14:39,139 - codesimulator - DEBUG - Moved mouse to (1392, 914)
+2025-02-20 14:14:41,195 - codesimulator - INFO - Typed line:         env:
+2025-02-20 14:14:46,035 - codesimulator - DEBUG - Moved mouse to (1250, 930)
+2025-02-20 14:14:53,319 - codesimulator - DEBUG - Moved mouse to (228, 727)
+2025-02-20 14:15:07,273 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-20 14:15:07,905 - codesimulator - DEBUG - Moved mouse to (58, 403)
+2025-02-20 14:15:20,912 - codesimulator - DEBUG - Moved mouse to (1341, 812)
+2025-02-20 14:15:32,198 - codesimulator - DEBUG - Moved mouse to (1324, 372)
+2025-02-20 14:15:42,432 - codesimulator - DEBUG - Moved mouse to (1120, 449)
+2025-02-20 14:15:44,075 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-20 14:15:50,295 - codesimulator - INFO - Typed line:           here)
+2025-02-20 14:15:51,331 - codesimulator - INFO - Typed line:  
+2025-02-20 14:15:52,379 - codesimulator - DEBUG - Moved mouse to (1251, 822)
+2025-02-20 14:16:06,637 - codesimulator - DEBUG - Moved mouse to (434, 836)
+2025-02-20 14:16:13,964 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-20 14:16:21,222 - codesimulator - DEBUG - Moved mouse to (1332, 619)
+2025-02-20 14:16:29,464 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-20 14:16:33,057 - codesimulator - DEBUG - Moved mouse to (797, 786)
+2025-02-20 14:16:44,638 - codesimulator - DEBUG - Moved mouse to (1429, 337)
+2025-02-20 14:16:46,661 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-20 14:16:53,542 - codesimulator - DEBUG - Moved mouse to (11, 254)
+2025-02-20 14:16:53,668 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:17:06,262 - codesimulator - DEBUG - Moved mouse to (1219, 153)
+2025-02-20 14:17:08,309 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-20 14:17:13,170 - codesimulator - DEBUG - Moved mouse to (422, 629)
+2025-02-20 14:17:28,525 - codesimulator - DEBUG - Moved mouse to (1358, 139)
+2025-02-20 14:17:36,698 - codesimulator - DEBUG - Moved mouse to (1460, 970)
+2025-02-20 14:17:40,746 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-20 14:17:41,753 - codesimulator - INFO - Typed line:  
+2025-02-20 14:17:48,814 - codesimulator - DEBUG - Moved mouse to (975, 499)
+2025-02-20 14:17:55,996 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-20 14:18:01,391 - codesimulator - DEBUG - Moved mouse to (83, 779)
+2025-02-20 14:18:10,991 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-20 14:18:14,711 - codesimulator - DEBUG - Moved mouse to (390, 26)
+2025-02-20 14:18:22,637 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-20 14:18:28,309 - codesimulator - DEBUG - Moved mouse to (230, 856)
+2025-02-20 14:18:38,748 - codesimulator - DEBUG - Moved mouse to (738, 644)
+2025-02-20 14:18:42,147 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-20 14:18:45,227 - codesimulator - DEBUG - Moved mouse to (1246, 647)
+2025-02-20 14:18:48,799 - codesimulator - INFO - Typed line:         env:
+2025-02-20 14:18:58,880 - codesimulator - DEBUG - Moved mouse to (681, 92)
+2025-02-20 14:19:06,728 - codesimulator - DEBUG - Moved mouse to (1222, 51)
+2025-02-20 14:19:12,523 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-20 14:19:18,295 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:19:22,949 - codesimulator - DEBUG - Moved mouse to (110, 744)
+2025-02-20 14:19:34,359 - codesimulator - DEBUG - Moved mouse to (1404, 804)
+2025-02-20 14:19:35,528 - codesimulator - INFO - Typed line:           tag_name: ${{ github.ref }}
+2025-02-20 14:19:42,741 - codesimulator - DEBUG - Moved mouse to (409, 793)
+2025-02-20 14:19:50,963 - codesimulator - DEBUG - Moved mouse to (91, 183)
+2025-02-20 14:19:56,238 - codesimulator - INFO - Typed line:           release_name: Release ${{ github.ref }}
+2025-02-20 14:20:05,893 - codesimulator - DEBUG - Moved mouse to (949, 162)
+2025-02-20 14:20:06,296 - codesimulator - INFO - Typed line:           draft: false
+2025-02-20 14:20:15,673 - codesimulator - DEBUG - Moved mouse to (1376, 107)
+2025-02-20 14:20:18,744 - codesimulator - INFO - Typed line:           prerelease: false
+2025-02-20 14:20:19,819 - codesimulator - INFO - Typed line:  
+2025-02-20 14:20:22,004 - codesimulator - DEBUG - Moved mouse to (1276, 807)
+2025-02-20 14:20:28,130 - codesimulator - DEBUG - Moved mouse to (1257, 186)
+2025-02-20 14:20:36,572 - codesimulator - DEBUG - Moved mouse to (189, 759)
+2025-02-20 14:20:45,449 - codesimulator - INFO - Typed line:        #Step 9: Upload installer to the GitHub Release
+2025-02-20 14:20:49,190 - codesimulator - DEBUG - Moved mouse to (1377, 102)
+2025-02-20 14:20:59,177 - codesimulator - INFO - Typed line:       name: Upload Release Asset
+2025-02-20 14:21:03,304 - codesimulator - DEBUG - Moved mouse to (1043, 768)
+2025-02-20 14:21:12,578 - codesimulator - DEBUG - Moved mouse to (1093, 467)
+2025-02-20 14:21:21,671 - codesimulator - INFO - Typed line:         uses: actions  upload  release  asset@v1
+2025-02-20 14:21:25,409 - codesimulator - DEBUG - Moved mouse to (651, 759)
+2025-02-20 14:21:27,206 - codesimulator - INFO - Typed line:         env:
+2025-02-20 14:21:33,184 - codesimulator - DEBUG - Moved mouse to (143, 652)
+2025-02-20 14:21:47,687 - codesimulator - DEBUG - Moved mouse to (1021, 81)
+2025-02-20 14:21:48,451 - codesimulator - INFO - Typed line:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+2025-02-20 14:21:54,239 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:22:03,220 - codesimulator - DEBUG - Moved mouse to (909, 680)
+2025-02-20 14:22:18,906 - codesimulator - DEBUG - Moved mouse to (1456, 494)
+2025-02-20 14:22:22,896 - codesimulator - INFO - Typed line:           upload_url: ${{ steps.create_release.outputs.upload_url }}
+2025-02-20 14:22:32,904 - codesimulator - DEBUG - Moved mouse to (613, 977)
+2025-02-20 14:22:43,685 - codesimulator - DEBUG - Moved mouse to (743, 893)
+2025-02-20 14:22:55,596 - codesimulator - DEBUG - Moved mouse to (724, 689)
+2025-02-20 14:22:59,274 - codesimulator - INFO - Typed line:           asset_path: dist  YourInstaller.exe   #update this to the actual installer name
+2025-02-20 14:23:05,480 - codesimulator - DEBUG - Moved mouse to (807, 755)
+2025-02-20 14:23:14,524 - codesimulator - INFO - Typed line:           asset_name: YourInstaller.exe
+2025-02-20 14:23:18,761 - codesimulator - DEBUG - Moved mouse to (935, 56)
+2025-02-20 14:23:27,966 - codesimulator - DEBUG - Moved mouse to (315, 713)
+2025-02-20 14:23:36,481 - codesimulator - DEBUG - Moved mouse to (115, 18)
+2025-02-20 14:23:40,114 - codesimulator - INFO - Typed line:           asset_content_type: application  octet  stream
+2025-02-20 14:23:41,154 - codesimulator - INFO - Typed line:  
+2025-02-20 14:23:43,338 - codesimulator - DEBUG - Moved mouse to (260, 854)
+2025-02-20 14:23:55,624 - codesimulator - DEBUG - Moved mouse to (989, 699)
+2025-02-20 14:24:01,097 - codesimulator - DEBUG - Moved mouse to (1091, 880)
+2025-02-20 14:24:06,976 - codesimulator - INFO - Typed line:        #Step 10: Update release.md with link to installer
+2025-02-20 14:24:15,436 - codesimulator - DEBUG - Moved mouse to (1209, 868)
+2025-02-20 14:24:19,300 - codesimulator - INFO - Typed line:       name: Update release.md
+2025-02-20 14:24:25,292 - codesimulator - INFO - Typed line:         run: |
+2025-02-20 14:24:27,815 - codesimulator - DEBUG - Moved mouse to (771, 45)
+2025-02-20 14:24:35,281 - codesimulator - DEBUG - Moved mouse to (886, 399)
+2025-02-20 14:24:44,033 - codesimulator - DEBUG - Moved mouse to (261, 912)
+2025-02-20 14:24:56,736 - codesimulator - DEBUG - Moved mouse to (738, 664)
+2025-02-20 14:25:02,002 - codesimulator - INFO - Typed line:            #Assume release.md contains a placeholder line like "Latest release:   LINK  "
+2025-02-20 14:25:04,429 - codesimulator - DEBUG - Moved mouse to (825, 126)
+2025-02-20 14:25:11,013 - codesimulator - DEBUG - Moved mouse to (881, 539)
+2025-02-20 14:25:23,977 - codesimulator - DEBUG - Moved mouse to (298, 839)
+2025-02-20 14:25:32,746 - codesimulator - DEBUG - Moved mouse to (96, 729)
+2025-02-20 14:25:36,196 - codesimulator - INFO - Typed line:            #and that the installer asset URL can be constructed from the release.
+2025-02-20 14:25:39,865 - codesimulator - DEBUG - Moved mouse to (936, 320)
+2025-02-20 14:25:46,144 - codesimulator - DEBUG - Moved mouse to (1362, 364)
+2025-02-20 14:25:56,084 - codesimulator - DEBUG - Moved mouse to (417, 860)
+2025-02-20 14:26:05,405 - codesimulator - INFO - Typed line:           echo "Updating release.md with the new installer link..."
+2025-02-20 14:26:05,895 - codesimulator - DEBUG - Moved mouse to (578, 653)
+2025-02-20 14:26:12,691 - codesimulator - DEBUG - Moved mouse to (1411, 406)
+2025-02-20 14:26:22,888 - codesimulator - DEBUG - Moved mouse to (1459, 802)
+2025-02-20 14:26:31,997 - codesimulator - DEBUG - Moved mouse to (86, 356)
+2025-02-20 14:26:41,133 - codesimulator - INFO - Typed line:           INSTALLER_URL  "https:    github.com  ${{ github.repository }}  releases
+2025-02-20 14:26:42,488 - codesimulator - DEBUG - Moved mouse to (517, 757)
+2025-02-20 14:26:56,347 - codesimulator - DEBUG - Moved mouse to (1090, 721)
+2025-02-20 14:27:04,804 - codesimulator - DEBUG - Moved mouse to (1061, 822)
+2025-02-20 14:27:06,196 - codesimulator - INFO - Typed line:           download  ${{ github.ref_name }}  YourInstaller.exe"
+2025-02-20 14:27:19,936 - codesimulator - DEBUG - Moved mouse to (1424, 154)
+2025-02-20 14:27:28,571 - codesimulator - DEBUG - Moved mouse to (962, 828)
+2025-02-20 14:27:40,322 - codesimulator - INFO - Typed line:            #Use sed or PowerShell to update the file (example below using PowerShell):
+2025-02-20 14:27:42,187 - codesimulator - DEBUG - Moved mouse to (824, 862)
+2025-02-20 14:27:53,046 - codesimulator - DEBUG - Moved mouse to (1240, 278)
+2025-02-20 14:28:02,147 - codesimulator - DEBUG - Moved mouse to (147, 607)
+2025-02-20 14:28:05,285 - codesimulator - INFO - Typed line:           powershell   Command "(Get  Content release.md)
+2025-02-20 14:28:10,052 - codesimulator - DEBUG - Moved mouse to (328, 50)
+2025-02-20 14:28:24,295 - codesimulator - DEBUG - Moved mouse to (1487, 78)
+2025-02-20 14:28:34,627 - codesimulator - DEBUG - Moved mouse to (1398, 339)
+2025-02-20 14:28:35,371 - codesimulator - INFO - Typed line:           replace '  LINK  ', '$INSTALLER_URL' | Set  Content release.md"
+2025-02-20 14:28:46,446 - codesimulator - DEBUG - Moved mouse to (1469, 291)
+2025-02-20 14:28:54,899 - codesimulator - DEBUG - Moved mouse to (1109, 385)
+2025-02-20 14:28:55,026 - codesimulator - INFO - Typed line:            #Commit and push the updated release.md
+2025-02-20 14:29:05,770 - codesimulator - DEBUG - Moved mouse to (1357, 905)
+2025-02-20 14:29:18,904 - codesimulator - INFO - Typed line:           git config user.name "github  actions[bot]"
+2025-02-20 14:29:21,050 - codesimulator - DEBUG - Moved mouse to (1214, 112)
+2025-02-20 14:29:32,421 - codesimulator - DEBUG - Moved mouse to (890, 65)
+2025-02-20 14:29:43,732 - codesimulator - DEBUG - Moved mouse to (1208, 597)
+2025-02-20 14:29:49,654 - codesimulator - INFO - Typed line:           git config user.email "github  actions[bot]@users.noreply.github.com"
+2025-02-20 14:29:54,842 - codesimulator - DEBUG - Moved mouse to (981, 246)
+2025-02-20 14:30:02,155 - codesimulator - INFO - Typed line:           git add release.md
+2025-02-20 14:30:09,356 - codesimulator - DEBUG - Moved mouse to (592, 843)
+2025-02-20 14:30:15,965 - codesimulator - DEBUG - Moved mouse to (872, 830)
+2025-02-20 14:30:30,660 - codesimulator - DEBUG - Moved mouse to (246, 44)
+2025-02-20 14:30:40,210 - codesimulator - INFO - Typed line:           git commit   m "Update release.md with installer link for ${{ github.ref_name
+2025-02-20 14:30:42,155 - codesimulator - DEBUG - Moved mouse to (702, 750)
+2025-02-20 14:30:46,090 - codesimulator - INFO - Typed line:           }}"
+2025-02-20 14:30:54,034 - codesimulator - INFO - Typed line:           git push
+2025-02-20 14:30:56,070 - codesimulator - DEBUG - Moved mouse to (925, 220)
+2025-02-20 14:30:56,492 - codesimulator - INFO - Typed line:  
+2025-02-20 14:30:57,659 - codesimulator - INFO - Typed line:  
+2025-02-20 14:30:58,645 - codesimulator - INFO - Typed line:  
+2025-02-20 14:30:59,998 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:01,238 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:02,592 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:03,937 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:05,029 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:06,030 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:07,347 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:08,740 - codesimulator - DEBUG - Moved mouse to (1375, 329)
+2025-02-20 14:31:20,035 - codesimulator - DEBUG - Moved mouse to (457, 714)
+2025-02-20 14:31:26,722 - codesimulator - INFO - Typed line:           name: Release Windows Installer
+2025-02-20 14:31:27,930 - codesimulator - INFO - Typed line:  
+2025-02-20 14:31:29,666 - codesimulator - INFO - Typed line: on:
+2025-02-20 14:31:31,003 - codesimulator - DEBUG - Moved mouse to (1103, 753)
+2025-02-20 14:31:34,065 - codesimulator - INFO - Typed line:   push:
+2025-02-20 14:31:38,283 - codesimulator - INFO - Typed line:     tags:
+2025-02-20 14:31:39,748 - codesimulator - DEBUG - Moved mouse to (1487, 154)
+2025-02-20 14:31:49,162 - codesimulator - DEBUG - Moved mouse to (762, 772)
+2025-02-20 14:31:57,386 - codesimulator - DEBUG - Moved mouse to (55, 735)
+2025-02-20 14:32:07,522 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-20 14:32:09,478 - codesimulator - INFO - Typed line:  
+2025-02-20 14:32:11,598 - codesimulator - DEBUG - Moved mouse to (96, 629)
+2025-02-20 14:32:12,610 - codesimulator - INFO - Typed line: jobs:
+2025-02-20 14:32:17,648 - codesimulator - INFO - Typed line:   release:
+2025-02-20 14:32:24,946 - codesimulator - DEBUG - Moved mouse to (483, 751)
+2025-02-20 14:32:30,802 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-20 14:32:35,468 - codesimulator - INFO - Typed line:     steps:
+2025-02-20 14:32:39,866 - codesimulator - DEBUG - Moved mouse to (45, 379)
+2025-02-20 14:32:51,956 - codesimulator - DEBUG - Moved mouse to (1321, 302)
+2025-02-20 14:32:52,404 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-20 14:33:02,409 - codesimulator - DEBUG - Moved mouse to (1011, 677)
+2025-02-20 14:33:04,728 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-20 14:33:17,774 - codesimulator - DEBUG - Moved mouse to (657, 699)
+2025-02-20 14:33:19,094 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-20 14:33:20,084 - codesimulator - INFO - Typed line:  
+2025-02-20 14:33:25,006 - codesimulator - DEBUG - Moved mouse to (498, 830)
+2025-02-20 14:33:31,284 - codesimulator - DEBUG - Moved mouse to (250, 745)
+2025-02-20 14:33:36,607 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-20 14:33:45,827 - codesimulator - DEBUG - Moved mouse to (1124, 434)
+2025-02-20 14:33:49,409 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-20 14:34:00,123 - codesimulator - DEBUG - Moved mouse to (1375, 927)
+2025-02-20 14:34:02,475 - codesimulator - INFO - Simulation stopped successfully.
+2025-02-20 14:34:02,478 - codesimulator - INFO - Simulation cancelled
+2025-02-20 14:34:02,479 - codesimulator - INFO - Simulation ended
+2025-02-20 14:34:14,992 - codesimulator - INFO - Simulation started successfully.
+2025-02-20 14:34:16,115 - codesimulator - INFO - Clicked at screen center
+2025-02-20 14:34:16,621 - codesimulator - INFO - Loading config from: /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/config.json
+2025-02-20 14:34:16,626 - codesimulator - INFO - Estimated typing time: 7h 50m 29s
+2025-02-20 14:34:17,302 - codesimulator - DEBUG - Moved mouse to (1123, 668)
+2025-02-20 14:34:18,633 - codesimulator - INFO - Started typing code from /Users/rylxes/WebDevelopment/rjClothing/simulationBriefcase/codesimulator/src/codesimulator/resources/code3.txt
+2025-02-20 14:34:28,015 - codesimulator - DEBUG - Moved mouse to (554, 888)
+2025-02-20 14:34:30,277 - codesimulator - INFO - Typed line: name: Release Windows Installer
+2025-02-20 14:34:31,318 - codesimulator - INFO - Typed line:  
+2025-02-20 14:34:33,174 - codesimulator - INFO - Typed line: on:
+2025-02-20 14:34:36,983 - codesimulator - INFO - Typed line:   push:
+2025-02-20 14:34:41,390 - codesimulator - DEBUG - Moved mouse to (611, 37)
+2025-02-20 14:34:42,140 - codesimulator - INFO - Typed line:     tags:
+2025-02-20 14:34:49,899 - codesimulator - DEBUG - Moved mouse to (1005, 232)
+2025-02-20 14:34:57,099 - codesimulator - DEBUG - Moved mouse to (715, 741)
+2025-02-20 14:35:06,363 - codesimulator - INFO - Typed line:       'v  .  .  '   #triggers only on version tags (e.g. v1.0.0)
+2025-02-20 14:35:07,391 - codesimulator - INFO - Typed line:  
+2025-02-20 14:35:09,954 - codesimulator - INFO - Typed line: jobs:
+2025-02-20 14:35:12,710 - codesimulator - DEBUG - Moved mouse to (1101, 863)
+2025-02-20 14:35:14,548 - codesimulator - INFO - Typed line:   release:
+2025-02-20 14:35:26,715 - codesimulator - DEBUG - Moved mouse to (911, 462)
+2025-02-20 14:35:26,844 - codesimulator - INFO - Typed line:     runs  on: windows  latest
+2025-02-20 14:35:33,026 - codesimulator - DEBUG - Moved mouse to (818, 117)
+2025-02-20 14:35:33,150 - codesimulator - INFO - Typed line:     steps:
+2025-02-20 14:35:46,757 - codesimulator - DEBUG - Moved mouse to (541, 918)
+2025-02-20 14:35:48,179 - codesimulator - INFO - Typed line:        #Step 1: Checkout the repository
+2025-02-20 14:35:56,320 - codesimulator - DEBUG - Moved mouse to (601, 873)
+2025-02-20 14:36:00,110 - codesimulator - INFO - Typed line:       name: Checkout Repository
+2025-02-20 14:36:09,289 - codesimulator - DEBUG - Moved mouse to (1222, 828)
+2025-02-20 14:36:15,644 - codesimulator - INFO - Typed line:         uses: actions  checkout@v3
+2025-02-20 14:36:17,098 - codesimulator - DEBUG - Moved mouse to (851, 454)
+2025-02-20 14:36:17,223 - codesimulator - INFO - Typed line:  
+2025-02-20 14:36:26,472 - codesimulator - DEBUG - Moved mouse to (128, 82)
+2025-02-20 14:36:33,894 - codesimulator - INFO - Typed line:        #Step 2: Setup Node.js environment
+2025-02-20 14:36:35,984 - codesimulator - DEBUG - Moved mouse to (1209, 650)
+2025-02-20 14:36:44,722 - codesimulator - INFO - Typed line:       name: Setup Node.js
+2025-02-20 14:36:49,525 - codesimulator - DEBUG - Moved mouse to (894, 779)
+2025-02-20 14:37:01,747 - codesimulator - INFO - Typed line:         uses: actions  setup  node@v3
+2025-02-20 14:37:03,379 - codesimulator - DEBUG - Moved mouse to (329, 13)
+2025-02-20 14:37:07,771 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:37:17,009 - codesimulator - DEBUG - Moved mouse to (1107, 318)
+2025-02-20 14:37:20,159 - codesimulator - INFO - Typed line:           node  version: '16'
+2025-02-20 14:37:28,732 - codesimulator - INFO - Typed line:           cache: 'npm'
+2025-02-20 14:37:29,707 - codesimulator - INFO - Typed line:  
+2025-02-20 14:37:31,260 - codesimulator - DEBUG - Moved mouse to (1268, 563)
+2025-02-20 14:37:36,970 - codesimulator - DEBUG - Moved mouse to (1126, 679)
+2025-02-20 14:37:50,208 - codesimulator - INFO - Typed line:        #(Optional) Step 3: Setup Python environment
+2025-02-20 14:37:51,684 - codesimulator - DEBUG - Moved mouse to (514, 847)
+2025-02-20 14:38:01,886 - codesimulator - INFO - Typed line:       name: Setup Python
+2025-02-20 14:38:03,437 - codesimulator - DEBUG - Moved mouse to (1161, 475)
+2025-02-20 14:38:17,197 - codesimulator - DEBUG - Moved mouse to (29, 229)
+2025-02-20 14:38:18,831 - codesimulator - INFO - Typed line:         uses: actions  setup  python@v4
+2025-02-20 14:38:24,590 - codesimulator - DEBUG - Moved mouse to (1478, 592)
+2025-02-20 14:38:25,673 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:38:38,541 - codesimulator - INFO - Typed line:           python  version: '3.x'
+2025-02-20 14:38:40,040 - codesimulator - DEBUG - Moved mouse to (401, 604)
+2025-02-20 14:38:40,540 - codesimulator - INFO - Typed line:  
+2025-02-20 14:38:46,601 - codesimulator - DEBUG - Moved mouse to (415, 846)
+2025-02-20 14:38:57,789 - codesimulator - INFO - Typed line:        #Step 4: Install project dependencies
+2025-02-20 14:39:01,188 - codesimulator - DEBUG - Moved mouse to (43, 370)
+2025-02-20 14:39:10,400 - codesimulator - INFO - Typed line:       name: Install Dependencies
+2025-02-20 14:39:12,211 - codesimulator - DEBUG - Moved mouse to (1000, 49)
+2025-02-20 14:39:19,355 - codesimulator - DEBUG - Moved mouse to (1218, 680)
+2025-02-20 14:39:21,797 - codesimulator - INFO - Typed line:         run: npm install
+2025-02-20 14:39:22,838 - codesimulator - INFO - Typed line:  
+2025-02-20 14:39:33,577 - codesimulator - DEBUG - Moved mouse to (1459, 945)
+2025-02-20 14:39:43,306 - codesimulator - DEBUG - Moved mouse to (1506, 947)
+2025-02-20 14:39:47,165 - codesimulator - INFO - Typed line:        #(Optional) Step 5: Run any pre  build scripts if needed
+2025-02-20 14:39:56,076 - codesimulator - DEBUG - Moved mouse to (21, 840)
+2025-02-20 14:39:58,716 - codesimulator - INFO - Typed line:       name: Build Project
+2025-02-20 14:40:08,439 - codesimulator - INFO - Typed line:         run: npm run build
+2025-02-20 14:40:10,108 - codesimulator - DEBUG - Moved mouse to (901, 774)
+2025-02-20 14:40:11,145 - codesimulator - INFO - Typed line:  
+2025-02-20 14:40:22,714 - codesimulator - DEBUG - Moved mouse to (595, 791)
+2025-02-20 14:40:30,827 - codesimulator - DEBUG - Moved mouse to (159, 764)
+2025-02-20 14:40:36,806 - codesimulator - INFO - Typed line:        #Step 6: Package Windows Installer using electron  builder
+2025-02-20 14:40:41,590 - codesimulator - DEBUG - Moved mouse to (1155, 931)
+2025-02-20 14:40:48,071 - codesimulator - DEBUG - Moved mouse to (1291, 237)
+2025-02-20 14:40:51,233 - codesimulator - INFO - Typed line:       name: Package Installer
+2025-02-20 14:41:00,365 - codesimulator - DEBUG - Moved mouse to (404, 860)
+2025-02-20 14:41:10,577 - codesimulator - INFO - Typed line:         run: npx electron  builder     win     x64
+2025-02-20 14:41:15,178 - codesimulator - DEBUG - Moved mouse to (27, 671)
+2025-02-20 14:41:15,634 - codesimulator - INFO - Typed line:         env:
+2025-02-20 14:41:21,495 - codesimulator - DEBUG - Moved mouse to (254, 768)
+2025-02-20 14:41:37,577 - codesimulator - DEBUG - Moved mouse to (1145, 782)
+2025-02-20 14:41:42,403 - codesimulator - INFO - Typed line:           ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+2025-02-20 14:41:48,078 - codesimulator - DEBUG - Moved mouse to (1372, 877)
+2025-02-20 14:42:00,086 - codesimulator - DEBUG - Moved mouse to (441, 93)
+2025-02-20 14:42:15,910 - codesimulator - DEBUG - Moved mouse to (1309, 61)
+2025-02-20 14:42:17,538 - codesimulator - INFO - Typed line:            #(Additional environment variables for signing or code signing can be added
+2025-02-20 14:42:22,541 - codesimulator - INFO - Typed line:           here)
+2025-02-20 14:42:23,689 - codesimulator - INFO - Typed line:  
+2025-02-20 14:42:26,347 - codesimulator - DEBUG - Moved mouse to (1496, 839)
+2025-02-20 14:42:35,134 - codesimulator - DEBUG - Moved mouse to (514, 43)
+2025-02-20 14:42:45,843 - codesimulator - DEBUG - Moved mouse to (627, 982)
+2025-02-20 14:42:49,892 - codesimulator - INFO - Typed line:        #Step 7: Upload built installer as an artifact
+2025-02-20 14:42:57,957 - codesimulator - DEBUG - Moved mouse to (1012, 789)
+2025-02-20 14:43:04,994 - codesimulator - INFO - Typed line:       name: Upload Installer Artifact
+2025-02-20 14:43:11,957 - codesimulator - DEBUG - Moved mouse to (1269, 549)
+2025-02-20 14:43:21,888 - codesimulator - DEBUG - Moved mouse to (885, 192)
+2025-02-20 14:43:22,020 - codesimulator - INFO - Typed line:         uses: actions  upload  artifact@v3
+2025-02-20 14:43:27,226 - codesimulator - INFO - Typed line:         with:
+2025-02-20 14:43:35,303 - codesimulator - DEBUG - Moved mouse to (638, 853)
+2025-02-20 14:43:43,598 - codesimulator - DEBUG - Moved mouse to (976, 249)
+2025-02-20 14:43:44,273 - codesimulator - INFO - Typed line:           name: windows  installer
+2025-02-20 14:43:59,419 - codesimulator - DEBUG - Moved mouse to (399, 630)
+2025-02-20 14:44:12,931 - codesimulator - INFO - Typed line:           path: dist    .exe   #adjust to match your actual output artifact
+2025-02-20 14:44:14,985 - codesimulator - DEBUG - Moved mouse to (1197, 228)
+2025-02-20 14:44:15,479 - codesimulator - INFO - Typed line:  
+2025-02-20 14:44:28,967 - codesimulator - DEBUG - Moved mouse to (1298, 842)
+2025-02-20 14:44:31,027 - codesimulator - INFO - Typed line:        #Step 8: Create GitHub Release
+2025-02-20 14:44:35,425 - codesimulator - DEBUG - Moved mouse to (868, 940)
+2025-02-20 14:44:45,785 - codesimulator - INFO - Typed line:       name: Create GitHub Release
+2025-02-20 14:44:48,504 - codesimulator - DEBUG - Moved mouse to (157, 955)
+2025-02-20 14:44:56,171 - codesimulator - INFO - Typed line:         id: create_release
+2025-02-20 14:45:03,716 - codesimulator - DEBUG - Moved mouse to (214, 93)
+2025-02-20 14:45:11,922 - codesimulator - DEBUG - Moved mouse to (1176, 191)
+2025-02-20 14:45:14,962 - codesimulator - INFO - Typed line:         uses: actions  create  release@v1
+2025-02-20 14:45:19,747 - codesimulator - INFO - Typed line:         env:
+2025-02-20 14:45:24,319 - codesimulator - DEBUG - Moved mouse to (1510, 439)
+2025-02-20 14:45:32,130 - codesimulator - DEBUG - Moved mouse to (463, 98)
+2025-02-20 14:45:34,458 - codesimulator - INFO - Simulation stopped successfully.
+2025-02-20 14:45:34,458 - codesimulator - INFO - Simulation cancelled
+2025-02-20 14:45:34,458 - codesimulator - INFO - Simulation ended
+2025-02-20 15:24:36,730 - codesimulator - INFO - Successfully loaded configuration
+2025-02-20 15:24:36,730 - codesimulator - INFO - Successfully configured simulation settings
+2025-02-20 15:24:36,741 - codesimulator - INFO - MacOS key handler initialized successfully
+2025-02-20 15:24:36,741 - codesimulator - INFO - Application started successfully.
+2025-02-24 20:47:55,483 - codesimulator - INFO - Successfully loaded configuration
+2025-02-24 20:47:55,483 - codesimulator - INFO - Successfully configured simulation settings
+2025-02-24 20:47:55,498 - codesimulator - INFO - MacOS key handler initialized successfully
+2025-02-24 20:47:55,498 - codesimulator - INFO - Application started successfully.
