@@ -42337,3 +42337,7 @@
 2025-02-25 19:28:11,381 - codesimulator - INFO - Successfully configured simulation settings
 2025-02-25 19:28:11,395 - codesimulator - INFO - MacOS key handler initialized successfully
 2025-02-25 19:28:11,395 - codesimulator - INFO - Application started successfully.
+2025-02-25 22:38:52,446 - codesimulator - INFO - Successfully loaded configuration
+2025-02-25 22:38:52,446 - codesimulator - INFO - Successfully configured simulation settings
+2025-02-25 22:38:52,457 - codesimulator - INFO - MacOS key handler initialized successfully
+2025-02-25 22:38:52,458 - codesimulator - INFO - Application started successfully.

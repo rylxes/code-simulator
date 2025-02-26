@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 from typing import Optional
 import toga
@@ -25,85 +26,137 @@ class CodeSimulator(toga.App):
         logger.info("Application started successfully.")
 
     def setup_ui(self):
-        # Header with title and subheader
-        header = toga.Label(
+        # Create a modern color scheme
+        self.colors = {
+            'primary': rgb(60, 120, 200),  # Blue
+            'accent': rgb(60, 180, 100),  # Green
+            'danger': rgb(220, 70, 70),  # Red
+            'background': rgb(250, 250, 252),  # Off-white
+            'card': rgb(255, 255, 255),  # White
+            'text': rgb(50, 50, 50),  # Dark grey
+            'text_light': rgb(120, 120, 120)  # Light grey
+        }
+
+        # Main box with column layout
+        main_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+
+        # Title header
+        header = toga.Box(style=Pack(direction=COLUMN, padding=10, background_color=self.colors['primary']))
+        title = toga.Label(
             "Code Simulator",
-            style=Pack(font_size=28, font_weight="bold", padding=(10, 0), text_align=CENTER)
+            style=Pack(
+                font_size=24,
+                font_weight="bold",
+                padding=5,
+                color=rgb(255, 255, 255),
+                text_align=CENTER
+            )
         )
-        subheader = toga.Label(
-            "Select a simulation mode and optionally choose a code file. Then start the simulation.",
-            style=Pack(font_size=14, color=rgb(80, 80, 80), padding=(0, 10), text_align=CENTER)
+        subtitle = toga.Label(
+            "Select mode and code file, then start simulation",
+            style=Pack(
+                font_size=14,
+                padding=(0, 5, 5, 5),
+                color=rgb(220, 220, 220),
+                text_align=CENTER
+            )
         )
 
-        # Sidebar: simulation mode selector, file chooser and control buttons
-        sidebar = toga.Box(style=Pack(direction=COLUMN, padding=10, background_color=rgb(250, 250, 250), width=250))
+        header.add(title)
+        header.add(subtitle)
+        main_box.add(header)
+
+        # Content container with two columns
+        content = toga.Box(style=Pack(direction=ROW, padding=10))
+
+        # Left column - Controls
+        left_column = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=1))
+
+        # Mode selection
         mode_label = toga.Label(
             "Simulation Mode:",
-            style=Pack(padding_bottom=5, font_size=12, font_weight="bold")
+            style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
         )
         self.simulation_modes = ["Typing Only", "Tab Switching Only", "Hybrid"]
         self.mode_selector = toga.Selection(
             items=self.simulation_modes,
-            value=self.simulation_modes[2],  # Default to Hybrid
-            style=Pack(padding_bottom=20)
+            value=self.simulation_modes[2],
+            style=Pack(padding=(0, 0, 20, 0))
         )
-        # File chooser area
+        left_column.add(mode_label)
+        left_column.add(self.mode_selector)
+
+        # File selection
         file_label = toga.Label(
-            "Selected Code File:",
-            style=Pack(padding_bottom=5, font_size=12, font_weight="bold")
+            "Selected File:",
+            style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
         )
         self.file_display = toga.Label(
             "Using default resources/code files",
-            style=Pack(padding_bottom=10, font_size=11, color=rgb(100, 100, 100))
+            style=Pack(padding=(0, 0, 10, 0), color=self.colors['text_light'])
         )
         choose_file_button = toga.Button(
             "Choose File",
             on_press=self.choose_file,
-            style=Pack(padding=5, background_color=rgb(60, 180, 100), color="white")
+            style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
         )
+        left_column.add(file_label)
+        left_column.add(self.file_display)
+        left_column.add(choose_file_button)
+
+        # Action buttons
+        button_box = toga.Box(style=Pack(direction=ROW, padding=(20, 0, 10, 0)))
         self.start_button = toga.Button(
             "Start Simulation",
             on_press=self.start_simulation,
-            style=Pack(padding=5, background_color=rgb(60, 120, 200), color="white")
+            style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
         )
         self.stop_button = toga.Button(
             "Stop Simulation",
             on_press=self.stop_simulation,
-            style=Pack(padding=5, background_color=rgb(200, 60, 60), color="white"),
+            style=Pack(padding=5, background_color=self.colors['danger'], color=rgb(255, 255, 255)),
             enabled=False
         )
-        extra_settings_label = toga.Label(
-            "Additional Settings (Coming Soon)",
-            style=Pack(font_size=10, padding_top=20, color=rgb(120, 120, 120))
-        )
-        sidebar.add(mode_label)
-        sidebar.add(self.mode_selector)
-        sidebar.add(file_label)
-        sidebar.add(self.file_display)
-        sidebar.add(choose_file_button)
-        sidebar.add(self.start_button)
-        sidebar.add(self.stop_button)
-        sidebar.add(extra_settings_label)
+        button_box.add(self.start_button)
+        button_box.add(toga.Box(style=Pack(flex=1)))  # Spacer
+        button_box.add(self.stop_button)
+        left_column.add(button_box)
 
-        # Main panel: scrollable text box for simulation log output.
+        # Information box
+        info_box = toga.Box(style=Pack(direction=COLUMN, padding=(20, 0, 0, 0)))
+        info_label = toga.Label(
+            "Keyboard Shortcuts:",
+            style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+        )
+        info_text = toga.Label(
+            "⌘+S: Start Simulation\n⌘+X: Stop Simulation",
+            style=Pack(color=self.colors['text_light'])
+        )
+        info_box.add(info_label)
+        info_box.add(info_text)
+        left_column.add(info_box)
+
+        # Right column - Output
+        right_column = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=2))
+        output_label = toga.Label(
+            "Simulation Log:",
+            style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+        )
         self.text_box = toga.MultilineTextInput(
             readonly=True,
-            placeholder="Simulation log output will appear here...",
-            style=Pack(flex=1, padding=10, font_family="monospace", background_color=rgb(250, 250, 250))
+            style=Pack(flex=1, background_color=rgb(245, 245, 250))
         )
-        main_panel = toga.ScrollContainer(content=self.text_box, style=Pack(flex=1, padding=10))
+        right_column.add(output_label)
+        right_column.add(self.text_box)
 
-        # Combine sidebar and main panel into a horizontal box
-        content_box = toga.Box(style=Pack(direction=ROW, flex=1))
-        content_box.add(sidebar)
-        content_box.add(main_panel)
+        # Add columns to content
+        content.add(left_column)
+        content.add(right_column)
 
-        # Overall layout: header on top, then content
-        main_box = toga.Box(style=Pack(direction=COLUMN, flex=1))
-        main_box.add(header)
-        main_box.add(subheader)
-        main_box.add(content_box)
+        # Add content to main box
+        main_box.add(content)
 
+        # Configure main window
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = main_box
 
@@ -127,16 +180,18 @@ class CodeSimulator(toga.App):
         self.simulation_task = None
 
     async def choose_file(self, widget):
-        # Use the new Toga dialog API for file selection
+        # Use the Toga dialog API for file selection
         dialog = toga.OpenFileDialog(
             title="Select a Code File",
-            file_types=["*.txt"]
+            file_types=["txt"]
         )
         file_paths = await self.main_window.dialog(dialog)
         if file_paths:
             # Assuming single file selection
             self.selected_file = file_paths[0]
-            self.file_display.text = self.selected_file
+            # Only show the filename, not the entire path
+            filename = os.path.basename(self.selected_file)
+            self.file_display.text = f"Selected: {filename}"
             logger.info(f"Selected file: {self.selected_file}")
         else:
             self.selected_file = None
@@ -146,21 +201,26 @@ class CodeSimulator(toga.App):
     async def start_simulation(self, widget):
         if not self.action_simulator.loop_flag:
             try:
-                self.text_box.value = "Starting simulation...\n"
+                self.text_box.value = "🚀 Starting simulation...\n"
                 self.update_button_states(running=True)
                 self.action_simulator.loop_flag = True
 
                 # Set simulation mode based on user selection
                 selected_mode = self.mode_selector.value
                 self.action_simulator.simulation_mode = selected_mode
+                self.text_box.value += f"▶️ Mode: {selected_mode}\n"
 
                 # If a file has been manually chosen and mode requires typing, pass that file.
                 if self.selected_file and selected_mode in ["Typing Only", "Hybrid"]:
                     file_to_use = self.selected_file
+                    filename = os.path.basename(file_to_use)
+                    self.text_box.value += f"📄 Using selected file: {filename}\n"
                 else:
                     file_to_use = None  # simulator will fall back to cycling default files
+                    self.text_box.value += "📄 Using default code samples\n"
 
                 if not self.simulation_task:
+                    self.text_box.value += "⏳ Calculating typing time...\n"
                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
                 logger.info("Simulation started successfully.")
             except Exception as e:
@@ -168,31 +228,49 @@ class CodeSimulator(toga.App):
                 await self.stop_simulation(widget)
 
     async def run_continuous_simulation(self, file_to_use: Optional[str]):
-        while self.action_simulator.loop_flag:
-            # If a file was manually chosen, use it; else, get the next available file.
-            next_file = file_to_use if file_to_use else self.action_simulator.get_next_code_file()
-            if not next_file:
-                self.text_box.value += "No code files found in resources/code directory.\n"
-                await asyncio.sleep(2)
-                continue
+        try:
+            while self.action_simulator.loop_flag:
+                # If a file was manually chosen, use it; else, get the next available file.
+                next_file = file_to_use if file_to_use else self.action_simulator.get_next_code_file()
+                if not next_file:
+                    self.text_box.value += "❌ No code files found in resources/code directory.\n"
+                    await asyncio.sleep(2)
+                    continue
 
-            if self.action_simulator.simulation_mode == "Typing Only":
-                await self.action_simulator.simulate_typing(next_file)
-            elif self.action_simulator.simulation_mode == "Tab Switching Only":
-                self.action_simulator.switch_window()
-                await asyncio.sleep(2)
-            elif self.action_simulator.simulation_mode == "Hybrid":
-                await self.action_simulator.simulate_typing(next_file)
-                self.action_simulator.switch_window()
-                await asyncio.sleep(2)
+                # Calculate estimated typing time
+                if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
+                    await self.action_simulator.calculate_typing_time(next_file)
 
-            self.text_box.value += f"\nFinished simulating file: {next_file}\nCycle completed. Restarting...\n"
-            await asyncio.sleep(2)
+                # Run appropriate simulation based on mode
+                if self.action_simulator.simulation_mode == "Typing Only":
+                    self.text_box.value += "⌨️ Simulating typing...\n"
+                    await self.action_simulator.simulate_typing(next_file)
+                elif self.action_simulator.simulation_mode == "Tab Switching Only":
+                    self.text_box.value += "🔄 Switching between applications...\n"
+                    self.action_simulator.switch_window()
+                    await asyncio.sleep(2)
+                elif self.action_simulator.simulation_mode == "Hybrid":
+                    self.text_box.value += "⌨️ Simulating typing...\n"
+                    await self.action_simulator.simulate_typing(next_file)
+                    self.text_box.value += "🔄 Switching between applications...\n"
+                    self.action_simulator.switch_window()
+                    await asyncio.sleep(2)
+
+                filename = os.path.basename(next_file)
+                self.text_box.value += f"\n✅ Finished simulating file: {filename}\n"
+                self.text_box.value += "🔄 Cycle completed. Restarting...\n\n"
+                await asyncio.sleep(2)
+        except asyncio.CancelledError:
+            self.text_box.value += "⏹️ Simulation task cancelled.\n"
+        except Exception as e:
+            self.text_box.value += f"❌ Error during simulation: {str(e)}\n"
+            logger.error(f"Error in continuous simulation: {e}")
+            self.stop_simulation(None)
 
     async def stop_simulation(self, widget):
         if self.action_simulator.loop_flag:
             try:
-                self.text_box.value += "Stopping simulation...\n"
+                self.text_box.value += "⏹️ Stopping simulation...\n"
                 self.action_simulator.loop_flag = False
                 self.update_button_states(running=False)
                 if self.simulation_task:
