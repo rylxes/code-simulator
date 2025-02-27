@@ -67,17 +67,16 @@ DEFAULT_APPS = {
 
 
 class AppConfig:
-    def __init__(self):
+    def __init__(self, app=None):
+        self.app = app
         self.config_path = self._get_config_path()
         self.platform = sys.platform
         self.apps = self._load_config()
 
     def _get_config_path(self) -> str:
         """Get the path to the configuration file."""
-        config_dir = os.path.join(os.path.dirname(__file__), 'resources')
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
-        return os.path.join(config_dir, 'applications.json')
+        from .path_utils import get_resource_path
+        return get_resource_path(self.app, 'applications.json')
 
     def _load_config(self) -> Dict:
         """Load the configuration file or create default if it doesn't exist."""

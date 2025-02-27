@@ -28,12 +28,29 @@ test_requires = [
     "pytest",
 ]
 
+resources = [
+    "src/codesimulator/resources",
+]
+
 [tool.briefcase.app.codesimulator.macOS]
 universal_build = true
 requires = [
     "toga-cocoa~=0.4.7",
     "std-nslog~=1.0.3",
+    "pyautogui>=0.9.53",
+    "PyQt5>=5.15"
 ]
+
+entitlements = [
+    "com.apple.security.automation.apple-events",
+    "com.apple.security.device.camera",  # if needed
+    "com.apple.security.device.audio-input",  # if needed
+]
+
+
+[tool.briefcase.app.codesimulator.macOS.info]
+NSAppleEventsUsageDescription = "Code Simulator needs to control other applications to perform simulations."
+NSAccessibilityUsageDescription = "Code Simulator needs accessibility access to simulate keyboard and mouse inputs."
 
 [tool.briefcase.app.codesimulator.linux]
 requires = [
@@ -156,6 +173,8 @@ flatpak_sdk = "org.gnome.Sdk"
 [tool.briefcase.app.codesimulator.windows]
 requires = [
     "toga-winforms~=0.4.7",
+    "pyautogui>=0.9.53",
+    "PyQt5>=5.15"
 ]
 
 # Mobile deployments

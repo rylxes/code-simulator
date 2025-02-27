@@ -1,5 +1,8 @@
 import asyncio
 import os
+import tempfile
+import platform
+import subprocess
 import sys
 from typing import Optional
 import toga
@@ -8,7 +11,10 @@ from toga.style.pack import COLUMN, ROW, CENTER
 from toga.colors import rgb
 from .actions import ActionSimulator
 from .key_handler import GlobalKeyHandler
-from .logging_config import logger
+from .logging_config import get_log_path, setup_file_logging, logger
+from .path_utils import log_environment_info, get_log_path
+
+log_environment_info()
 
 
 class CodeSimulator(toga.App):
@@ -20,7 +26,138 @@ class CodeSimulator(toga.App):
         # Store a manually selected file (if any)
         self.selected_file = None
 
+    async def show_debug_info(self, widget):
+
+        # Get system information
+        info = {
+            "OS": platform.system(),
+            "OS Version": platform.version(),
+            "Python Version": platform.python_version(),
+            "App Directory": os.path.dirname(os.path.abspath(__file__)),
+            "Current Directory": os.getcwd(),
+            "Log File": get_log_path(),
+            "Is Packaged": getattr(sys, 'frozen', False),
+            "Executable": sys.executable
+        }
+
+        # Display in text box
+        self.text_box.value = "--- Debug Information ---\n\n"
+        for key, value in info.items():
+            self.text_box.value += f"{key}: {value}\n"
+
+        # Log detailed info for troubleshooting
+        log_environment_info()
+
+        self.text_box.value += "\nDetailed debug information has been logged to the log file.\n"
+
+    async def view_console_logs(self, widget):
+        """View recent console output (for macOS/Linux only)"""
+        try:
+            if platform.system() == "Darwin":  # macOS
+                # Get last 50 lines from system log for this app
+                process = subprocess.Popen(
+                    ["log", "show", "--predicate", "process == 'Code Simulator'", "--last", "1h"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                stdout, stderr = process.communicate(timeout=5)
+
+                if stdout:
+                    self.text_box.value = "Recent Console Logs:\n\n" + stdout
+                else:
+                    self.text_box.value = "No recent console logs found.\n"
+                    if stderr:
+                        self.text_box.value += f"Error: {stderr}\n"
+            else:
+                self.text_box.value = "Console log viewing only supported on macOS."
+        except Exception as e:
+            self.text_box.value = f"Error viewing console logs: {e}"
+
+    async def view_logs(self, widget):
+
+
+        # Ensure file logging is set up
+        setup_file_logging()
+
+        # Get log path
+        log_path = get_log_path()
+
+        # Clear text box
+        self.text_box.value = "Log Information\n"
+        self.text_box.value += "=============\n\n"
+        self.text_box.value += f"Log file location: {log_path}\n\n"
+
+        # Write a test log message
+        logger.info("Test log message from View Logs button")
+
+        # Check if log file exists now
+        if not os.path.exists(log_path):
+            self.text_box.value += f"❌ Log file still not found after write attempt!\n\n"
+
+            # Try to create a simple text file in the same directory to test permissions
+            try:
+                log_dir = os.path.dirname(log_path)
+                test_file_path = os.path.join(log_dir, "test_write.txt")
+                with open(test_file_path, 'w') as f:
+                    f.write("Test write")
+                self.text_box.value += f"✓ Successfully created test file at: {test_file_path}\n"
+                os.remove(test_file_path)  # Clean up
+            except Exception as e:
+                self.text_box.value += f"❌ Could not write test file: {e}\n"
+                self.text_box.value += "This suggests a permissions issue or the directory doesn't exist\n"
+
+            # Print environment variables to help debug
+            self.text_box.value += "\nEnvironment Information:\n"
+            self.text_box.value += f"Working directory: {os.getcwd()}\n"
+            self.text_box.value += f"Home directory: {os.path.expanduser('~')}\n"
+            self.text_box.value += f"App directory: {os.path.dirname(__file__)}\n"
+            self.text_box.value += f"Python executable: {sys.executable}\n"
+            self.text_box.value += f"Is packaged: {getattr(sys, 'frozen', False)}\n"
+
+            # Suggest a location for logs
+            self.text_box.value += "\nTry looking for logs in these locations:\n"
+            self.text_box.value += f"1. {os.path.join(os.path.expanduser('~'), 'Library', 'Logs', 'CodeSimulator')}\n"
+            self.text_box.value += f"2. {tempfile.gettempdir()}\n"
+
+            return
+
+        # Display file stats
+        file_size = os.path.getsize(log_path)
+        last_modified = os.path.getmtime(log_path)
+        import datetime
+        mod_time = datetime.datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')
+
+        self.text_box.value += f"Log file size: {file_size} bytes\n"
+        self.text_box.value += f"Last modified: {mod_time}\n\n"
+
+        # Read and display log content
+        try:
+            with open(log_path, 'r') as f:
+                # For larger files, just get the last part
+                if file_size > 10000:
+                    self.text_box.value += f"Log file is large. Showing last portion...\n\n"
+                    f.seek(max(0, file_size - 10000))
+                    # Skip potentially incomplete first line
+                    f.readline()
+                    content = f.read()
+                else:
+                    content = f.read()
+
+            # Display content
+            self.text_box.value += "Log Content:\n"
+            self.text_box.value += "===========\n\n"
+            self.text_box.value += content
+
+        except Exception as e:
+            self.text_box.value += f"❌ Error reading log file: {e}\n"
+
     def startup(self):
+        # Ensure logging is set up
+        from .logging_config import setup_file_logging
+        setup_file_logging()
+
+        # Continue with normal startup
         self.setup_ui()
         self.setup_components()
         logger.info("Application started successfully.")
@@ -83,6 +220,27 @@ class CodeSimulator(toga.App):
             value=self.simulation_modes[2],
             style=Pack(padding=(0, 0, 20, 0))
         )
+        # Add View Logs button
+        view_logs_button = toga.Button(
+            "View Logs",
+            on_press=self.view_logs,
+            style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
+        )
+        debug_info_button = toga.Button(
+            "Debug Info",
+            on_press=self.show_debug_info,
+            style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+        )
+
+        # Add Console Logs button
+        console_logs_button = toga.Button(
+            "View Console Logs",
+            on_press=self.view_console_logs,
+            style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+        )
+        left_column.add(console_logs_button)
+        left_column.add(debug_info_button)
+        left_column.add(view_logs_button)
         left_column.add(mode_label)
         left_column.add(self.mode_selector)
 
@@ -175,7 +333,7 @@ class CodeSimulator(toga.App):
         self.main_window.show()
 
     def setup_components(self):
-        self.action_simulator = ActionSimulator(self.text_box)
+        self.action_simulator = ActionSimulator(self.text_box, self)
         self.key_handler = GlobalKeyHandler(self, self.action_simulator)
         self.simulation_task = None
 

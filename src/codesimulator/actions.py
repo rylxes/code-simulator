@@ -17,11 +17,12 @@ from .mouse import MouseController
 class ActionSimulator:
     """Simulates keyboard and mouse actions for code typing simulation."""
 
-    def __init__(self, text_box):
+    def __init__(self, text_box, app=None):
         self.text_box = text_box
+        self.app = app
         self.loop_flag = False
         self._configure_pyautogui()
-        self.app_config = AppConfig()
+        self.app_config = AppConfig(app)
         self.app_switcher = AppSwitcher(self.app_config)
         self.formatter_factory = FormatterFactory()
         self.formatter = None
@@ -68,11 +69,25 @@ class ActionSimulator:
         }
 
     def _get_config_path(self) -> str:
-        config_path = os.path.join(os.path.dirname(__file__), 'resources', 'config.json')
+        from .path_utils import get_resource_path
+        config_path = get_resource_path(self.app, 'config.json')
         if not os.path.exists(config_path):
             logger.error(f"Config file not found at {config_path}")
             raise FileNotFoundError(f"Config file not found at {config_path}")
         return config_path
+
+    def _get_code_files(self) -> list:
+        """Return a list of .txt files from the 'resources/code' directory."""
+        from .path_utils import get_resource_path
+        code_dir = get_resource_path(self.app, 'code')
+        if os.path.isdir(code_dir):
+            files = [os.path.join(code_dir, f) for f in os.listdir(code_dir) if f.endswith(".txt")]
+            if not files:
+                logger.warning(f"No .txt files found in {code_dir}")
+            return files
+        else:
+            logger.warning(f"Code directory not found: {code_dir}")
+            return []
 
     def _load_config(self) -> dict:
         try:
@@ -101,20 +116,16 @@ class ActionSimulator:
             self.max_line_length = 80
 
     def _configure_pyautogui(self):
-        pyautogui.FAILSAFE = True
-        pyautogui.PAUSE = 0.1
+        try:
+            import pyautogui
+            pyautogui.FAILSAFE = True
+            pyautogui.PAUSE = 0.1
+            logger.info(f"PyAutoGUI initialized. Screen size: {pyautogui.size()}")
+        except Exception as e:
+            logger.error(f"Failed to initialize PyAutoGUI: {e}")
+            self.text_box.value += f"⚠️ Warning: Failed to initialize PyAutoGUI: {e}\n"
 
-    def _get_code_files(self) -> list:
-        """Return a list of .txt files from the 'resources/code' directory."""
-        code_dir = os.path.join(os.path.dirname(__file__), "resources", "code")
-        if os.path.isdir(code_dir):
-            files = [os.path.join(code_dir, f) for f in os.listdir(code_dir) if f.endswith(".txt")]
-            if not files:
-                logger.warning(f"No .txt files found in {code_dir}")
-            return files
-        else:
-            logger.warning(f"Code directory not found: {code_dir}")
-            return []
+
 
     def get_next_code_file(self) -> Optional[str]:
         """Return the next code file in sequence (cycling through available files)."""
