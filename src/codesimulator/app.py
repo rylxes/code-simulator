@@ -141,163 +141,127 @@ class CodeSimulator(toga.App):
         logger.info("Application started successfully.")
 
     def setup_colors(self):
-        """Set up the color theme for the application."""
         self.colors = {
-            'primary': rgb(41, 98, 255),  # Main brand color
-            'secondary': rgb(0, 163, 92),  # Secondary brand color
-            'accent': rgb(83, 186, 122),  # Accent color for highlights
-            'danger': rgb(235, 64, 52),  # Danger/warning color
-            'background': rgb(245, 247, 250),  # Main background color
-            'card': rgb(255, 255, 255),  # Card background color
-            'text': rgb(33, 33, 33),  # Main text color
-            'text_light': rgb(108, 117, 125),  # Secondary text color
-            'border': rgb(222, 226, 230),  # Border color
-            'menu_bg': rgb(32, 41, 64),  # Side menu background
-            'menu_text': rgb(255, 255, 255),  # Side menu text
-            'menu_selected': rgb(53, 63, 88),  # Selected menu item
-            'menu_hover': rgb(47, 56, 80),  # Hover state for menu
-            'status_success': rgb(25, 135, 84),  # Success status color
-            'status_warning': rgb(255, 193, 7),  # Warning status color
-            'status_error': rgb(220, 53, 69),  # Error status color
-            'toolbar': rgb(52, 58, 64),  # Toolbar background
-            'toolbar_text': rgb(255, 255, 255),  # Toolbar text
+            'primary': rgb(0, 122, 255),  # Vibrant blue for actions
+            'secondary': rgb(0, 163, 92),  # Green for secondary actions
+            'danger': rgb(255, 45, 85),  # Red for stop
+            'background': rgb(34, 34, 34),  # Dark gray for main background
+            'card': rgb(34, 34, 50),  # Slightly lighter gray for cards
+            'text': rgb(230, 230, 230),  # Light gray for primary text
+            'text_light': rgb(160, 160, 160),  # Mid-gray for secondary text
+            'menu_bg': rgb(24, 24, 24),  # Darker shade for sidebar
+            'menu_text': rgb(255, 255, 255),  # White for menu text
+            'menu_selected': rgb(70, 70, 70),  # Lighter gray for selected menu item
+            'toolbar': rgb(24, 24, 24),  # Matches menu_bg for consistency
+            'toolbar_text': rgb(255, 255, 255),  # White for top bar text
         }
 
     def setup_ui(self):
-        """Create the main UI layout."""
         self.setup_colors()
 
-        # Main container
-        main_box = toga.Box(style=Pack(direction=ROW, flex=1))
+        # Main container with dark background
+        main_box = toga.Box(style=Pack(direction=COLUMN, flex=1, background_color=self.colors['background']))
 
-        # 1. Create the side menu
+        # Top Bar
+        top_bar = toga.Box(style=Pack(
+            direction=ROW,
+            padding=(10, 15),
+            height=50,
+            background_color=self.colors['toolbar'],
+            alignment=CENTER
+        ))
+
+        # App Title/Logo
+        app_title = toga.Label(
+            "Code Simulator",
+            style=Pack(font_size=16, font_weight="bold", color=self.colors['toolbar_text'], padding_right=20)
+        )
+
+        # Start/Stop Buttons (Icon-based for minimalism)
+        self.start_button = toga.Button(
+            "▶",  # Play icon
+            on_press=self.start_simulation,
+            style=Pack(width=40, height=30, background_color=self.colors['primary'], color="white", font_size=14),
+        )
+        self.stop_button = toga.Button(
+            "⏹",  # Stop icon
+            on_press=self.stop_simulation,
+            enabled=False,
+            style=Pack(width=40, height=30, background_color=self.colors['danger'], color="white", font_size=14),
+        )
+
+        # Status Label
+        self.status_label = toga.Label(
+            "Ready",
+            style=Pack(font_size=12, color=self.colors['toolbar_text'], padding_left=20, flex=1)
+        )
+
+        top_bar.add(app_title)
+        top_bar.add(self.start_button)
+        top_bar.add(self.stop_button)
+        top_bar.add(self.status_label)
+
+        # Inner container for sidebar + content
+        inner_box = toga.Box(style=Pack(direction=ROW, flex=1))
         self.side_menu = self.create_side_menu()
-        # Set a fixed width for the side menu
-        self.side_menu.style.width = 220
-        main_box.add(self.side_menu)
-
-        # 2. Create the content area container that will change based on selected view
         self.content_container = toga.Box(style=Pack(
             direction=COLUMN,
             flex=1,
+            padding=20,
             background_color=self.colors['background']
         ))
-        main_box.add(self.content_container)
 
-        # 3. Build all possible views
+        inner_box.add(self.side_menu)
+        inner_box.add(self.content_container)
+
+        # Add views
         self.simulation_view = self.create_simulation_view()
         self.configuration_view = self.create_configuration_view()
         self.logs_view = self.create_logs_view()
         self.about_view = self.create_about_view()
-
-        # 4. Set the initial view
         self.show_view("simulation")
 
-        # 5. Set up the main window
+        main_box.add(top_bar)
+        main_box.add(inner_box)
+
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = main_box
-
-        # 6. Set up keyboard shortcuts
-        cmd_s = toga.Command(
-            self.start_simulation,
-            "Start Simulation",
-            shortcut=toga.Key.MOD_1 + "s"
-        )
-        cmd_x = toga.Command(
-            self.stop_simulation,
-            "Stop Simulation",
-            shortcut=toga.Key.MOD_1 + "x"
-        )
-        self.commands.add(cmd_s, cmd_x)
-
-        # 7. Display the window
         self.main_window.show()
 
     def create_side_menu(self):
-        """Create the side menu with navigation options."""
         side_menu = toga.Box(style=Pack(
             direction=COLUMN,
+            width=60,  # Slimmer for minimalism
             background_color=self.colors['menu_bg'],
-            padding=(0, 0),
-            flex=1
+            padding_top=10
         ))
 
-        # App title/logo header
-        logo_box = toga.Box(style=Pack(
-            direction=COLUMN,
-            padding=(20, 15),
-            alignment=CENTER
-        ))
-
-        title = toga.Label(
-            "Code Simulator",
-            style=Pack(
-                font_size=18,
-                font_weight="bold",
-                color=self.colors['menu_text'],
-                text_align=CENTER
-            )
-        )
-
-        subtitle = toga.Label(
-            "v0.0.1",
-            style=Pack(
-                font_size=12,
-                color=rgba(255, 255, 255, 0.7),
-                text_align=CENTER,
-                padding_top=5
-            )
-        )
-
-        logo_box.add(title)
-        logo_box.add(subtitle)
-        side_menu.add(logo_box)
-
-        # Menu item divider
-        divider = toga.Divider(style=Pack(
-            padding=(0, 15),
-        ))
-        divider.style.color = rgba(255, 255, 255, 0.2)
-        side_menu.add(divider)
-
-        # Menu items
-        self.menu_items = {}
         menu_options = [
             ("simulation", "Simulation", "⌨️"),
             ("configuration", "Configuration", "⚙️"),
-            ("logs", "Logs & Debug", "📊"),
-            ("about", "About & Help", "ℹ️")
+            ("logs", "Logs", "📊"),
+            ("about", "About", "ℹ️")
         ]
+        self.menu_items = {}
 
-        # Create menu items
         for item_id, label, icon in menu_options:
-            menu_item = self.create_menu_item(item_id, label, icon)
-            side_menu.add(menu_item)
-            self.menu_items[item_id] = menu_item
-
-        # Add a stretching box to push status to the bottom
-        side_menu.add(toga.Box(style=Pack(flex=1)))
-
-        # Status box at the bottom
-        status_box = toga.Box(style=Pack(
-            direction=COLUMN,
-            padding=(15, 15),
-        ))
-        # Set the background color after creation
-        status_box.style.background_color = rgba(0, 0, 0, 0.2)
-
-        status_label = toga.Label(
-            "Ready",
-            style=Pack(
-                font_size=12,
-                color=self.colors['menu_text'],
-                padding=(5, 5)
+            menu_item = toga.Button(
+                icon,
+                on_press=lambda widget, vid=item_id: self.show_view(vid),
+                style=Pack(
+                    width=60,
+                    height=60,
+                    font_size=20,
+                    background_color=self.colors['menu_bg'],
+                    color=self.colors['menu_text'],
+                    alignment=CENTER
+                )
             )
-        )
-        self.status_label = status_label
-        status_box.add(status_label)
-
-        side_menu.add(status_box)
+            # Highlight selected item
+            if item_id == self.current_view:
+                menu_item.style.background_color = self.colors['menu_selected']
+            self.menu_items[item_id] = menu_item
+            side_menu.add(menu_item)
 
         return side_menu
 
@@ -357,23 +321,16 @@ class CodeSimulator(toga.App):
         return menu_item
 
     def show_view(self, view_name):
-        """Switch to the specified view."""
-        # First, clear the content container
         for child in self.content_container.children:
             self.content_container.remove(child)
 
-        # Update menu selection styling
+        # Update menu item styling
         for item_id, menu_item in self.menu_items.items():
-            if item_id == view_name:
-                # Set the background color for the selected item
-                menu_item.style.background_color = self.colors['menu_selected']
-            else:
-                # For non-selected items, reset to menu background color
-                menu_item.style.background_color = self.colors['menu_bg']
+            menu_item.style.background_color = (
+                self.colors['menu_selected'] if item_id == view_name else self.colors['menu_bg']
+            )
 
-        # Set the current view and add the appropriate content
         self.current_view = view_name
-
         if view_name == "simulation":
             self.content_container.add(self.simulation_view)
         elif view_name == "configuration":
@@ -384,223 +341,47 @@ class CodeSimulator(toga.App):
             self.content_container.add(self.about_view)
 
     def create_simulation_view(self):
-        """Create the main simulation view."""
         simulation_view = toga.Box(style=Pack(
             direction=COLUMN,
-            background_color=self.colors['background'],
-            padding=(20, 20),
-            flex=1
-        ))
-
-        # Top toolbar section
-        toolbar = toga.Box(style=Pack(
-            direction=ROW,
-            padding=(15, 10),
-            background_color=self.colors['primary'],
-            alignment=CENTER
-        ))
-
-        # Toolbar title
-        toolbar_title = toga.Label(
-            "Simulation Control",
-            style=Pack(
-                font_size=16,
-                font_weight="bold",
-                color=self.colors['toolbar_text'],
-                flex=1
-            )
-        )
-        toolbar.add(toolbar_title)
-
-        # Toolbar buttons
-        self.start_button = toga.Button(
-            "Start Simulation",
-            on_press=self.start_simulation,
-            style=Pack(
-                padding=(10, 15),
-                background_color=self.colors['secondary'],
-                color=self.colors['toolbar_text'],
-                font_weight="bold"
-            )
-        )
-
-        self.stop_button = toga.Button(
-            "Stop",
-            on_press=self.stop_simulation,
-            style=Pack(
-                padding=(10, 15),
-                background_color=self.colors['danger'],
-                color=self.colors['toolbar_text'],
-                font_weight="bold"
-            ),
-            enabled=False
-        )
-
-        toolbar.add(self.start_button)
-        toolbar.add(toga.Box(style=Pack(width=10)))  # Spacer
-        toolbar.add(self.stop_button)
-
-        simulation_view.add(toolbar)
-
-        # Main content with card design
-        content_card = toga.Box(style=Pack(
-            direction=COLUMN,
             background_color=self.colors['card'],
-            padding=(20, 20),
-            flex=1,
-            
-            
+            padding=20,
         ))
 
-        # Simulation settings section
-        settings_box = toga.Box(style=Pack(
-            direction=COLUMN,
-            padding=(0, 0, 10, 0)
-        ))
-
-        settings_title = toga.Label(
-            "Simulation Settings",
-            style=Pack(
-                font_size=16,
-                font_weight="bold",
-                color=self.colors['text'],
-                padding_bottom=10
-            )
-        )
-        settings_box.add(settings_title)
-
-        # Mode selection
-        mode_box = toga.Box(style=Pack(
-            direction=ROW,
-            padding=(0, 0, 15, 0),
-            alignment=CENTER
-        ))
-
-        mode_label = toga.Label(
-            "Mode:",
-            style=Pack(
-                width=100,
-                color=self.colors['text']
-            )
-        )
-
-        self.simulation_modes = [
-            "Typing Only",
-            "Tab Switching Only",
-            "Hybrid",
-            "Mouse and Command+Tab"
-        ]
-
+        # Mode Selector
+        mode_box = toga.Box(style=Pack(direction=ROW, padding_bottom=15))
+        mode_label = toga.Label("Mode:", style=Pack(font_size=14, color=self.colors['text'], width=100))
         self.mode_selector = toga.Selection(
-            items=self.simulation_modes,
-            value=self.simulation_modes[2],
-            style=Pack(
-                flex=1,
-                padding=(5, 5)
-            )
+            items=["Typing Only", "Tab Switching Only", "Hybrid", "Mouse and Command+Tab"],
+            style=Pack(flex=1, height=35, background_color=self.colors['card'])
         )
-
         mode_box.add(mode_label)
         mode_box.add(self.mode_selector)
-        settings_box.add(mode_box)
 
-        # File selection
-        file_box = toga.Box(style=Pack(
-            direction=ROW,
-            padding=(0, 0, 15, 0),
-            alignment=CENTER
-        ))
-
-        file_label = toga.Label(
-            "File:",
-            style=Pack(
-                width=100,
-                color=self.colors['text']
-            )
-        )
-
+        # File Selection
+        file_box = toga.Box(style=Pack(direction=ROW, padding_bottom=15))
         self.file_display = toga.Label(
             "Using default resources/code files",
-            style=Pack(
-                flex=1,
-                color=self.colors['text_light'],
-                padding=(5, 5)
-            )
+            style=Pack(flex=1, font_size=12, color=self.colors['text_light'])
         )
-
-        choose_file_button = toga.Button(
+        choose_button = toga.Button(
             "Choose File",
             on_press=self.choose_file,
-            style=Pack(
-                padding=(5, 10),
-                background_color=self.colors['accent'],
-                color=self.colors['toolbar_text']
-            )
+            style=Pack(width=120, height=35, background_color=self.colors['primary'], color="white")
         )
-
-        file_box.add(file_label)
         file_box.add(self.file_display)
-        file_box.add(toga.Box(style=Pack(width=10)))  # Spacer
-        file_box.add(choose_file_button)
-        settings_box.add(file_box)
+        file_box.add(choose_button)
 
-        content_card.add(settings_box)
-
-        # Divider
-        content_card.add(toga.Divider(style=Pack(
-            padding=(10, 0)
-        )))
-
-        # Console output section
-        console_box = toga.Box(style=Pack(
-            direction=COLUMN,
-            padding=(10, 0, 0, 0),
-            flex=1
-        ))
-
-        console_title = toga.Label(
-            "Simulation Log",
-            style=Pack(
-                font_size=16,
-                font_weight="bold",
-                color=self.colors['text'],
-                padding_bottom=10
-            )
-        )
-        console_box.add(console_title)
-
+        # Console
         self.console = toga.MultilineTextInput(
             readonly=True,
-            style=Pack(
-                flex=1,
-                background_color=rgb(250, 250, 250)
-            )
+            style=Pack(flex=1, padding_top=10,
+                       #background_color=self.colors['card']
+                       )
         )
-        console_box.add(self.console)
 
-        content_card.add(console_box)
-        simulation_view.add(content_card)
-
-        # Status footer
-        status_bar = toga.Box(style=Pack(
-            direction=ROW,
-            padding=(10, 10),
-            background_color=self.colors['card'],
-            
-            
-        ))
-
-        keyboard_shortcut_label = toga.Label(
-            "Keyboard Shortcuts: ⌘+S = Start Simulation | ⌘+X = Stop Simulation",
-            style=Pack(
-                font_size=12,
-                color=self.colors['text_light']
-            )
-        )
-        status_bar.add(keyboard_shortcut_label)
-
-        simulation_view.add(status_bar)
-
+        simulation_view.add(mode_box)
+        simulation_view.add(file_box)
+        simulation_view.add(self.console)
         return simulation_view
 
     def create_configuration_view(self):
@@ -652,8 +433,6 @@ class CodeSimulator(toga.App):
             background_color=self.colors['card'],
             padding=(20, 20),
             flex=1,
-            
-            
         ))
 
         # Create a scroll container to hold all settings
@@ -922,9 +701,6 @@ class CodeSimulator(toga.App):
         # Add content card to the view
         configuration_view.add(content_card)
 
-        # Load the initial configuration values
-        # Note: We'll load values in setup_components after ActionSimulator is initialized
-
         return configuration_view
 
     def create_logs_view(self):
@@ -963,8 +739,6 @@ class CodeSimulator(toga.App):
             background_color=self.colors['card'],
             padding=(20, 20),
             flex=1,
-            
-            
         ))
 
         # Debug buttons
@@ -1040,16 +814,13 @@ class CodeSimulator(toga.App):
         )
         log_box.add(log_instructions)
 
-        # This uses the same console widget as the simulation view
-        # since we don't need two separate consoles
         log_console = toga.MultilineTextInput(
             readonly=True,
             style=Pack(
                 flex=1,
-                background_color=rgb(250, 250, 250)
+                # background_color=self.colors['card']
             )
         )
-        # Share the console between views
         self.console = log_console
         log_box.add(log_console)
 
@@ -1094,8 +865,6 @@ class CodeSimulator(toga.App):
             background_color=self.colors['card'],
             padding=(20, 20),
             flex=1,
-            
-            
         ))
 
         # Create a scroll container for about content
