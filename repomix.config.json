@@ -1,0 +1,25 @@
+{
+  "output": {
+    "style": "markdown",
+    "filePath": "repomix.md",
+    "removeComments": true,
+    "showLineNumbers": true,
+    "topFilesLength": 10
+  },
+  "ignore": {
+    "customPatterns": [
+      "*.test.ts",
+      "*.sh",
+      ".idea",
+      ".github",
+      ".gitignore",
+      "repomix.*",
+      "**/*.md",
+      "dist",
+      "src/codesimulator/resources/code",
+      "src/codesimulator/back",
+      "build",
+      "tests"
+    ]
+  }
+}

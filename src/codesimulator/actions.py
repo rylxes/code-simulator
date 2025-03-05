@@ -1,6 +1,7 @@
 import asyncio
 import os
 import random
+import time
 import sys
 import json
 from typing import Optional
@@ -115,6 +116,21 @@ class ActionSimulator:
             self.indent_size = 4
             self.max_line_length = 80
 
+    async def simulate_command_tab(self):
+        """Simulate pressing Command+Tab to switch applications."""
+        try:
+            if sys.platform == 'darwin':
+                pyautogui.hotkey('command', 'tab')
+            elif sys.platform == 'win32':
+                pyautogui.hotkey('alt', 'tab')
+            else:  # Linux
+                pyautogui.hotkey('alt', 'tab')
+
+            logger.info("Pressed Command+Tab / Alt+Tab")
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            logger.error(f"Error simulating Command+Tab: {e}")
+
     def _configure_pyautogui(self):
         try:
             import pyautogui
@@ -207,14 +223,35 @@ class ActionSimulator:
         else:
             return f"{remaining_seconds}s"
 
+    # Replace the simulate_typing method in actions.py (around line 210):
+
     async def simulate_typing(self, file_path: Optional[str] = None):
+        """Simulate typing code from a file."""
+        logger.debug(f"simulate_typing called with file_path: {file_path}")
+
         if self.simulation_mode == "Tab Switching Only":
             self.text_box.value += "Tab switching only mode selected. Skipping typing simulation...\n"
             return
         elif self.simulation_mode in ["Typing Only", "Hybrid"]:
-            # Split file into chunks if long
+            # Validate file path
+            if not file_path:
+                logger.error("No file path provided for typing simulation")
+                self.text_box.value += "❌ Error: No file path provided for typing simulation.\n"
+                return
+
+            if not os.path.exists(file_path):
+                logger.error(f"File not found: {file_path}")
+                self.text_box.value += f"❌ Error: File not found: {file_path}\n"
+                return
+
+            logger.info(f"Simulating typing with file: {file_path}")
+            self.text_box.value += f"Typing from file: {os.path.basename(file_path)}\n"
+
+            # Split file into chunks and type
             chunks = self._split_file_into_chunks(file_path, chunk_size=50)
             for i, chunk in enumerate(chunks):
+                if not self.loop_flag:
+                    break
                 chunk_text = "".join(chunk)
                 await self._simulate_code_typing_from_lines(chunk_text, i)
                 await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
@@ -327,3 +364,43 @@ class ActionSimulator:
         self.mouse_controller.stop()
         self.text_box.value += "Simulation ended\n"
         logger.info("Simulation ended")
+
+    async def simulate_mouse_and_command_tab(self, duration=10):
+        """
+        Simulate mouse movements and Command+Tab key combination for window switching.
+
+        Args:
+            duration (int): The approximate duration in seconds for the simulation
+        """
+        if not self.loop_flag:
+            return
+
+        self.text_box.value += "🖱️ Simulating mouse movements and Command+Tab...\n"
+        logger.info("Starting mouse and Command+Tab simulation")
+
+        start_time = time.time()
+
+        try:
+            # Enable mouse controller for random movements
+            self.mouse_controller.start(min_interval=1.0, max_interval=3.0)
+
+            # Perform a sequence of mouse movements and command+tab presses
+            while self.loop_flag and (time.time() - start_time < duration):
+                # Random mouse movements
+                for _ in range(random.randint(1, 3)):
+                    if not self.loop_flag:
+                        break
+                    await self._random_cursor_move()
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
+
+                # Occasional Command+Tab
+                if random.random() < 0.7:  # 70% chance to do Command+Tab
+                    await self.simulate_command_tab()
+
+                # Add a small pause
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+
+        finally:
+            # Make sure to stop the mouse controller
+            self.mouse_controller.stop()
+            logger.info("Mouse and Command+Tab simulation completed")

@@ -1,7 +1,9 @@
 import asyncio
 import os
+import json
 import tempfile
 import platform
+import random
 import subprocess
 import sys
 from typing import Optional
@@ -75,7 +77,6 @@ class CodeSimulator(toga.App):
             self.text_box.value = f"Error viewing console logs: {e}"
 
     async def view_logs(self, widget):
-
 
         # Ensure file logging is set up
         setup_file_logging()
@@ -214,7 +215,7 @@ class CodeSimulator(toga.App):
             "Simulation Mode:",
             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
         )
-        self.simulation_modes = ["Typing Only", "Tab Switching Only", "Hybrid"]
+        self.simulation_modes = ["Typing Only", "Tab Switching Only", "Hybrid", "Mouse and Command+Tab"]
         self.mode_selector = toga.Selection(
             items=self.simulation_modes,
             value=self.simulation_modes[2],
@@ -238,6 +239,13 @@ class CodeSimulator(toga.App):
             on_press=self.view_console_logs,
             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
         )
+
+        edit_config_button = toga.Button(
+            "Edit Configuration",
+            on_press=self.edit_configuration,
+            style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
+        )
+        left_column.add(edit_config_button)
         left_column.add(console_logs_button)
         left_column.add(debug_info_button)
         left_column.add(view_logs_button)
@@ -338,23 +346,36 @@ class CodeSimulator(toga.App):
         self.simulation_task = None
 
     async def choose_file(self, widget):
-        # Use the Toga dialog API for file selection
-        dialog = toga.OpenFileDialog(
-            title="Select a Code File",
-            file_types=["txt"]
-        )
-        file_paths = await self.main_window.dialog(dialog)
-        if file_paths:
-            # Assuming single file selection
-            self.selected_file = file_paths[0]
-            # Only show the filename, not the entire path
-            filename = os.path.basename(self.selected_file)
-            self.file_display.text = f"Selected: {filename}"
-            logger.info(f"Selected file: {self.selected_file}")
-        else:
+        """Allow the user to select a code file."""
+        try:
+            dialog = toga.OpenFileDialog(
+                title="Select a Code File",
+                file_types=["txt"]
+            )
+            file_path = await self.main_window.dialog(dialog)
+
+            # Handle the file_path based on its type
+            if file_path:
+                # Convert PosixPath to string if needed
+                if hasattr(file_path, 'resolve'):  # It's a Path object
+                    self.selected_file = str(file_path.resolve())
+                elif isinstance(file_path, list) and file_path:  # It's a list of paths
+                    self.selected_file = str(file_path[0])
+                else:  # It's already a string
+                    self.selected_file = str(file_path)
+
+                filename = os.path.basename(self.selected_file)
+                self.file_display.text = f"Selected: {filename}"
+                logger.info(f"Selected file: {self.selected_file}")
+            else:
+                self.selected_file = None
+                self.file_display.text = "Using default resources/code files"
+                logger.info("No file selected; using default.")
+        except Exception as e:
+            self.text_box.value += f"Error selecting file: {str(e)}\n"
+            logger.error(f"Error in choose_file: {e}")
             self.selected_file = None
             self.file_display.text = "Using default resources/code files"
-            logger.info("No file selected; using default.")
 
     async def start_simulation(self, widget):
         if not self.action_simulator.loop_flag:
@@ -363,22 +384,28 @@ class CodeSimulator(toga.App):
                 self.update_button_states(running=True)
                 self.action_simulator.loop_flag = True
 
-                # Set simulation mode based on user selection
+                # Get the selected simulation mode
                 selected_mode = self.mode_selector.value
                 self.action_simulator.simulation_mode = selected_mode
                 self.text_box.value += f"▶️ Mode: {selected_mode}\n"
 
-                # If a file has been manually chosen and mode requires typing, pass that file.
-                if self.selected_file and selected_mode in ["Typing Only", "Hybrid"]:
-                    file_to_use = self.selected_file
-                    filename = os.path.basename(file_to_use)
-                    self.text_box.value += f"📄 Using selected file: {filename}\n"
+                # Determine which file to use based on the selected mode and whether a file was chosen
+                file_to_use = None
+                if selected_mode in ["Typing Only", "Hybrid"]:
+                    if self.selected_file and os.path.exists(self.selected_file):
+                        file_to_use = self.selected_file
+                        filename = os.path.basename(file_to_use)
+                        self.text_box.value += f"📄 Using selected file: {filename}\n"
+                        logger.info(f"Using selected file: {file_to_use}")
+                    else:
+                        self.text_box.value += "📄 No valid file selected. Using default code samples\n"
+                        logger.info("No valid file selected, using default code samples")
                 else:
-                    file_to_use = None  # simulator will fall back to cycling default files
-                    self.text_box.value += "📄 Using default code samples\n"
+                    self.text_box.value += "📄 File selection not applicable for this mode\n"
+                    logger.info("File selection not applicable for this mode")
 
+                # Start the simulation task
                 if not self.simulation_task:
-                    self.text_box.value += "⏳ Calculating typing time...\n"
                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
                 logger.info("Simulation started successfully.")
             except Exception as e:
@@ -388,18 +415,24 @@ class CodeSimulator(toga.App):
     async def run_continuous_simulation(self, file_to_use: Optional[str]):
         try:
             while self.action_simulator.loop_flag:
-                # If a file was manually chosen, use it; else, get the next available file.
-                next_file = file_to_use if file_to_use else self.action_simulator.get_next_code_file()
+                # Determine which file to use
+                if file_to_use and os.path.exists(file_to_use):
+                    next_file = file_to_use
+                    logger.debug(f"Using provided file: {next_file}")
+                else:
+                    next_file = self.action_simulator.get_next_code_file()
+                    logger.debug(f"Using default file: {next_file}")
+
                 if not next_file:
-                    self.text_box.value += "❌ No code files found in resources/code directory.\n"
+                    self.text_box.value += "❌ No code files found to simulate typing.\n"
                     await asyncio.sleep(2)
                     continue
 
-                # Calculate estimated typing time
+                # Calculate typing time if applicable
                 if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
                     await self.action_simulator.calculate_typing_time(next_file)
 
-                # Run appropriate simulation based on mode
+                # Execute the simulation based on the selected mode
                 if self.action_simulator.simulation_mode == "Typing Only":
                     self.text_box.value += "⌨️ Simulating typing...\n"
                     await self.action_simulator.simulate_typing(next_file)
@@ -413,6 +446,9 @@ class CodeSimulator(toga.App):
                     self.text_box.value += "🔄 Switching between applications...\n"
                     self.action_simulator.switch_window()
                     await asyncio.sleep(2)
+                elif self.action_simulator.simulation_mode == "Mouse and Command+Tab":
+                    # Use the dedicated method for this simulation mode
+                    await self.action_simulator.simulate_mouse_and_command_tab(duration=15)  # Run for 15 seconds
 
                 filename = os.path.basename(next_file)
                 self.text_box.value += f"\n✅ Finished simulating file: {filename}\n"
@@ -423,7 +459,7 @@ class CodeSimulator(toga.App):
         except Exception as e:
             self.text_box.value += f"❌ Error during simulation: {str(e)}\n"
             logger.error(f"Error in continuous simulation: {e}")
-            self.stop_simulation(None)
+            await self.stop_simulation(None)
 
     async def stop_simulation(self, widget):
         if self.action_simulator.loop_flag:
@@ -441,6 +477,194 @@ class CodeSimulator(toga.App):
     def update_button_states(self, running: bool):
         self.start_button.enabled = not running
         self.stop_button.enabled = running
+
+    async def edit_configuration(self, widget):
+        """Open a dialog to edit the configuration."""
+        try:
+            # Get the current configuration
+            config_path = self.action_simulator._get_config_path()
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+
+            # Create a new window for editing configuration
+            config_window = toga.Window(title="Edit Configuration")
+            config_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+
+            # Add fields for code configuration
+            code_label = toga.Label(
+                "Code Configuration",
+                style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+            )
+            config_box.add(code_label)
+
+            code_config = config.get('code', {})
+
+            # Language selection
+            language_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+            language_label = toga.Label("Language:", style=Pack(width=100))
+            language_input = toga.Selection(
+                items=["python", "java", "php"],
+                value=code_config.get('language', 'python')
+            )
+            language_box.add(language_label)
+            language_box.add(language_input)
+            config_box.add(language_box)
+
+            # Indent size
+            indent_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+            indent_label = toga.Label("Indent Size:", style=Pack(width=100))
+            indent_input = toga.NumberInput(
+                value=code_config.get('indent_size', 4),
+                min_value=1,
+                max_value=8,
+                step=1
+            )
+            indent_box.add(indent_label)
+            indent_box.add(indent_input)
+            config_box.add(indent_box)
+
+            # Max line length
+            line_length_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+            line_length_label = toga.Label("Max Line Length:", style=Pack(width=100))
+            line_length_input = toga.NumberInput(
+                value=code_config.get('max_line_length', 80),
+                min_value=40,
+                max_value=120,
+                step=1
+            )
+            line_length_box.add(line_length_label)
+            line_length_box.add(line_length_input)
+            config_box.add(line_length_box)
+
+            # Add fields for typing speed configuration
+            typing_label = toga.Label(
+                "Typing Speed Configuration",
+                style=Pack(padding=(10, 0, 5, 0), font_weight="bold")
+            )
+            config_box.add(typing_label)
+
+            typing_config = config.get('typing_speed', {})
+
+            # Min typing speed
+            min_speed_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+            min_speed_label = toga.Label("Min Speed:", style=Pack(width=100))
+            min_speed_input = toga.NumberInput(
+                value=typing_config.get('min', 0.03),
+                min_value=0.01,
+                max_value=0.5,
+                step=0.01
+            )
+            min_speed_box.add(min_speed_label)
+            min_speed_box.add(min_speed_input)
+            config_box.add(min_speed_box)
+
+            # Max typing speed
+            max_speed_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+            max_speed_label = toga.Label("Max Speed:", style=Pack(width=100))
+            max_speed_input = toga.NumberInput(
+                value=typing_config.get('max', 0.07),
+                min_value=0.01,
+                max_value=0.5,
+                step=0.01
+            )
+            max_speed_box.add(max_speed_label)
+            max_speed_box.add(max_speed_input)
+            config_box.add(max_speed_box)
+
+            # Mistake rate
+            mistake_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+            mistake_label = toga.Label("Mistake Rate:", style=Pack(width=100))
+            mistake_input = toga.NumberInput(
+                value=typing_config.get('mistake_rate', 0.07),
+                min_value=0,
+                max_value=0.5,
+                step=0.01
+            )
+            mistake_box.add(mistake_label)
+            mistake_box.add(mistake_input)
+            config_box.add(mistake_box)
+
+            # Add button box
+            button_box = toga.Box(style=Pack(direction=ROW, padding=(10, 0)))
+
+            # Add save button
+            save_button = toga.Button(
+                "Save Configuration",
+                on_press=lambda w: asyncio.create_task(self.save_configuration(
+                    config,
+                    config_window,
+                    {
+                        'language': language_input.value,
+                        'indent_size': indent_input.value,
+                        'max_line_length': line_length_input.value,
+                        'min_speed': min_speed_input.value,
+                        'max_speed': max_speed_input.value,
+                        'mistake_rate': mistake_input.value
+                    }
+                )),
+                style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+            )
+            button_box.add(save_button)
+
+            # Add cancel button
+            cancel_button = toga.Button(
+                "Cancel",
+                on_press=lambda w: config_window.close(),
+                style=Pack(padding=5, background_color=self.colors['danger'], color=rgb(255, 255, 255))
+            )
+            button_box.add(toga.Box(style=Pack(flex=1)))
+            button_box.add(cancel_button)
+
+            config_box.add(button_box)
+
+            # Display the window
+            config_window.content = config_box
+            config_window.show()
+
+        except Exception as e:
+            self.text_box.value += f"Error editing configuration: {e}\n"
+            logger.error(f"Error editing configuration: {e}")
+
+    async def save_configuration(self, config, config_window, form_values):
+        """Save the edited configuration."""
+        try:
+            # Update the configuration with form values
+            if 'code' not in config:
+                config['code'] = {}
+
+            config['code']['language'] = form_values['language']
+            config['code']['indent_size'] = form_values['indent_size']
+            config['code']['max_line_length'] = form_values['max_line_length']
+
+            if 'typing_speed' not in config:
+                config['typing_speed'] = {}
+
+            config['typing_speed']['min'] = form_values['min_speed']
+            config['typing_speed']['max'] = form_values['max_speed']
+            config['typing_speed']['mistake_rate'] = form_values['mistake_rate']
+
+            # Preserve line_break if it exists
+            if 'line_break' not in config['typing_speed']:
+                config['typing_speed']['line_break'] = [0.5, 1.0]
+
+            # Save configuration to file
+            config_path = self.action_simulator._get_config_path()
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=4)
+
+            # Reload the configuration
+            self.action_simulator.config = self.action_simulator._load_config()
+            self.action_simulator._setup_from_config()
+
+            self.text_box.value += "✅ Configuration saved and reloaded successfully.\n"
+            logger.info("Configuration updated successfully")
+
+            # Close the configuration window
+            config_window.close()
+
+        except Exception as e:
+            self.text_box.value += f"Error saving configuration: {e}\n"
+            logger.error(f"Error saving configuration: {e}")
 
 
 def main():
