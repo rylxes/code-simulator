@@ -53,6 +53,11 @@ src/
     logging_config.py
     mouse.py
     path_utils.py
+  codesimulator.dist-info/
+    INSTALLER
+    METADATA
+    top_level.txt
+    WHEEL
 CHANGELOG
 LICENSE
 pyproject.toml
@@ -160,332 +165,404 @@ README.rst
   1: import asyncio
   2: import os
   3: import random
-  4: import sys
-  5: import json
-  6: from typing import Optional
-  7: 
-  8: import pyautogui
-  9: 
- 10: from .app_switcher import AppSwitcher
- 11: from .config import AppConfig
- 12: from .language_formatter import FormatterFactory
- 13: from .logging_config import logger
- 14: from .mouse import MouseController
- 15: 
+  4: import time
+  5: import sys
+  6: import json
+  7: from typing import Optional
+  8: 
+  9: import pyautogui
+ 10: 
+ 11: from .app_switcher import AppSwitcher
+ 12: from .config import AppConfig
+ 13: from .language_formatter import FormatterFactory
+ 14: from .logging_config import logger
+ 15: from .mouse import MouseController
  16: 
- 17: class ActionSimulator:
- 18: 
+ 17: 
+ 18: class ActionSimulator:
  19: 
- 20:     def __init__(self, text_box, app=None):
- 21:         self.text_box = text_box
- 22:         self.app = app
- 23:         self.loop_flag = False
- 24:         self._configure_pyautogui()
- 25:         self.app_config = AppConfig(app)
- 26:         self.app_switcher = AppSwitcher(self.app_config)
- 27:         self.formatter_factory = FormatterFactory()
- 28:         self.formatter = None
- 29:         self.mouse_controller = MouseController()
- 30:         self.simulation_mode = "Hybrid"
- 31: 
- 32:         self.config = self._load_config()
- 33:         self._setup_from_config()
- 34: 
+ 20: 
+ 21:     def __init__(self, text_box, app=None):
+ 22:         self.text_box = text_box
+ 23:         self.app = app
+ 24:         self.loop_flag = False
+ 25:         self._configure_pyautogui()
+ 26:         self.app_config = AppConfig(app)
+ 27:         self.app_switcher = AppSwitcher(self.app_config)
+ 28:         self.formatter_factory = FormatterFactory()
+ 29:         self.formatter = None
+ 30:         self.mouse_controller = MouseController()
+ 31:         self.simulation_mode = "Hybrid"
+ 32: 
+ 33:         self.config = self._load_config()
+ 34:         self._setup_from_config()
  35: 
- 36:         self.code_files = self._get_code_files()
- 37:         self.current_code_index = 0
- 38: 
- 39:         self.original_indentations = {}
- 40: 
- 41:     def _setup_from_config(self):
- 42:         try:
- 43:             code_config = self.config.get('code', {})
- 44:             self.language = code_config.get('language', 'python')
- 45:             self.indent_size = code_config.get('indent_size', 4)
- 46:             self.max_line_length = code_config.get('max_line_length', 80)
- 47:             typing_config = self.config.get('typing_speed', {})
- 48:             self.typing_speed = {
- 49:                 'min': typing_config.get('min', 0.03),
- 50:                 'max': typing_config.get('max', 0.07),
- 51:                 'line_break': tuple(typing_config.get('line_break', [0.5, 1.0])),
- 52:                 'mistake_rate': typing_config.get('mistake_rate', 0.07)
- 53:             }
- 54:             logger.info("Successfully configured simulation settings")
- 55:         except Exception as e:
- 56:             logger.error(f"Error setting up configuration: {e}")
- 57:             self._setup_default_config()
- 58: 
- 59:     def _setup_default_config(self):
- 60:         logger.warning("Using default configuration settings")
- 61:         self.language = 'python'
- 62:         self.indent_size = 4
- 63:         self.max_line_length = 80
- 64:         self.typing_speed = {
- 65:             'min': 0.03,
- 66:             'max': 0.07,
- 67:             'line_break': (0.5, 1.0),
- 68:             'mistake_rate': 0.07,
- 69:         }
- 70: 
- 71:     def _get_config_path(self) -> str:
- 72:         from .path_utils import get_resource_path
- 73:         config_path = get_resource_path(self.app, 'config.json')
- 74:         if not os.path.exists(config_path):
- 75:             logger.error(f"Config file not found at {config_path}")
- 76:             raise FileNotFoundError(f"Config file not found at {config_path}")
- 77:         return config_path
- 78: 
- 79:     def _get_code_files(self) -> list:
- 80: 
- 81:         from .path_utils import get_resource_path
- 82:         code_dir = get_resource_path(self.app, 'code')
- 83:         if os.path.isdir(code_dir):
- 84:             files = [os.path.join(code_dir, f) for f in os.listdir(code_dir) if f.endswith(".txt")]
- 85:             if not files:
- 86:                 logger.warning(f"No .txt files found in {code_dir}")
- 87:             return files
- 88:         else:
- 89:             logger.warning(f"Code directory not found: {code_dir}")
- 90:             return []
- 91: 
- 92:     def _load_config(self) -> dict:
- 93:         try:
- 94:             with open(self._get_config_path(), 'r') as f:
- 95:                 config = json.load(f)
- 96:                 logger.info("Successfully loaded configuration")
- 97:                 return config
- 98:         except Exception as e:
- 99:             logger.error(f"Error loading config: {e}")
-100:             raise
-101: 
-102:     def load_config(self):
-103:         try:
-104:             config_path = os.path.join(os.path.dirname(__file__), 'resources', 'config.json')
-105:             logger.info(f"Loading config from: {config_path}")
-106:             with open(config_path, "r") as f:
-107:                 config = json.load(f)
-108:                 code_config = config.get('code', {})
-109:                 self.language = code_config.get("language", "unknown")
-110:                 self.indent_size = code_config.get("indent_size", 4)
-111:                 self.max_line_length = code_config.get("max_line_length", 80)
-112:         except Exception as e:
-113:             logger.error(f"Error loading config: {e}")
-114:             self.language = "unknown"
-115:             self.indent_size = 4
-116:             self.max_line_length = 80
-117: 
-118:     def _configure_pyautogui(self):
-119:         try:
-120:             import pyautogui
-121:             pyautogui.FAILSAFE = True
-122:             pyautogui.PAUSE = 0.1
-123:             logger.info(f"PyAutoGUI initialized. Screen size: {pyautogui.size()}")
-124:         except Exception as e:
-125:             logger.error(f"Failed to initialize PyAutoGUI: {e}")
-126:             self.text_box.value += f"⚠️ Warning: Failed to initialize PyAutoGUI: {e}\n"
-127: 
+ 36: 
+ 37:         self.code_files = self._get_code_files()
+ 38:         self.current_code_index = 0
+ 39: 
+ 40:         self.original_indentations = {}
+ 41: 
+ 42:     def _setup_from_config(self):
+ 43:         try:
+ 44:             code_config = self.config.get('code', {})
+ 45:             self.language = code_config.get('language', 'python')
+ 46:             self.indent_size = code_config.get('indent_size', 4)
+ 47:             self.max_line_length = code_config.get('max_line_length', 80)
+ 48:             typing_config = self.config.get('typing_speed', {})
+ 49:             self.typing_speed = {
+ 50:                 'min': typing_config.get('min', 0.03),
+ 51:                 'max': typing_config.get('max', 0.07),
+ 52:                 'line_break': tuple(typing_config.get('line_break', [0.5, 1.0])),
+ 53:                 'mistake_rate': typing_config.get('mistake_rate', 0.07)
+ 54:             }
+ 55:             logger.info("Successfully configured simulation settings")
+ 56:         except Exception as e:
+ 57:             logger.error(f"Error setting up configuration: {e}")
+ 58:             self._setup_default_config()
+ 59: 
+ 60:     def _setup_default_config(self):
+ 61:         logger.warning("Using default configuration settings")
+ 62:         self.language = 'python'
+ 63:         self.indent_size = 4
+ 64:         self.max_line_length = 80
+ 65:         self.typing_speed = {
+ 66:             'min': 0.03,
+ 67:             'max': 0.07,
+ 68:             'line_break': (0.5, 1.0),
+ 69:             'mistake_rate': 0.07,
+ 70:         }
+ 71: 
+ 72:     def _get_config_path(self) -> str:
+ 73:         from .path_utils import get_resource_path
+ 74:         config_path = get_resource_path(self.app, 'config.json')
+ 75:         if not os.path.exists(config_path):
+ 76:             logger.error(f"Config file not found at {config_path}")
+ 77:             raise FileNotFoundError(f"Config file not found at {config_path}")
+ 78:         return config_path
+ 79: 
+ 80:     def _get_code_files(self) -> list:
+ 81: 
+ 82:         from .path_utils import get_resource_path
+ 83:         code_dir = get_resource_path(self.app, 'code')
+ 84:         if os.path.isdir(code_dir):
+ 85:             files = [os.path.join(code_dir, f) for f in os.listdir(code_dir) if f.endswith(".txt")]
+ 86:             if not files:
+ 87:                 logger.warning(f"No .txt files found in {code_dir}")
+ 88:             return files
+ 89:         else:
+ 90:             logger.warning(f"Code directory not found: {code_dir}")
+ 91:             return []
+ 92: 
+ 93:     def _load_config(self) -> dict:
+ 94:         try:
+ 95:             with open(self._get_config_path(), 'r') as f:
+ 96:                 config = json.load(f)
+ 97:                 logger.info("Successfully loaded configuration")
+ 98:                 return config
+ 99:         except Exception as e:
+100:             logger.error(f"Error loading config: {e}")
+101:             raise
+102: 
+103:     def load_config(self):
+104:         try:
+105:             config_path = os.path.join(os.path.dirname(__file__), 'resources', 'config.json')
+106:             logger.info(f"Loading config from: {config_path}")
+107:             with open(config_path, "r") as f:
+108:                 config = json.load(f)
+109:                 code_config = config.get('code', {})
+110:                 self.language = code_config.get("language", "unknown")
+111:                 self.indent_size = code_config.get("indent_size", 4)
+112:                 self.max_line_length = code_config.get("max_line_length", 80)
+113:         except Exception as e:
+114:             logger.error(f"Error loading config: {e}")
+115:             self.language = "unknown"
+116:             self.indent_size = 4
+117:             self.max_line_length = 80
+118: 
+119:     async def simulate_command_tab(self):
+120: 
+121:         try:
+122:             if sys.platform == 'darwin':
+123:                 pyautogui.hotkey('command', 'tab')
+124:             elif sys.platform == 'win32':
+125:                 pyautogui.hotkey('alt', 'tab')
+126:             else:
+127:                 pyautogui.hotkey('alt', 'tab')
 128: 
-129: 
-130:     def get_next_code_file(self) -> Optional[str]:
-131: 
-132:         if self.code_files:
-133:             file_path = self.code_files[self.current_code_index]
-134:             self.current_code_index = (self.current_code_index + 1) % len(self.code_files)
-135:             return file_path
-136:         return None
-137: 
-138:     def _split_file_into_chunks(self, file_path: str, chunk_size: int = 50) -> list:
-139: 
-140:         with open(file_path, "r") as f:
-141:             lines = f.readlines()
-142:         if len(lines) <= chunk_size:
-143:             return [lines]
-144:         chunks = [lines[i:i + chunk_size] for i in range(0, len(lines), chunk_size)]
-145:         logger.info(f"Split file {file_path} into {len(chunks)} chunks")
-146:         return chunks
+129:             logger.info("Pressed Command+Tab / Alt+Tab")
+130:             await asyncio.sleep(0.5)
+131:         except Exception as e:
+132:             logger.error(f"Error simulating Command+Tab: {e}")
+133: 
+134:     def _configure_pyautogui(self):
+135:         try:
+136:             import pyautogui
+137:             pyautogui.FAILSAFE = True
+138:             pyautogui.PAUSE = 0.1
+139:             logger.info(f"PyAutoGUI initialized. Screen size: {pyautogui.size()}")
+140:         except Exception as e:
+141:             logger.error(f"Failed to initialize PyAutoGUI: {e}")
+142:             self.text_box.value += f"⚠️ Warning: Failed to initialize PyAutoGUI: {e}\n"
+143: 
+144: 
+145: 
+146:     def get_next_code_file(self) -> Optional[str]:
 147: 
-148:     async def calculate_typing_time(self, file_path: str) -> dict:
-149:         try:
-150:             with open(file_path, "r") as file:
-151:                 lines = file.readlines()
-152:             total_chars = sum(len(line.rstrip()) for line in lines)
-153:             total_lines = len(lines)
-154:             empty_lines = sum(1 for line in lines if not line.strip())
-155:             non_empty_lines = total_lines - empty_lines
-156: 
-157:             avg_char_time = (self.typing_speed["min"] + self.typing_speed["max"]) / 2
-158:             char_typing_time = total_chars * avg_char_time
-159: 
-160:             expected_mistakes = int(total_chars * self.typing_speed["mistake_rate"])
-161:             mistake_time = expected_mistakes * (0.2 + 0.1)
-162: 
-163:             avg_line_break = sum(self.typing_speed["line_break"]) / 2
-164:             line_break_time = non_empty_lines * avg_line_break
-165:             empty_line_time = empty_lines * (avg_line_break * 0.5)
-166: 
-167:             total_time = char_typing_time + mistake_time + line_break_time + empty_line_time
-168: 
-169:             timing_details = {
-170:                 "total_time_seconds": round(total_time, 2),
-171:                 "total_time_formatted": self._format_time(total_time),
-172:                 "breakdown": {
-173:                     "characters": {"count": total_chars, "time_seconds": round(char_typing_time, 2)},
-174:                     "lines": {"total": total_lines, "empty": empty_lines, "non_empty": non_empty_lines,
-175:                               "time_seconds": round(line_break_time + empty_line_time, 2)},
-176:                     "expected_mistakes": {"count": expected_mistakes, "time_seconds": round(mistake_time, 2)},
-177:                     "typing_speed": {"chars_per_second": round(1 / avg_char_time, 2),
-178:                                      "avg_pause_between_lines": round(avg_line_break, 2)},
-179:                 },
-180:             }
-181:             logger.info(f"Estimated typing time: {timing_details['total_time_formatted']}")
-182:             self.text_box.value += (
-183:                 f"Estimated typing time: {timing_details['total_time_formatted']}\n"
-184:                 f"Total characters: {total_chars}\n"
-185:                 f"Total lines: {total_lines}\n"
-186:                 f"Expected mistakes: {expected_mistakes}\n"
-187:             )
-188:             return timing_details
-189: 
-190:         except FileNotFoundError:
-191:             logger.error(f"File not found: {file_path}")
-192:             self.text_box.value += f"Error: File not found: {file_path}\n"
-193:             return None
-194:         except Exception as e:
-195:             logger.error(f"Error calculating typing time: {e}")
-196:             self.text_box.value += f"Error calculating typing time: {e}\n"
-197:             return None
-198: 
-199:     def _format_time(self, seconds: float) -> str:
-200:         hours = int(seconds // 3600)
-201:         minutes = int((seconds % 3600) // 60)
-202:         remaining_seconds = int(seconds % 60)
-203:         if hours > 0:
-204:             return f"{hours}h {minutes}m {remaining_seconds}s"
-205:         elif minutes > 0:
-206:             return f"{minutes}m {remaining_seconds}s"
-207:         else:
-208:             return f"{remaining_seconds}s"
-209: 
-210:     async def simulate_typing(self, file_path: Optional[str] = None):
-211:         if self.simulation_mode == "Tab Switching Only":
-212:             self.text_box.value += "Tab switching only mode selected. Skipping typing simulation...\n"
-213:             return
-214:         elif self.simulation_mode in ["Typing Only", "Hybrid"]:
-215: 
-216:             chunks = self._split_file_into_chunks(file_path, chunk_size=50)
-217:             for i, chunk in enumerate(chunks):
-218:                 chunk_text = "".join(chunk)
-219:                 await self._simulate_code_typing_from_lines(chunk_text, i)
-220:                 await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
-221:         else:
-222:             self.text_box.value += "Unknown simulation mode selected.\n"
-223: 
-224:     async def _simulate_code_typing_from_lines(self, text: str, chunk_index: int):
-225:         lines = text.splitlines(keepends=True)
-226:         original_indents = {i: len(line) - len(line.lstrip()) for i, line in enumerate(lines)}
-227:         self.text_box.value += f"Typing chunk {chunk_index + 1}...\n"
-228:         for i, line in enumerate(lines):
-229:             if not self.loop_flag:
-230:                 break
-231:             line = " " * original_indents.get(i, 0) + line.strip()
-232:             if not line:
-233:                 pyautogui.press("enter")
-234:                 await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
-235:                 continue
-236:             await self._type_line_with_simulation(line, i)
-237:             await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
-238: 
-239:     async def _type_line_with_simulation(self, line: str, line_num: int):
-240:         if self.formatter:
-241:             line = self.formatter.format_line(line)
-242:         for char in line:
-243:             if not self.loop_flag:
-244:                 break
-245:             if random.random() < self.typing_speed["mistake_rate"]:
-246:                 await self._simulate_typing_mistake(char)
-247:             self._type_character(char)
-248:             await asyncio.sleep(random.uniform(self.typing_speed["min"], self.typing_speed["max"]))
-249:         pyautogui.press("enter")
-250:         logger.info(f"Typed line: {line}")
-251: 
-252:     async def _simulate_typing_mistake(self, correct_char: str):
-253:         wrong_char = random.choice("abcdefghijklmnopqrstuvwxyz")
-254:         pyautogui.write(wrong_char)
-255:         await asyncio.sleep(0.2)
-256:         pyautogui.press("backspace")
-257:         await asyncio.sleep(0.1)
-258: 
-259:     def _type_character(self, char: str):
-260:         if char == "\t":
-261:             pyautogui.press("tab")
-262:         elif char == "\n":
-263:             pyautogui.press("enter")
-264:         else:
-265:             pyautogui.write(char)
-266: 
-267:     def switch_window(self):
-268:         app = self.app_switcher.get_random_running_app()
-269:         if app:
-270:             if self.app_switcher.focus_application(app):
-271:                 self.text_box.value += f"Switched to {app['name']}\n"
-272:                 logger.info(f"Switched to {app['name']}")
-273:             else:
-274:                 self.text_box.value += f"Failed to switch to {app['name']}\n"
-275:                 logger.error(f"Failed to switch to {app['name']}")
-276:         else:
-277:             self.text_box.value += "No configured applications running\n"
-278:             logger.warning("No configured applications running")
-279: 
-280:     async def _simulate_random_actions(self):
-281:         while self.loop_flag:
-282:             actions = [
-283:                 self._random_cursor_move,
-284:                 self._random_scroll,
-285:                 self._middle_click,
-286:                 self._window_switch_action,
-287:             ]
-288:             for action in actions:
-289:                 if not self.loop_flag:
-290:                     break
-291:                 await action()
-292:             await asyncio.sleep(random.uniform(0.3, 0.7))
-293: 
-294:     async def _random_cursor_move(self):
-295:         x = random.randint(100, 1000)
-296:         y = random.randint(100, 1000)
-297:         pyautogui.moveTo(x, y, duration=0.5)
-298:         logger.info(f"Moved cursor to ({x}, {y})")
-299: 
-300:     async def _random_scroll(self):
-301:         scroll_amount = random.randint(-100, 100)
-302:         pyautogui.scroll(scroll_amount)
-303:         logger.info(f"Scrolled {scroll_amount}")
-304:         await asyncio.sleep(0.5)
-305:         pyautogui.move(100, 50, duration=0.5)
-306:         logger.info("Moved mouse relatively by (100, 50).")
-307:         await asyncio.sleep(0.5)
-308:         pyautogui.move(-50, -25, duration=0.5)
-309:         logger.info("Moved mouse relatively by (-50, -25).")
-310:         await asyncio.sleep(0.5)
-311: 
-312:     async def _middle_click(self):
-313:         if random.random() < 0.3:
-314:             pyautogui.click(button="middle")
-315:             logger.info("Middle clicked")
+148:         if self.code_files:
+149:             file_path = self.code_files[self.current_code_index]
+150:             self.current_code_index = (self.current_code_index + 1) % len(self.code_files)
+151:             return file_path
+152:         return None
+153: 
+154:     def _split_file_into_chunks(self, file_path: str, chunk_size: int = 50) -> list:
+155: 
+156:         with open(file_path, "r") as f:
+157:             lines = f.readlines()
+158:         if len(lines) <= chunk_size:
+159:             return [lines]
+160:         chunks = [lines[i:i + chunk_size] for i in range(0, len(lines), chunk_size)]
+161:         logger.info(f"Split file {file_path} into {len(chunks)} chunks")
+162:         return chunks
+163: 
+164:     async def calculate_typing_time(self, file_path: str) -> dict:
+165:         try:
+166:             with open(file_path, "r") as file:
+167:                 lines = file.readlines()
+168:             total_chars = sum(len(line.rstrip()) for line in lines)
+169:             total_lines = len(lines)
+170:             empty_lines = sum(1 for line in lines if not line.strip())
+171:             non_empty_lines = total_lines - empty_lines
+172: 
+173:             avg_char_time = (self.typing_speed["min"] + self.typing_speed["max"]) / 2
+174:             char_typing_time = total_chars * avg_char_time
+175: 
+176:             expected_mistakes = int(total_chars * self.typing_speed["mistake_rate"])
+177:             mistake_time = expected_mistakes * (0.2 + 0.1)
+178: 
+179:             avg_line_break = sum(self.typing_speed["line_break"]) / 2
+180:             line_break_time = non_empty_lines * avg_line_break
+181:             empty_line_time = empty_lines * (avg_line_break * 0.5)
+182: 
+183:             total_time = char_typing_time + mistake_time + line_break_time + empty_line_time
+184: 
+185:             timing_details = {
+186:                 "total_time_seconds": round(total_time, 2),
+187:                 "total_time_formatted": self._format_time(total_time),
+188:                 "breakdown": {
+189:                     "characters": {"count": total_chars, "time_seconds": round(char_typing_time, 2)},
+190:                     "lines": {"total": total_lines, "empty": empty_lines, "non_empty": non_empty_lines,
+191:                               "time_seconds": round(line_break_time + empty_line_time, 2)},
+192:                     "expected_mistakes": {"count": expected_mistakes, "time_seconds": round(mistake_time, 2)},
+193:                     "typing_speed": {"chars_per_second": round(1 / avg_char_time, 2),
+194:                                      "avg_pause_between_lines": round(avg_line_break, 2)},
+195:                 },
+196:             }
+197:             logger.info(f"Estimated typing time: {timing_details['total_time_formatted']}")
+198:             self.text_box.value += (
+199:                 f"Estimated typing time: {timing_details['total_time_formatted']}\n"
+200:                 f"Total characters: {total_chars}\n"
+201:                 f"Total lines: {total_lines}\n"
+202:                 f"Expected mistakes: {expected_mistakes}\n"
+203:             )
+204:             return timing_details
+205: 
+206:         except FileNotFoundError:
+207:             logger.error(f"File not found: {file_path}")
+208:             self.text_box.value += f"Error: File not found: {file_path}\n"
+209:             return None
+210:         except Exception as e:
+211:             logger.error(f"Error calculating typing time: {e}")
+212:             self.text_box.value += f"Error calculating typing time: {e}\n"
+213:             return None
+214: 
+215:     def _format_time(self, seconds: float) -> str:
+216:         hours = int(seconds // 3600)
+217:         minutes = int((seconds % 3600) // 60)
+218:         remaining_seconds = int(seconds % 60)
+219:         if hours > 0:
+220:             return f"{hours}h {minutes}m {remaining_seconds}s"
+221:         elif minutes > 0:
+222:             return f"{minutes}m {remaining_seconds}s"
+223:         else:
+224:             return f"{remaining_seconds}s"
+225: 
+226: 
+227: 
+228:     async def simulate_typing(self, file_path: Optional[str] = None):
+229: 
+230:         logger.debug(f"simulate_typing called with file_path: {file_path}")
+231: 
+232:         if self.simulation_mode == "Tab Switching Only":
+233:             self.text_box.value += "Tab switching only mode selected. Skipping typing simulation...\n"
+234:             return
+235:         elif self.simulation_mode in ["Typing Only", "Hybrid"]:
+236: 
+237:             if not file_path:
+238:                 logger.error("No file path provided for typing simulation")
+239:                 self.text_box.value += "❌ Error: No file path provided for typing simulation.\n"
+240:                 return
+241: 
+242:             if not os.path.exists(file_path):
+243:                 logger.error(f"File not found: {file_path}")
+244:                 self.text_box.value += f"❌ Error: File not found: {file_path}\n"
+245:                 return
+246: 
+247:             logger.info(f"Simulating typing with file: {file_path}")
+248:             self.text_box.value += f"Typing from file: {os.path.basename(file_path)}\n"
+249: 
+250: 
+251:             chunks = self._split_file_into_chunks(file_path, chunk_size=50)
+252:             for i, chunk in enumerate(chunks):
+253:                 if not self.loop_flag:
+254:                     break
+255:                 chunk_text = "".join(chunk)
+256:                 await self._simulate_code_typing_from_lines(chunk_text, i)
+257:                 await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
+258:         else:
+259:             self.text_box.value += "Unknown simulation mode selected.\n"
+260: 
+261:     async def _simulate_code_typing_from_lines(self, text: str, chunk_index: int):
+262:         lines = text.splitlines(keepends=True)
+263:         original_indents = {i: len(line) - len(line.lstrip()) for i, line in enumerate(lines)}
+264:         self.text_box.value += f"Typing chunk {chunk_index + 1}...\n"
+265:         for i, line in enumerate(lines):
+266:             if not self.loop_flag:
+267:                 break
+268:             line = " " * original_indents.get(i, 0) + line.strip()
+269:             if not line:
+270:                 pyautogui.press("enter")
+271:                 await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
+272:                 continue
+273:             await self._type_line_with_simulation(line, i)
+274:             await asyncio.sleep(random.uniform(*self.typing_speed["line_break"]))
+275: 
+276:     async def _type_line_with_simulation(self, line: str, line_num: int):
+277:         if self.formatter:
+278:             line = self.formatter.format_line(line)
+279:         for char in line:
+280:             if not self.loop_flag:
+281:                 break
+282:             if random.random() < self.typing_speed["mistake_rate"]:
+283:                 await self._simulate_typing_mistake(char)
+284:             self._type_character(char)
+285:             await asyncio.sleep(random.uniform(self.typing_speed["min"], self.typing_speed["max"]))
+286:         pyautogui.press("enter")
+287:         logger.info(f"Typed line: {line}")
+288: 
+289:     async def _simulate_typing_mistake(self, correct_char: str):
+290:         wrong_char = random.choice("abcdefghijklmnopqrstuvwxyz")
+291:         pyautogui.write(wrong_char)
+292:         await asyncio.sleep(0.2)
+293:         pyautogui.press("backspace")
+294:         await asyncio.sleep(0.1)
+295: 
+296:     def _type_character(self, char: str):
+297:         if char == "\t":
+298:             pyautogui.press("tab")
+299:         elif char == "\n":
+300:             pyautogui.press("enter")
+301:         else:
+302:             pyautogui.write(char)
+303: 
+304:     def switch_window(self):
+305:         app = self.app_switcher.get_random_running_app()
+306:         if app:
+307:             if self.app_switcher.focus_application(app):
+308:                 self.text_box.value += f"Switched to {app['name']}\n"
+309:                 logger.info(f"Switched to {app['name']}")
+310:             else:
+311:                 self.text_box.value += f"Failed to switch to {app['name']}\n"
+312:                 logger.error(f"Failed to switch to {app['name']}")
+313:         else:
+314:             self.text_box.value += "No configured applications running\n"
+315:             logger.warning("No configured applications running")
 316: 
-317:     async def _window_switch_action(self):
-318:         if random.random() < 0.2:
-319:             self.switch_window()
-320:             await asyncio.sleep(0.5)
-321: 
-322:     async def _cleanup_simulation(self):
-323:         await asyncio.sleep(0.5)
-324: 
-325:     def _handle_simulation_end(self):
-326:         self.loop_flag = False
-327:         self.mouse_controller.stop()
-328:         self.text_box.value += "Simulation ended\n"
-329:         logger.info("Simulation ended")
+317:     async def _simulate_random_actions(self):
+318:         while self.loop_flag:
+319:             actions = [
+320:                 self._random_cursor_move,
+321:                 self._random_scroll,
+322:                 self._middle_click,
+323:                 self._window_switch_action,
+324:             ]
+325:             for action in actions:
+326:                 if not self.loop_flag:
+327:                     break
+328:                 await action()
+329:             await asyncio.sleep(random.uniform(0.3, 0.7))
+330: 
+331:     async def _random_cursor_move(self):
+332:         x = random.randint(100, 1000)
+333:         y = random.randint(100, 1000)
+334:         pyautogui.moveTo(x, y, duration=0.5)
+335:         logger.info(f"Moved cursor to ({x}, {y})")
+336: 
+337:     async def _random_scroll(self):
+338:         scroll_amount = random.randint(-100, 100)
+339:         pyautogui.scroll(scroll_amount)
+340:         logger.info(f"Scrolled {scroll_amount}")
+341:         await asyncio.sleep(0.5)
+342:         pyautogui.move(100, 50, duration=0.5)
+343:         logger.info("Moved mouse relatively by (100, 50).")
+344:         await asyncio.sleep(0.5)
+345:         pyautogui.move(-50, -25, duration=0.5)
+346:         logger.info("Moved mouse relatively by (-50, -25).")
+347:         await asyncio.sleep(0.5)
+348: 
+349:     async def _middle_click(self):
+350:         if random.random() < 0.3:
+351:             pyautogui.click(button="middle")
+352:             logger.info("Middle clicked")
+353: 
+354:     async def _window_switch_action(self):
+355:         if random.random() < 0.2:
+356:             self.switch_window()
+357:             await asyncio.sleep(0.5)
+358: 
+359:     async def _cleanup_simulation(self):
+360:         await asyncio.sleep(0.5)
+361: 
+362:     def _handle_simulation_end(self):
+363:         self.loop_flag = False
+364:         self.mouse_controller.stop()
+365:         self.text_box.value += "Simulation ended\n"
+366:         logger.info("Simulation ended")
+367: 
+368:     async def simulate_mouse_and_command_tab(self, duration=10):
+369: 
+370:         if not self.loop_flag:
+371:             return
+372: 
+373:         self.text_box.value += "🖱️ Simulating mouse movements and Command+Tab...\n"
+374:         logger.info("Starting mouse and Command+Tab simulation")
+375: 
+376:         start_time = time.time()
+377: 
+378:         try:
+379: 
+380:             self.mouse_controller.start(min_interval=1.0, max_interval=3.0)
+381: 
+382: 
+383:             while self.loop_flag and (time.time() - start_time < duration):
+384: 
+385:                 for _ in range(random.randint(1, 3)):
+386:                     if not self.loop_flag:
+387:                         break
+388:                     await self._random_cursor_move()
+389:                     await asyncio.sleep(random.uniform(0.5, 1.5))
+390: 
+391: 
+392:                 if random.random() < 0.7:
+393:                     await self.simulate_command_tab()
+394: 
+395: 
+396:                 await asyncio.sleep(random.uniform(1.0, 2.0))
+397: 
+398:         finally:
+399: 
+400:             self.mouse_controller.stop()
+401:             logger.info("Mouse and Command+Tab simulation completed")
 ```
 
 ## File: src/codesimulator/app_switcher.py
@@ -724,451 +801,675 @@ README.rst
 ```python
   1: import asyncio
   2: import os
-  3: import tempfile
-  4: import platform
-  5: import subprocess
-  6: import sys
-  7: from typing import Optional
-  8: import toga
-  9: from toga.style import Pack
- 10: from toga.style.pack import COLUMN, ROW, CENTER
- 11: from toga.colors import rgb
- 12: from .actions import ActionSimulator
- 13: from .key_handler import GlobalKeyHandler
- 14: from .logging_config import get_log_path, setup_file_logging, logger
- 15: from .path_utils import log_environment_info, get_log_path
- 16: 
- 17: log_environment_info()
+  3: import json
+  4: import tempfile
+  5: import platform
+  6: import random
+  7: import subprocess
+  8: import sys
+  9: from typing import Optional
+ 10: import toga
+ 11: from toga.style import Pack
+ 12: from toga.style.pack import COLUMN, ROW, CENTER
+ 13: from toga.colors import rgb
+ 14: from .actions import ActionSimulator
+ 15: from .key_handler import GlobalKeyHandler
+ 16: from .logging_config import get_log_path, setup_file_logging, logger
+ 17: from .path_utils import log_environment_info, get_log_path
  18: 
- 19: 
- 20: class CodeSimulator(toga.App):
- 21:     def __init__(self):
- 22:         super().__init__(
- 23:             formal_name="Code Simulator",
- 24:             app_id="com.example.codesimulator"
- 25:         )
- 26: 
- 27:         self.selected_file = None
+ 19: log_environment_info()
+ 20: 
+ 21: 
+ 22: class CodeSimulator(toga.App):
+ 23:     def __init__(self):
+ 24:         super().__init__(
+ 25:             formal_name="Code Simulator",
+ 26:             app_id="com.example.codesimulator"
+ 27:         )
  28: 
- 29:     async def show_debug_info(self, widget):
+ 29:         self.selected_file = None
  30: 
- 31: 
- 32:         info = {
- 33:             "OS": platform.system(),
- 34:             "OS Version": platform.version(),
- 35:             "Python Version": platform.python_version(),
- 36:             "App Directory": os.path.dirname(os.path.abspath(__file__)),
- 37:             "Current Directory": os.getcwd(),
- 38:             "Log File": get_log_path(),
- 39:             "Is Packaged": getattr(sys, 'frozen', False),
- 40:             "Executable": sys.executable
- 41:         }
- 42: 
- 43: 
- 44:         self.text_box.value = "--- Debug Information ---\n\n"
- 45:         for key, value in info.items():
- 46:             self.text_box.value += f"{key}: {value}\n"
- 47: 
- 48: 
- 49:         log_environment_info()
+ 31:     async def show_debug_info(self, widget):
+ 32: 
+ 33: 
+ 34:         info = {
+ 35:             "OS": platform.system(),
+ 36:             "OS Version": platform.version(),
+ 37:             "Python Version": platform.python_version(),
+ 38:             "App Directory": os.path.dirname(os.path.abspath(__file__)),
+ 39:             "Current Directory": os.getcwd(),
+ 40:             "Log File": get_log_path(),
+ 41:             "Is Packaged": getattr(sys, 'frozen', False),
+ 42:             "Executable": sys.executable
+ 43:         }
+ 44: 
+ 45: 
+ 46:         self.text_box.value = "--- Debug Information ---\n\n"
+ 47:         for key, value in info.items():
+ 48:             self.text_box.value += f"{key}: {value}\n"
+ 49: 
  50: 
- 51:         self.text_box.value += "\nDetailed debug information has been logged to the log file.\n"
+ 51:         log_environment_info()
  52: 
- 53:     async def view_console_logs(self, widget):
+ 53:         self.text_box.value += "\nDetailed debug information has been logged to the log file.\n"
  54: 
- 55:         try:
- 56:             if platform.system() == "Darwin":
- 57: 
- 58:                 process = subprocess.Popen(
- 59:                     ["log", "show", "--predicate", "process == 'Code Simulator'", "--last", "1h"],
- 60:                     stdout=subprocess.PIPE,
- 61:                     stderr=subprocess.PIPE,
- 62:                     text=True
- 63:                 )
- 64:                 stdout, stderr = process.communicate(timeout=5)
- 65: 
- 66:                 if stdout:
- 67:                     self.text_box.value = "Recent Console Logs:\n\n" + stdout
- 68:                 else:
- 69:                     self.text_box.value = "No recent console logs found.\n"
- 70:                     if stderr:
- 71:                         self.text_box.value += f"Error: {stderr}\n"
- 72:             else:
- 73:                 self.text_box.value = "Console log viewing only supported on macOS."
- 74:         except Exception as e:
- 75:             self.text_box.value = f"Error viewing console logs: {e}"
- 76: 
- 77:     async def view_logs(self, widget):
+ 55:     async def view_console_logs(self, widget):
+ 56: 
+ 57:         try:
+ 58:             if platform.system() == "Darwin":
+ 59: 
+ 60:                 process = subprocess.Popen(
+ 61:                     ["log", "show", "--predicate", "process == 'Code Simulator'", "--last", "1h"],
+ 62:                     stdout=subprocess.PIPE,
+ 63:                     stderr=subprocess.PIPE,
+ 64:                     text=True
+ 65:                 )
+ 66:                 stdout, stderr = process.communicate(timeout=5)
+ 67: 
+ 68:                 if stdout:
+ 69:                     self.text_box.value = "Recent Console Logs:\n\n" + stdout
+ 70:                 else:
+ 71:                     self.text_box.value = "No recent console logs found.\n"
+ 72:                     if stderr:
+ 73:                         self.text_box.value += f"Error: {stderr}\n"
+ 74:             else:
+ 75:                 self.text_box.value = "Console log viewing only supported on macOS."
+ 76:         except Exception as e:
+ 77:             self.text_box.value = f"Error viewing console logs: {e}"
  78: 
- 79: 
+ 79:     async def view_logs(self, widget):
  80: 
- 81:         setup_file_logging()
- 82: 
+ 81: 
+ 82:         setup_file_logging()
  83: 
- 84:         log_path = get_log_path()
- 85: 
+ 84: 
+ 85:         log_path = get_log_path()
  86: 
- 87:         self.text_box.value = "Log Information\n"
- 88:         self.text_box.value += "=============\n\n"
- 89:         self.text_box.value += f"Log file location: {log_path}\n\n"
- 90: 
+ 87: 
+ 88:         self.text_box.value = "Log Information\n"
+ 89:         self.text_box.value += "=============\n\n"
+ 90:         self.text_box.value += f"Log file location: {log_path}\n\n"
  91: 
- 92:         logger.info("Test log message from View Logs button")
- 93: 
+ 92: 
+ 93:         logger.info("Test log message from View Logs button")
  94: 
- 95:         if not os.path.exists(log_path):
- 96:             self.text_box.value += f"❌ Log file still not found after write attempt!\n\n"
- 97: 
+ 95: 
+ 96:         if not os.path.exists(log_path):
+ 97:             self.text_box.value += f"❌ Log file still not found after write attempt!\n\n"
  98: 
- 99:             try:
-100:                 log_dir = os.path.dirname(log_path)
-101:                 test_file_path = os.path.join(log_dir, "test_write.txt")
-102:                 with open(test_file_path, 'w') as f:
-103:                     f.write("Test write")
-104:                 self.text_box.value += f"✓ Successfully created test file at: {test_file_path}\n"
-105:                 os.remove(test_file_path)
-106:             except Exception as e:
-107:                 self.text_box.value += f"❌ Could not write test file: {e}\n"
-108:                 self.text_box.value += "This suggests a permissions issue or the directory doesn't exist\n"
-109: 
+ 99: 
+100:             try:
+101:                 log_dir = os.path.dirname(log_path)
+102:                 test_file_path = os.path.join(log_dir, "test_write.txt")
+103:                 with open(test_file_path, 'w') as f:
+104:                     f.write("Test write")
+105:                 self.text_box.value += f"✓ Successfully created test file at: {test_file_path}\n"
+106:                 os.remove(test_file_path)
+107:             except Exception as e:
+108:                 self.text_box.value += f"❌ Could not write test file: {e}\n"
+109:                 self.text_box.value += "This suggests a permissions issue or the directory doesn't exist\n"
 110: 
-111:             self.text_box.value += "\nEnvironment Information:\n"
-112:             self.text_box.value += f"Working directory: {os.getcwd()}\n"
-113:             self.text_box.value += f"Home directory: {os.path.expanduser('~')}\n"
-114:             self.text_box.value += f"App directory: {os.path.dirname(__file__)}\n"
-115:             self.text_box.value += f"Python executable: {sys.executable}\n"
-116:             self.text_box.value += f"Is packaged: {getattr(sys, 'frozen', False)}\n"
-117: 
+111: 
+112:             self.text_box.value += "\nEnvironment Information:\n"
+113:             self.text_box.value += f"Working directory: {os.getcwd()}\n"
+114:             self.text_box.value += f"Home directory: {os.path.expanduser('~')}\n"
+115:             self.text_box.value += f"App directory: {os.path.dirname(__file__)}\n"
+116:             self.text_box.value += f"Python executable: {sys.executable}\n"
+117:             self.text_box.value += f"Is packaged: {getattr(sys, 'frozen', False)}\n"
 118: 
-119:             self.text_box.value += "\nTry looking for logs in these locations:\n"
-120:             self.text_box.value += f"1. {os.path.join(os.path.expanduser('~'), 'Library', 'Logs', 'CodeSimulator')}\n"
-121:             self.text_box.value += f"2. {tempfile.gettempdir()}\n"
-122: 
-123:             return
-124: 
+119: 
+120:             self.text_box.value += "\nTry looking for logs in these locations:\n"
+121:             self.text_box.value += f"1. {os.path.join(os.path.expanduser('~'), 'Library', 'Logs', 'CodeSimulator')}\n"
+122:             self.text_box.value += f"2. {tempfile.gettempdir()}\n"
+123: 
+124:             return
 125: 
-126:         file_size = os.path.getsize(log_path)
-127:         last_modified = os.path.getmtime(log_path)
-128:         import datetime
-129:         mod_time = datetime.datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')
-130: 
-131:         self.text_box.value += f"Log file size: {file_size} bytes\n"
-132:         self.text_box.value += f"Last modified: {mod_time}\n\n"
-133: 
+126: 
+127:         file_size = os.path.getsize(log_path)
+128:         last_modified = os.path.getmtime(log_path)
+129:         import datetime
+130:         mod_time = datetime.datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')
+131: 
+132:         self.text_box.value += f"Log file size: {file_size} bytes\n"
+133:         self.text_box.value += f"Last modified: {mod_time}\n\n"
 134: 
-135:         try:
-136:             with open(log_path, 'r') as f:
-137: 
-138:                 if file_size > 10000:
-139:                     self.text_box.value += f"Log file is large. Showing last portion...\n\n"
-140:                     f.seek(max(0, file_size - 10000))
-141: 
-142:                     f.readline()
-143:                     content = f.read()
-144:                 else:
-145:                     content = f.read()
-146: 
+135: 
+136:         try:
+137:             with open(log_path, 'r') as f:
+138: 
+139:                 if file_size > 10000:
+140:                     self.text_box.value += f"Log file is large. Showing last portion...\n\n"
+141:                     f.seek(max(0, file_size - 10000))
+142: 
+143:                     f.readline()
+144:                     content = f.read()
+145:                 else:
+146:                     content = f.read()
 147: 
-148:             self.text_box.value += "Log Content:\n"
-149:             self.text_box.value += "===========\n\n"
-150:             self.text_box.value += content
-151: 
-152:         except Exception as e:
-153:             self.text_box.value += f"❌ Error reading log file: {e}\n"
-154: 
-155:     def startup(self):
-156: 
-157:         from .logging_config import setup_file_logging
-158:         setup_file_logging()
-159: 
+148: 
+149:             self.text_box.value += "Log Content:\n"
+150:             self.text_box.value += "===========\n\n"
+151:             self.text_box.value += content
+152: 
+153:         except Exception as e:
+154:             self.text_box.value += f"❌ Error reading log file: {e}\n"
+155: 
+156:     def startup(self):
+157: 
+158:         from .logging_config import setup_file_logging
+159:         setup_file_logging()
 160: 
-161:         self.setup_ui()
-162:         self.setup_components()
-163:         logger.info("Application started successfully.")
-164: 
-165:     def setup_ui(self):
-166: 
-167:         self.colors = {
-168:             'primary': rgb(60, 120, 200),
-169:             'accent': rgb(60, 180, 100),
-170:             'danger': rgb(220, 70, 70),
-171:             'background': rgb(250, 250, 252),
-172:             'card': rgb(255, 255, 255),
-173:             'text': rgb(50, 50, 50),
-174:             'text_light': rgb(120, 120, 120)
-175:         }
-176: 
+161: 
+162:         self.setup_ui()
+163:         self.setup_components()
+164:         logger.info("Application started successfully.")
+165: 
+166:     def setup_ui(self):
+167: 
+168:         self.colors = {
+169:             'primary': rgb(60, 120, 200),
+170:             'accent': rgb(60, 180, 100),
+171:             'danger': rgb(220, 70, 70),
+172:             'background': rgb(250, 250, 252),
+173:             'card': rgb(255, 255, 255),
+174:             'text': rgb(50, 50, 50),
+175:             'text_light': rgb(120, 120, 120)
+176:         }
 177: 
-178:         main_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
-179: 
+178: 
+179:         main_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
 180: 
-181:         header = toga.Box(style=Pack(direction=COLUMN, padding=10, background_color=self.colors['primary']))
-182:         title = toga.Label(
-183:             "Code Simulator",
-184:             style=Pack(
-185:                 font_size=24,
-186:                 font_weight="bold",
-187:                 padding=5,
-188:                 color=rgb(255, 255, 255),
-189:                 text_align=CENTER
-190:             )
-191:         )
-192:         subtitle = toga.Label(
-193:             "Select mode and code file, then start simulation",
-194:             style=Pack(
-195:                 font_size=14,
-196:                 padding=(0, 5, 5, 5),
-197:                 color=rgb(220, 220, 220),
-198:                 text_align=CENTER
-199:             )
-200:         )
-201: 
-202:         header.add(title)
-203:         header.add(subtitle)
-204:         main_box.add(header)
-205: 
+181: 
+182:         header = toga.Box(style=Pack(direction=COLUMN, padding=10, background_color=self.colors['primary']))
+183:         title = toga.Label(
+184:             "Code Simulator",
+185:             style=Pack(
+186:                 font_size=24,
+187:                 font_weight="bold",
+188:                 padding=5,
+189:                 color=rgb(255, 255, 255),
+190:                 text_align=CENTER
+191:             )
+192:         )
+193:         subtitle = toga.Label(
+194:             "Select mode and code file, then start simulation",
+195:             style=Pack(
+196:                 font_size=14,
+197:                 padding=(0, 5, 5, 5),
+198:                 color=rgb(220, 220, 220),
+199:                 text_align=CENTER
+200:             )
+201:         )
+202: 
+203:         header.add(title)
+204:         header.add(subtitle)
+205:         main_box.add(header)
 206: 
-207:         content = toga.Box(style=Pack(direction=ROW, padding=10))
-208: 
+207: 
+208:         content = toga.Box(style=Pack(direction=ROW, padding=10))
 209: 
-210:         left_column = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=1))
-211: 
+210: 
+211:         left_column = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=1))
 212: 
-213:         mode_label = toga.Label(
-214:             "Simulation Mode:",
-215:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
-216:         )
-217:         self.simulation_modes = ["Typing Only", "Tab Switching Only", "Hybrid"]
-218:         self.mode_selector = toga.Selection(
-219:             items=self.simulation_modes,
-220:             value=self.simulation_modes[2],
-221:             style=Pack(padding=(0, 0, 20, 0))
-222:         )
-223: 
-224:         view_logs_button = toga.Button(
-225:             "View Logs",
-226:             on_press=self.view_logs,
-227:             style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
-228:         )
-229:         debug_info_button = toga.Button(
-230:             "Debug Info",
-231:             on_press=self.show_debug_info,
-232:             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
-233:         )
-234: 
+213: 
+214:         mode_label = toga.Label(
+215:             "Simulation Mode:",
+216:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+217:         )
+218:         self.simulation_modes = ["Typing Only", "Tab Switching Only", "Hybrid", "Mouse and Command+Tab"]
+219:         self.mode_selector = toga.Selection(
+220:             items=self.simulation_modes,
+221:             value=self.simulation_modes[2],
+222:             style=Pack(padding=(0, 0, 20, 0))
+223:         )
+224: 
+225:         view_logs_button = toga.Button(
+226:             "View Logs",
+227:             on_press=self.view_logs,
+228:             style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
+229:         )
+230:         debug_info_button = toga.Button(
+231:             "Debug Info",
+232:             on_press=self.show_debug_info,
+233:             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+234:         )
 235: 
-236:         console_logs_button = toga.Button(
-237:             "View Console Logs",
-238:             on_press=self.view_console_logs,
-239:             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
-240:         )
-241:         left_column.add(console_logs_button)
-242:         left_column.add(debug_info_button)
-243:         left_column.add(view_logs_button)
-244:         left_column.add(mode_label)
-245:         left_column.add(self.mode_selector)
-246: 
-247: 
-248:         file_label = toga.Label(
-249:             "Selected File:",
-250:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
-251:         )
-252:         self.file_display = toga.Label(
-253:             "Using default resources/code files",
-254:             style=Pack(padding=(0, 0, 10, 0), color=self.colors['text_light'])
-255:         )
-256:         choose_file_button = toga.Button(
-257:             "Choose File",
-258:             on_press=self.choose_file,
-259:             style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
-260:         )
-261:         left_column.add(file_label)
-262:         left_column.add(self.file_display)
-263:         left_column.add(choose_file_button)
-264: 
-265: 
-266:         button_box = toga.Box(style=Pack(direction=ROW, padding=(20, 0, 10, 0)))
-267:         self.start_button = toga.Button(
-268:             "Start Simulation",
-269:             on_press=self.start_simulation,
-270:             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
-271:         )
-272:         self.stop_button = toga.Button(
-273:             "Stop Simulation",
-274:             on_press=self.stop_simulation,
-275:             style=Pack(padding=5, background_color=self.colors['danger'], color=rgb(255, 255, 255)),
-276:             enabled=False
-277:         )
-278:         button_box.add(self.start_button)
-279:         button_box.add(toga.Box(style=Pack(flex=1)))
-280:         button_box.add(self.stop_button)
-281:         left_column.add(button_box)
-282: 
-283: 
-284:         info_box = toga.Box(style=Pack(direction=COLUMN, padding=(20, 0, 0, 0)))
-285:         info_label = toga.Label(
-286:             "Keyboard Shortcuts:",
-287:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
-288:         )
-289:         info_text = toga.Label(
-290:             "⌘+S: Start Simulation\n⌘+X: Stop Simulation",
-291:             style=Pack(color=self.colors['text_light'])
-292:         )
-293:         info_box.add(info_label)
-294:         info_box.add(info_text)
-295:         left_column.add(info_box)
-296: 
-297: 
-298:         right_column = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=2))
-299:         output_label = toga.Label(
-300:             "Simulation Log:",
-301:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
-302:         )
-303:         self.text_box = toga.MultilineTextInput(
-304:             readonly=True,
-305:             style=Pack(flex=1, background_color=rgb(245, 245, 250))
-306:         )
-307:         right_column.add(output_label)
-308:         right_column.add(self.text_box)
-309: 
-310: 
-311:         content.add(left_column)
-312:         content.add(right_column)
-313: 
-314: 
-315:         main_box.add(content)
-316: 
+236: 
+237:         console_logs_button = toga.Button(
+238:             "View Console Logs",
+239:             on_press=self.view_console_logs,
+240:             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+241:         )
+242: 
+243:         edit_config_button = toga.Button(
+244:             "Edit Configuration",
+245:             on_press=self.edit_configuration,
+246:             style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
+247:         )
+248:         left_column.add(edit_config_button)
+249:         left_column.add(console_logs_button)
+250:         left_column.add(debug_info_button)
+251:         left_column.add(view_logs_button)
+252:         left_column.add(mode_label)
+253:         left_column.add(self.mode_selector)
+254: 
+255: 
+256:         file_label = toga.Label(
+257:             "Selected File:",
+258:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+259:         )
+260:         self.file_display = toga.Label(
+261:             "Using default resources/code files",
+262:             style=Pack(padding=(0, 0, 10, 0), color=self.colors['text_light'])
+263:         )
+264:         choose_file_button = toga.Button(
+265:             "Choose File",
+266:             on_press=self.choose_file,
+267:             style=Pack(padding=5, background_color=self.colors['accent'], color=rgb(255, 255, 255))
+268:         )
+269:         left_column.add(file_label)
+270:         left_column.add(self.file_display)
+271:         left_column.add(choose_file_button)
+272: 
+273: 
+274:         button_box = toga.Box(style=Pack(direction=ROW, padding=(20, 0, 10, 0)))
+275:         self.start_button = toga.Button(
+276:             "Start Simulation",
+277:             on_press=self.start_simulation,
+278:             style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+279:         )
+280:         self.stop_button = toga.Button(
+281:             "Stop Simulation",
+282:             on_press=self.stop_simulation,
+283:             style=Pack(padding=5, background_color=self.colors['danger'], color=rgb(255, 255, 255)),
+284:             enabled=False
+285:         )
+286:         button_box.add(self.start_button)
+287:         button_box.add(toga.Box(style=Pack(flex=1)))
+288:         button_box.add(self.stop_button)
+289:         left_column.add(button_box)
+290: 
+291: 
+292:         info_box = toga.Box(style=Pack(direction=COLUMN, padding=(20, 0, 0, 0)))
+293:         info_label = toga.Label(
+294:             "Keyboard Shortcuts:",
+295:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+296:         )
+297:         info_text = toga.Label(
+298:             "⌘+S: Start Simulation\n⌘+X: Stop Simulation",
+299:             style=Pack(color=self.colors['text_light'])
+300:         )
+301:         info_box.add(info_label)
+302:         info_box.add(info_text)
+303:         left_column.add(info_box)
+304: 
+305: 
+306:         right_column = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=2))
+307:         output_label = toga.Label(
+308:             "Simulation Log:",
+309:             style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+310:         )
+311:         self.text_box = toga.MultilineTextInput(
+312:             readonly=True,
+313:             style=Pack(flex=1, background_color=rgb(245, 245, 250))
+314:         )
+315:         right_column.add(output_label)
+316:         right_column.add(self.text_box)
 317: 
-318:         self.main_window = toga.MainWindow(title=self.formal_name)
-319:         self.main_window.content = main_box
-320: 
+318: 
+319:         content.add(left_column)
+320:         content.add(right_column)
 321: 
-322:         cmd_s = toga.Command(
-323:             self.start_simulation,
-324:             "Start Simulation",
-325:             shortcut=toga.Key.MOD_1 + "s"
-326:         )
-327:         cmd_x = toga.Command(
-328:             self.stop_simulation,
-329:             "Stop Simulation",
-330:             shortcut=toga.Key.MOD_1 + "x"
-331:         )
-332:         self.commands.add(cmd_s, cmd_x)
-333:         self.main_window.show()
-334: 
-335:     def setup_components(self):
-336:         self.action_simulator = ActionSimulator(self.text_box, self)
-337:         self.key_handler = GlobalKeyHandler(self, self.action_simulator)
-338:         self.simulation_task = None
-339: 
-340:     async def choose_file(self, widget):
-341: 
-342:         dialog = toga.OpenFileDialog(
-343:             title="Select a Code File",
-344:             file_types=["txt"]
-345:         )
-346:         file_paths = await self.main_window.dialog(dialog)
-347:         if file_paths:
-348: 
-349:             self.selected_file = file_paths[0]
-350: 
-351:             filename = os.path.basename(self.selected_file)
-352:             self.file_display.text = f"Selected: {filename}"
-353:             logger.info(f"Selected file: {self.selected_file}")
-354:         else:
-355:             self.selected_file = None
-356:             self.file_display.text = "Using default resources/code files"
-357:             logger.info("No file selected; using default.")
-358: 
-359:     async def start_simulation(self, widget):
-360:         if not self.action_simulator.loop_flag:
-361:             try:
-362:                 self.text_box.value = "🚀 Starting simulation...\n"
-363:                 self.update_button_states(running=True)
-364:                 self.action_simulator.loop_flag = True
-365: 
+322: 
+323:         main_box.add(content)
+324: 
+325: 
+326:         self.main_window = toga.MainWindow(title=self.formal_name)
+327:         self.main_window.content = main_box
+328: 
+329: 
+330:         cmd_s = toga.Command(
+331:             self.start_simulation,
+332:             "Start Simulation",
+333:             shortcut=toga.Key.MOD_1 + "s"
+334:         )
+335:         cmd_x = toga.Command(
+336:             self.stop_simulation,
+337:             "Stop Simulation",
+338:             shortcut=toga.Key.MOD_1 + "x"
+339:         )
+340:         self.commands.add(cmd_s, cmd_x)
+341:         self.main_window.show()
+342: 
+343:     def setup_components(self):
+344:         self.action_simulator = ActionSimulator(self.text_box, self)
+345:         self.key_handler = GlobalKeyHandler(self, self.action_simulator)
+346:         self.simulation_task = None
+347: 
+348:     async def choose_file(self, widget):
+349: 
+350:         try:
+351:             dialog = toga.OpenFileDialog(
+352:                 title="Select a Code File",
+353:                 file_types=["txt"]
+354:             )
+355:             file_path = await self.main_window.dialog(dialog)
+356: 
+357: 
+358:             if file_path:
+359: 
+360:                 if hasattr(file_path, 'resolve'):
+361:                     self.selected_file = str(file_path.resolve())
+362:                 elif isinstance(file_path, list) and file_path:  # It's a list of paths
+363:                     self.selected_file = str(file_path[0])
+364:                 else:
+365:                     self.selected_file = str(file_path)
 366: 
-367:                 selected_mode = self.mode_selector.value
-368:                 self.action_simulator.simulation_mode = selected_mode
-369:                 self.text_box.value += f"▶️ Mode: {selected_mode}\n"
-370: 
-371: 
-372:                 if self.selected_file and selected_mode in ["Typing Only", "Hybrid"]:
-373:                     file_to_use = self.selected_file
-374:                     filename = os.path.basename(file_to_use)
-375:                     self.text_box.value += f"📄 Using selected file: {filename}\n"
-376:                 else:
-377:                     file_to_use = None
-378:                     self.text_box.value += "📄 Using default code samples\n"
+367:                 filename = os.path.basename(self.selected_file)
+368:                 self.file_display.text = f"Selected: {filename}"
+369:                 logger.info(f"Selected file: {self.selected_file}")
+370:             else:
+371:                 self.selected_file = None
+372:                 self.file_display.text = "Using default resources/code files"
+373:                 logger.info("No file selected; using default.")
+374:         except Exception as e:
+375:             self.text_box.value += f"Error selecting file: {str(e)}\n"
+376:             logger.error(f"Error in choose_file: {e}")
+377:             self.selected_file = None
+378:             self.file_display.text = "Using default resources/code files"
 379: 
-380:                 if not self.simulation_task:
-381:                     self.text_box.value += "⏳ Calculating typing time...\n"
-382:                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
-383:                 logger.info("Simulation started successfully.")
-384:             except Exception as e:
-385:                 logger.error(f"Error starting simulation: {e}")
-386:                 await self.stop_simulation(widget)
-387: 
-388:     async def run_continuous_simulation(self, file_to_use: Optional[str]):
-389:         try:
-390:             while self.action_simulator.loop_flag:
+380:     async def start_simulation(self, widget):
+381:         if not self.action_simulator.loop_flag:
+382:             try:
+383:                 self.text_box.value = "🚀 Starting simulation...\n"
+384:                 self.update_button_states(running=True)
+385:                 self.action_simulator.loop_flag = True
+386: 
+387:                 # Get the selected simulation mode
+388:                 selected_mode = self.mode_selector.value
+389:                 self.action_simulator.simulation_mode = selected_mode
+390:                 self.text_box.value += f"▶️ Mode: {selected_mode}\n"
 391: 
-392:                 next_file = file_to_use if file_to_use else self.action_simulator.get_next_code_file()
-393:                 if not next_file:
-394:                     self.text_box.value += "❌ No code files found in resources/code directory.\n"
-395:                     await asyncio.sleep(2)
-396:                     continue
-397: 
-398: 
-399:                 if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
-400:                     await self.action_simulator.calculate_typing_time(next_file)
-401: 
-402: 
-403:                 if self.action_simulator.simulation_mode == "Typing Only":
-404:                     self.text_box.value += "⌨️ Simulating typing...\n"
-405:                     await self.action_simulator.simulate_typing(next_file)
-406:                 elif self.action_simulator.simulation_mode == "Tab Switching Only":
-407:                     self.text_box.value += "🔄 Switching between applications...\n"
-408:                     self.action_simulator.switch_window()
-409:                     await asyncio.sleep(2)
-410:                 elif self.action_simulator.simulation_mode == "Hybrid":
-411:                     self.text_box.value += "⌨️ Simulating typing...\n"
-412:                     await self.action_simulator.simulate_typing(next_file)
-413:                     self.text_box.value += "🔄 Switching between applications...\n"
-414:                     self.action_simulator.switch_window()
-415:                     await asyncio.sleep(2)
-416: 
-417:                 filename = os.path.basename(next_file)
-418:                 self.text_box.value += f"\n✅ Finished simulating file: {filename}\n"
-419:                 self.text_box.value += "🔄 Cycle completed. Restarting...\n\n"
-420:                 await asyncio.sleep(2)
-421:         except asyncio.CancelledError:
-422:             self.text_box.value += "⏹️ Simulation task cancelled.\n"
-423:         except Exception as e:
-424:             self.text_box.value += f"❌ Error during simulation: {str(e)}\n"
-425:             logger.error(f"Error in continuous simulation: {e}")
-426:             self.stop_simulation(None)
-427: 
-428:     async def stop_simulation(self, widget):
-429:         if self.action_simulator.loop_flag:
-430:             try:
-431:                 self.text_box.value += "⏹️ Stopping simulation...\n"
-432:                 self.action_simulator.loop_flag = False
-433:                 self.update_button_states(running=False)
-434:                 if self.simulation_task:
-435:                     self.simulation_task.cancel()
-436:                     self.simulation_task = None
-437:                 logger.info("Simulation stopped successfully.")
-438:             except Exception as e:
-439:                 logger.error(f"Error stopping simulation: {e}")
-440: 
-441:     def update_button_states(self, running: bool):
-442:         self.start_button.enabled = not running
-443:         self.stop_button.enabled = running
-444: 
-445: 
-446: def main():
-447:     return CodeSimulator()
+392:                 # Determine which file to use based on the selected mode and whether a file was chosen
+393:                 file_to_use = None
+394:                 if selected_mode in ["Typing Only", "Hybrid"]:
+395:                     if self.selected_file and os.path.exists(self.selected_file):
+396:                         file_to_use = self.selected_file
+397:                         filename = os.path.basename(file_to_use)
+398:                         self.text_box.value += f"📄 Using selected file: {filename}\n"
+399:                         logger.info(f"Using selected file: {file_to_use}")
+400:                     else:
+401:                         self.text_box.value += "📄 No valid file selected. Using default code samples\n"
+402:                         logger.info("No valid file selected, using default code samples")
+403:                 else:
+404:                     self.text_box.value += "📄 File selection not applicable for this mode\n"
+405:                     logger.info("File selection not applicable for this mode")
+406: 
+407:                 # Start the simulation task
+408:                 if not self.simulation_task:
+409:                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
+410:                 logger.info("Simulation started successfully.")
+411:             except Exception as e:
+412:                 logger.error(f"Error starting simulation: {e}")
+413:                 await self.stop_simulation(widget)
+414: 
+415:     async def run_continuous_simulation(self, file_to_use: Optional[str]):
+416:         try:
+417:             while self.action_simulator.loop_flag:
+418:                 # Determine which file to use
+419:                 if file_to_use and os.path.exists(file_to_use):
+420:                     next_file = file_to_use
+421:                     logger.debug(f"Using provided file: {next_file}")
+422:                 else:
+423:                     next_file = self.action_simulator.get_next_code_file()
+424:                     logger.debug(f"Using default file: {next_file}")
+425: 
+426:                 if not next_file:
+427:                     self.text_box.value += "❌ No code files found to simulate typing.\n"
+428:                     await asyncio.sleep(2)
+429:                     continue
+430: 
+431:                 # Calculate typing time if applicable
+432:                 if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
+433:                     await self.action_simulator.calculate_typing_time(next_file)
+434: 
+435:                 # Execute the simulation based on the selected mode
+436:                 if self.action_simulator.simulation_mode == "Typing Only":
+437:                     self.text_box.value += "⌨️ Simulating typing...\n"
+438:                     await self.action_simulator.simulate_typing(next_file)
+439:                 elif self.action_simulator.simulation_mode == "Tab Switching Only":
+440:                     self.text_box.value += "🔄 Switching between applications...\n"
+441:                     self.action_simulator.switch_window()
+442:                     await asyncio.sleep(2)
+443:                 elif self.action_simulator.simulation_mode == "Hybrid":
+444:                     self.text_box.value += "⌨️ Simulating typing...\n"
+445:                     await self.action_simulator.simulate_typing(next_file)
+446:                     self.text_box.value += "🔄 Switching between applications...\n"
+447:                     self.action_simulator.switch_window()
+448:                     await asyncio.sleep(2)
+449:                 elif self.action_simulator.simulation_mode == "Mouse and Command+Tab":
+450:                     # Use the dedicated method for this simulation mode
+451:                     await self.action_simulator.simulate_mouse_and_command_tab(duration=15)  # Run for 15 seconds
+452: 
+453:                 filename = os.path.basename(next_file)
+454:                 self.text_box.value += f"\n✅ Finished simulating file: {filename}\n"
+455:                 self.text_box.value += "🔄 Cycle completed. Restarting...\n\n"
+456:                 await asyncio.sleep(2)
+457:         except asyncio.CancelledError:
+458:             self.text_box.value += "⏹️ Simulation task cancelled.\n"
+459:         except Exception as e:
+460:             self.text_box.value += f"❌ Error during simulation: {str(e)}\n"
+461:             logger.error(f"Error in continuous simulation: {e}")
+462:             await self.stop_simulation(None)
+463: 
+464:     async def stop_simulation(self, widget):
+465:         if self.action_simulator.loop_flag:
+466:             try:
+467:                 self.text_box.value += "⏹️ Stopping simulation...\n"
+468:                 self.action_simulator.loop_flag = False
+469:                 self.update_button_states(running=False)
+470:                 if self.simulation_task:
+471:                     self.simulation_task.cancel()
+472:                     self.simulation_task = None
+473:                 logger.info("Simulation stopped successfully.")
+474:             except Exception as e:
+475:                 logger.error(f"Error stopping simulation: {e}")
+476: 
+477:     def update_button_states(self, running: bool):
+478:         self.start_button.enabled = not running
+479:         self.stop_button.enabled = running
+480: 
+481:     async def edit_configuration(self, widget):
+482: 
+483:         try:
+484:             # Get the current configuration
+485:             config_path = self.action_simulator._get_config_path()
+486:             with open(config_path, 'r') as f:
+487:                 config = json.load(f)
+488: 
+489:             # Create a new window for editing configuration
+490:             config_window = toga.Window(title="Edit Configuration")
+491:             config_box = toga.Box(style=Pack(direction=COLUMN, padding=10))
+492: 
+493:             # Add fields for code configuration
+494:             code_label = toga.Label(
+495:                 "Code Configuration",
+496:                 style=Pack(padding=(0, 0, 5, 0), font_weight="bold")
+497:             )
+498:             config_box.add(code_label)
+499: 
+500:             code_config = config.get('code', {})
+501: 
+502:             # Language selection
+503:             language_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+504:             language_label = toga.Label("Language:", style=Pack(width=100))
+505:             language_input = toga.Selection(
+506:                 items=["python", "java", "php"],
+507:                 value=code_config.get('language', 'python')
+508:             )
+509:             language_box.add(language_label)
+510:             language_box.add(language_input)
+511:             config_box.add(language_box)
+512: 
+513:             # Indent size
+514:             indent_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+515:             indent_label = toga.Label("Indent Size:", style=Pack(width=100))
+516:             indent_input = toga.NumberInput(
+517:                 value=code_config.get('indent_size', 4),
+518:                 min_value=1,
+519:                 max_value=8,
+520:                 step=1
+521:             )
+522:             indent_box.add(indent_label)
+523:             indent_box.add(indent_input)
+524:             config_box.add(indent_box)
+525: 
+526:             # Max line length
+527:             line_length_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+528:             line_length_label = toga.Label("Max Line Length:", style=Pack(width=100))
+529:             line_length_input = toga.NumberInput(
+530:                 value=code_config.get('max_line_length', 80),
+531:                 min_value=40,
+532:                 max_value=120,
+533:                 step=1
+534:             )
+535:             line_length_box.add(line_length_label)
+536:             line_length_box.add(line_length_input)
+537:             config_box.add(line_length_box)
+538: 
+539:             # Add fields for typing speed configuration
+540:             typing_label = toga.Label(
+541:                 "Typing Speed Configuration",
+542:                 style=Pack(padding=(10, 0, 5, 0), font_weight="bold")
+543:             )
+544:             config_box.add(typing_label)
+545: 
+546:             typing_config = config.get('typing_speed', {})
+547: 
+548:             # Min typing speed
+549:             min_speed_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+550:             min_speed_label = toga.Label("Min Speed:", style=Pack(width=100))
+551:             min_speed_input = toga.NumberInput(
+552:                 value=typing_config.get('min', 0.03),
+553:                 min_value=0.01,
+554:                 max_value=0.5,
+555:                 step=0.01
+556:             )
+557:             min_speed_box.add(min_speed_label)
+558:             min_speed_box.add(min_speed_input)
+559:             config_box.add(min_speed_box)
+560: 
+561:             # Max typing speed
+562:             max_speed_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+563:             max_speed_label = toga.Label("Max Speed:", style=Pack(width=100))
+564:             max_speed_input = toga.NumberInput(
+565:                 value=typing_config.get('max', 0.07),
+566:                 min_value=0.01,
+567:                 max_value=0.5,
+568:                 step=0.01
+569:             )
+570:             max_speed_box.add(max_speed_label)
+571:             max_speed_box.add(max_speed_input)
+572:             config_box.add(max_speed_box)
+573: 
+574:             # Mistake rate
+575:             mistake_box = toga.Box(style=Pack(direction=ROW, padding=(0, 0, 5, 0)))
+576:             mistake_label = toga.Label("Mistake Rate:", style=Pack(width=100))
+577:             mistake_input = toga.NumberInput(
+578:                 value=typing_config.get('mistake_rate', 0.07),
+579:                 min_value=0,
+580:                 max_value=0.5,
+581:                 step=0.01
+582:             )
+583:             mistake_box.add(mistake_label)
+584:             mistake_box.add(mistake_input)
+585:             config_box.add(mistake_box)
+586: 
+587:             # Add button box
+588:             button_box = toga.Box(style=Pack(direction=ROW, padding=(10, 0)))
+589: 
+590:             # Add save button
+591:             save_button = toga.Button(
+592:                 "Save Configuration",
+593:                 on_press=lambda w: asyncio.create_task(self.save_configuration(
+594:                     config,
+595:                     config_window,
+596:                     {
+597:                         'language': language_input.value,
+598:                         'indent_size': indent_input.value,
+599:                         'max_line_length': line_length_input.value,
+600:                         'min_speed': min_speed_input.value,
+601:                         'max_speed': max_speed_input.value,
+602:                         'mistake_rate': mistake_input.value
+603:                     }
+604:                 )),
+605:                 style=Pack(padding=5, background_color=self.colors['primary'], color=rgb(255, 255, 255))
+606:             )
+607:             button_box.add(save_button)
+608: 
+609:             # Add cancel button
+610:             cancel_button = toga.Button(
+611:                 "Cancel",
+612:                 on_press=lambda w: config_window.close(),
+613:                 style=Pack(padding=5, background_color=self.colors['danger'], color=rgb(255, 255, 255))
+614:             )
+615:             button_box.add(toga.Box(style=Pack(flex=1)))
+616:             button_box.add(cancel_button)
+617: 
+618:             config_box.add(button_box)
+619: 
+620:             # Display the window
+621:             config_window.content = config_box
+622:             config_window.show()
+623: 
+624:         except Exception as e:
+625:             self.text_box.value += f"Error editing configuration: {e}\n"
+626:             logger.error(f"Error editing configuration: {e}")
+627: 
+628:     async def save_configuration(self, config, config_window, form_values):
+629: 
+630:         try:
+631:             # Update the configuration with form values
+632:             if 'code' not in config:
+633:                 config['code'] = {}
+634: 
+635:             config['code']['language'] = form_values['language']
+636:             config['code']['indent_size'] = form_values['indent_size']
+637:             config['code']['max_line_length'] = form_values['max_line_length']
+638: 
+639:             if 'typing_speed' not in config:
+640:                 config['typing_speed'] = {}
+641: 
+642:             config['typing_speed']['min'] = form_values['min_speed']
+643:             config['typing_speed']['max'] = form_values['max_speed']
+644:             config['typing_speed']['mistake_rate'] = form_values['mistake_rate']
+645: 
+646:             # Preserve line_break if it exists
+647:             if 'line_break' not in config['typing_speed']:
+648:                 config['typing_speed']['line_break'] = [0.5, 1.0]
+649: 
+650:             # Save configuration to file
+651:             config_path = self.action_simulator._get_config_path()
+652:             with open(config_path, 'w') as f:
+653:                 json.dump(config, f, indent=4)
+654: 
+655: 
+656:             self.action_simulator.config = self.action_simulator._load_config()
+657:             self.action_simulator._setup_from_config()
+658: 
+659:             self.text_box.value += "✅ Configuration saved and reloaded successfully.\n"
+660:             logger.info("Configuration updated successfully")
+661: 
+662: 
+663:             config_window.close()
+664: 
+665:         except Exception as e:
+666:             self.text_box.value += f"Error saving configuration: {e}\n"
+667:             logger.error(f"Error saving configuration: {e}")
+668: 
+669: 
+670: def main():
+671:     return CodeSimulator()
 ```
 
 ## File: src/codesimulator/config.py
@@ -1799,6 +2100,39 @@ README.rst
 101: 
 102:         import tempfile
 103:         return os.path.join(tempfile.gettempdir(), 'codesimulator.log')
+```
+
+## File: src/codesimulator.dist-info/INSTALLER
+```
+1: briefcase
+```
+
+## File: src/codesimulator.dist-info/METADATA
+```
+ 1: Metadata-Version: 2.1
+ 2: Briefcase-Version: 0.3.14
+ 3: Name: codesimulator
+ 4: Formal-Name: Code Simulator
+ 5: App-ID: com.rylxes.code-simulator.codesimulator
+ 6: Version: 0.0.1
+ 7: Home-page: https://code-simulator.rylxes.com/codesimulator
+ 8: Download-URL: https://code-simulator.rylxes.com/codesimulator
+ 9: Author: rylxes
+10: Author-email: rylxes@gmail.com
+11: Summary: My first application
+```
+
+## File: src/codesimulator.dist-info/top_level.txt
+```
+1: codesimulator
+```
+
+## File: src/codesimulator.dist-info/WHEEL
+```
+1: Wheel-Version: 1.0
+2: Root-Is-Purelib: true
+3: Generator: briefcase (0.3.14)
+4: Tag: py3-none-any
 ```
 
 ## File: CHANGELOG
