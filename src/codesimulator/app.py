@@ -29,6 +29,25 @@ class CodeSimulator(toga.App):
         self.selected_file = None
         self.current_view = "simulation"  # Default view
 
+    def shutdown(self):
+        """
+        Clean up resources when the application is closing.
+        This ensures keyboard listeners are properly terminated.
+        """
+        logger.info("Application shutting down, cleaning up resources...")
+
+        # Stop any running simulations
+        if self.action_simulator.loop_flag:
+            self.action_simulator.loop_flag = False
+
+        # Clean up the key handler
+        if hasattr(self, 'key_handler'):
+            self.key_handler.cleanup()
+
+        # Other cleanup as needed
+        logger.info("Cleanup completed, application shutting down")
+
+
     async def show_debug_info(self, widget):
         info = {
             "OS": platform.system(),

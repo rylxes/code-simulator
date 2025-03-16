@@ -1,7 +1,7 @@
 {
   "output": {
-    "style": "markdown",
-    "filePath": "repomix.md",
+    "style": "plain",
+    "filePath": "repomix.txt",
     "removeComments": true,
     "showLineNumbers": true,
     "topFilesLength": 10

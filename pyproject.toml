@@ -22,7 +22,8 @@ test_sources = [
 
 requires = [
     "pyautogui>=0.9.53",
-    "PyQt5>=5.15"
+    "PyQt5>=5.15",
+    "pynput>=1.7.6"
 ]
 test_requires = [
     "pytest",
@@ -38,7 +39,8 @@ requires = [
     "toga-cocoa~=0.4.7",
     "std-nslog~=1.0.3",
     "pyautogui>=0.9.53",
-    "PyQt5>=5.15"
+    "PyQt5>=5.15",
+    "pynput>=1.7.6"
 ]
 
 entitlements = [
@@ -57,7 +59,8 @@ requires = [
     "toga-cocoa~=0.4.7",
     "std-nslog~=1.0.3",
     "pyautogui>=0.9.53",
-    "PyQt5>=5.15"
+    "PyQt5>=5.15",
+    "pynput>=1.7.6"
 ]
 
 [tool.briefcase.app.codesimulator.linux.system.debian]
@@ -174,7 +177,8 @@ flatpak_sdk = "org.gnome.Sdk"
 requires = [
     "toga-winforms~=0.4.7",
     "pyautogui>=0.9.53",
-    "PyQt5>=5.15"
+    "PyQt5>=5.15",
+    "pynput>=1.7.6"
 ]
 
 # Mobile deployments
