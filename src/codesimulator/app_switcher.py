@@ -120,16 +120,28 @@ class AppSwitcher:
             if window_list:
                 window_list = list(window_list)
 
-            for app in self.config.get_applications():
-                app_name = app.get('process_name', '')
-                bundle_id = app.get('bundle_id', '')
+            for app in self.config.get_applications(): # app is a dict with all platform keys
+                # For macOS, bundle_id is primary. process_name_darwin can be secondary.
+                bundle_id = app.get('bundle_id')
+                process_name_darwin = app.get('process_name_darwin', app.get('name')) # Fallback to general name
+
+                if not bundle_id and not process_name_darwin:
+                    logger.debug(f"Skipping app due to missing bundle_id/process_name_darwin: {app.get('name')}")
+                    continue
 
                 for window in window_list:
-                    owner = window.get(self._quartz.kCGWindowOwnerName, '')
-                    owner_bundle = window.get('kCGWindowOwnerBundleID', '')
+                    owner_name = window.get(self._quartz.kCGWindowOwnerName, '')
+                    owner_bundle_id = window.get('kCGWindowOwnerBundleID', '') # This key might not be standard, double check Quartz docs.
+                                                                            # More common is kCGWindowOwnerPID then getting app from PID.
+                                                                            # For now, assume direct bundle ID might be available or owner_name match is enough.
+                                                                            # The original code had 'kCGWindowOwnerBundleID' so I'll keep similar logic.
 
-                    if (owner and owner == app_name) or \
-                            (bundle_id and owner_bundle == bundle_id):
+                    # Prefer bundle_id match if available
+                    if bundle_id and owner_bundle_id == bundle_id:
+                        running_apps.append(app.copy())
+                        break
+                    # Fallback to matching owner name (process name)
+                    elif process_name_darwin and owner_name == process_name_darwin:
                         running_apps.append(app.copy())
                         break
 
@@ -154,11 +166,15 @@ class AppSwitcher:
 
                 try:
                     _, pid = self._win32process.GetWindowThreadProcessId(hwnd)
-                    class_name = self._win32gui.GetClassName(hwnd)
+                    current_window_class = self._win32gui.GetClassName(hwnd)
 
-                    for app in self.config.get_applications():
-                        if class_name == app.get('window_class'):
-                            apps.append(app.copy())
+                    for app_config_entry in self.config.get_applications(): # app_config_entry is a dict with all platform keys
+                        target_window_class = app_config_entry.get('window_class_windows')
+                        if target_window_class and current_window_class == target_window_class:
+                            apps.append(app_config_entry.copy())
+                            # Assuming one window match is enough for this app_config_entry
+                            # To avoid adding the same app multiple times if it has many windows of the same class
+                            break
                 except Exception as e:
                     logger.debug(f"Error processing window {hwnd}: {e}")
                 return True
@@ -188,13 +204,29 @@ class AppSwitcher:
             for window_id in window_ids:
                 window = self._display.create_resource_object('window', window_id)
                 try:
-                    window_class = window.get_wm_class()
-                    if window_class:
-                        for app in self.config.get_applications():
-                            if app.get('window_class') in window_class:
-                                running_apps.append(app.copy())
+                    # WM_CLASS property can return a tuple (instance_name, class_name)
+                    # Or sometimes just one of them as a string.
+                    wm_class_prop = window.get_wm_class()
+                    current_window_classes = []
+                    if wm_class_prop:
+                        if isinstance(wm_class_prop, tuple):
+                            current_window_classes.extend(list(wm_class_prop))
+                        elif isinstance(wm_class_prop, str):
+                            current_window_classes.append(wm_class_prop)
+
+                    if not current_window_classes:
+                        continue
+
+                    for app_config_entry in self.config.get_applications(): # app_config_entry is a dict with all platform keys
+                        target_window_class_linux = app_config_entry.get('window_class_linux')
+                        if target_window_class_linux:
+                            # Check if any of the current window's classes match the target
+                            if any(target_wc in current_window_classes for target_wc in target_window_class_linux.split()): # Target can be space separated
+                                running_apps.append(app_config_entry.copy())
+                                # Assuming one window match is enough for this app_config_entry
+                                break
                 except Exception as e:
-                    logger.debug(f"Error processing window {window_id}: {e}")
+                    logger.debug(f"Error processing Linux window {window_id}: {e}")
                     continue
 
         except Exception as e:
@@ -229,43 +261,64 @@ class AppSwitcher:
 
         try:
             if self.platform == 'darwin':
-                app_name = app_info.get("name")
-                if not app_name:
-                    raise ValueError("No application name provided")
-                subprocess.run(
-                    ['osascript', '-e', f'tell application "{app_name}" to activate'],
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
+                # On macOS, 'name' (general name) or 'bundle_id' or 'path_darwin' can be used.
+                # 'osascript -e tell application "Name"' is common.
+                # 'osascript -e tell application id "bundle.id"' is also robust.
+                # 'open -a /path/to/app' or 'open -b bundle.id'
+                target_name = app_info.get("name")
+                bundle_id = app_info.get("bundle_id")
+
+                if bundle_id: # Prefer bundle_id for activation if available
+                    logger.info(f"Attempting to activate macOS app by bundle_id: {bundle_id}")
+                    subprocess.run(['osascript', '-e', f'tell application id "{bundle_id}" to activate'], check=True, capture_output=True, text=True)
+                elif target_name:
+                    logger.info(f"Attempting to activate macOS app by name: {target_name}")
+                    subprocess.run(['osascript', '-e', f'tell application "{target_name}" to activate'], check=True, capture_output=True, text=True)
+                else:
+                    raise ValueError("No 'name' or 'bundle_id' provided for macOS application focus")
 
             elif self.platform == 'win32':
-                window_class = app_info.get('window_class')
-                if not window_class:
-                    raise ValueError("No window class provided")
+                target_window_class = app_info.get('window_class_windows')
+                if not target_window_class:
+                    raise ValueError("No 'window_class_windows' provided for Windows application focus")
 
-                def callback(hwnd, class_name):
+                logger.info(f"Attempting to focus Windows app by window_class: {target_window_class}")
+                def callback(hwnd, class_name_to_find):
                     try:
                         if (self._win32gui.IsWindowVisible(hwnd) and
-                                self._win32gui.GetClassName(hwnd) == class_name):
+                                self._win32gui.GetClassName(hwnd) == class_name_to_find):
                             self._win32gui.SetForegroundWindow(hwnd)
-                            return False
+                            logger.info(f"Focused window with class: {class_name_to_find}")
+                            return False # Stop enumeration
                     except Exception as e:
                         logger.error(f"Error setting foreground window: {e}")
-                    return True
-
-                self._win32gui.EnumWindows(callback, window_class)
+                    return True # Continue enumeration
+                self._win32gui.EnumWindows(callback, target_window_class)
 
             else:  # Linux
-                app_name = app_info.get("name")
-                if not app_name:
-                    raise ValueError("No application name provided")
-                subprocess.run(
-                    ['wmctrl', '-a', app_name],
-                    check=True,
-                    capture_output=True,
-                    text=True
-                )
+                # For Linux, wmctrl can use window title (often app name), or class.
+                # The 'name' field from app_info should be suitable for wmctrl -a.
+                # If window_class_linux is more reliable, that could be used with wmctrl -x -a <class>.
+                target_name = app_info.get("name")
+                target_class = app_info.get("window_class_linux")
+
+                if target_class: # Prefer class based activation if available
+                    logger.info(f"Attempting to focus Linux app by WM_CLASS: {target_class}")
+                    # wmctrl -x will use the WM_CLASS. It might need only one part of the class.
+                    # Taking the first part if it's space-separated.
+                    subprocess.run(['wmctrl', '-x', '-a', target_class.split()[0]], check=True, capture_output=True, text=True)
+                elif target_name:
+                    logger.info(f"Attempting to focus Linux app by name/title: {target_name}")
+                    subprocess.run(['wmctrl', '-a', target_name], check=True, capture_output=True, text=True)
+                else:
+                    raise ValueError("No 'name' or 'window_class_linux' provided for Linux application focus")
+                # The redundant call below was causing tests to fail. It has been removed.
+                # subprocess.run(
+                #     ['wmctrl', '-a', target_name],
+                #     check=True,
+                #     capture_output=True,
+                #     text=True
+                # )
 
             return True
 
