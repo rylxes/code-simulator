@@ -64,11 +64,6 @@ src/
     logging_config.py
     mouse.py
     path_utils.py
-  codesimulator.dist-info/
-    INSTALLER
-    METADATA
-    top_level.txt
-    WHEEL
 CHANGELOG
 LICENSE
 pyproject.toml
@@ -843,1203 +838,1219 @@ File: src/codesimulator/app.py
   29:         self.selected_file = None
   30:         self.current_view = "simulation"
   31: 
-  32:     async def show_debug_info(self, widget):
-  33:         info = {
-  34:             "OS": platform.system(),
-  35:             "OS Version": platform.version(),
-  36:             "Python Version": platform.python_version(),
-  37:             "App Directory": os.path.dirname(os.path.abspath(__file__)),
-  38:             "Current Directory": os.getcwd(),
-  39:             "Log File": get_log_path(),
-  40:             "Is Packaged": getattr(sys, 'frozen', False),
-  41:             "Executable": sys.executable
-  42:         }
+  32:     def shutdown(self):
+  33: 
+  34:         logger.info("Application shutting down, cleaning up resources...")
+  35: 
+  36: 
+  37:         if self.action_simulator.loop_flag:
+  38:             self.action_simulator.loop_flag = False
+  39: 
+  40: 
+  41:         if hasattr(self, 'key_handler'):
+  42:             self.key_handler.cleanup()
   43: 
-  44:         self.console.value = "--- Debug Information ---\n\n"
-  45:         for key, value in info.items():
-  46:             self.console.value += f"{key}: {value}\n"
+  44: 
+  45:         logger.info("Cleanup completed, application shutting down")
+  46: 
   47: 
-  48:         log_environment_info()
-  49:         self.console.value += "\nDetailed debug information has been logged to the log file.\n"
-  50: 
-  51:     async def view_console_logs(self, widget):
-  52:         try:
-  53:             if platform.system() == "Darwin":
-  54:                 process = subprocess.Popen(
-  55:                     ["log", "show", "--predicate", "process == 'Code Simulator'", "--last", "1h"],
-  56:                     stdout=subprocess.PIPE,
-  57:                     stderr=subprocess.PIPE,
-  58:                     text=True
-  59:                 )
-  60:                 stdout, stderr = process.communicate(timeout=5)
-  61: 
-  62:                 if stdout:
-  63:                     self.console.value = "Recent Console Logs:\n\n" + stdout
-  64:                 else:
-  65:                     self.console.value = "No recent console logs found.\n"
-  66:                     if stderr:
-  67:                         self.console.value += f"Error: {stderr}\n"
-  68:             else:
-  69:                 self.console.value = "Console log viewing only supported on macOS."
-  70:         except Exception as e:
-  71:             self.console.value = f"Error viewing console logs: {e}"
-  72: 
-  73:     async def view_logs(self, widget):
-  74:         setup_file_logging()
-  75:         log_path = get_log_path()
-  76: 
-  77:         self.console.value = "Log Information\n"
-  78:         self.console.value += "=============\n\n"
-  79:         self.console.value += f"Log file location: {log_path}\n\n"
-  80: 
-  81:         logger.info("Test log message from View Logs button")
-  82: 
-  83:         if not os.path.exists(log_path):
-  84:             self.console.value += f"❌ Log file still not found after write attempt!\n\n"
-  85: 
-  86:             try:
-  87:                 log_dir = os.path.dirname(log_path)
-  88:                 test_file_path = os.path.join(log_dir, "test_write.txt")
-  89:                 with open(test_file_path, 'w') as f:
-  90:                     f.write("Test write")
-  91:                 self.console.value += f"✓ Successfully created test file at: {test_file_path}\n"
-  92:                 os.remove(test_file_path)
-  93:             except Exception as e:
-  94:                 self.console.value += f"❌ Could not write test file: {e}\n"
-  95:                 self.console.value += "This suggests a permissions issue or the directory doesn't exist\n"
+  48:     async def show_debug_info(self, widget):
+  49:         info = {
+  50:             "OS": platform.system(),
+  51:             "OS Version": platform.version(),
+  52:             "Python Version": platform.python_version(),
+  53:             "App Directory": os.path.dirname(os.path.abspath(__file__)),
+  54:             "Current Directory": os.getcwd(),
+  55:             "Log File": get_log_path(),
+  56:             "Is Packaged": getattr(sys, 'frozen', False),
+  57:             "Executable": sys.executable
+  58:         }
+  59: 
+  60:         self.console.value = "--- Debug Information ---\n\n"
+  61:         for key, value in info.items():
+  62:             self.console.value += f"{key}: {value}\n"
+  63: 
+  64:         log_environment_info()
+  65:         self.console.value += "\nDetailed debug information has been logged to the log file.\n"
+  66: 
+  67:     async def view_console_logs(self, widget):
+  68:         try:
+  69:             if platform.system() == "Darwin":
+  70:                 process = subprocess.Popen(
+  71:                     ["log", "show", "--predicate", "process == 'Code Simulator'", "--last", "1h"],
+  72:                     stdout=subprocess.PIPE,
+  73:                     stderr=subprocess.PIPE,
+  74:                     text=True
+  75:                 )
+  76:                 stdout, stderr = process.communicate(timeout=5)
+  77: 
+  78:                 if stdout:
+  79:                     self.console.value = "Recent Console Logs:\n\n" + stdout
+  80:                 else:
+  81:                     self.console.value = "No recent console logs found.\n"
+  82:                     if stderr:
+  83:                         self.console.value += f"Error: {stderr}\n"
+  84:             else:
+  85:                 self.console.value = "Console log viewing only supported on macOS."
+  86:         except Exception as e:
+  87:             self.console.value = f"Error viewing console logs: {e}"
+  88: 
+  89:     async def view_logs(self, widget):
+  90:         setup_file_logging()
+  91:         log_path = get_log_path()
+  92: 
+  93:         self.console.value = "Log Information\n"
+  94:         self.console.value += "=============\n\n"
+  95:         self.console.value += f"Log file location: {log_path}\n\n"
   96: 
-  97:             self.console.value += "\nEnvironment Information:\n"
-  98:             self.console.value += f"Working directory: {os.getcwd()}\n"
-  99:             self.console.value += f"Home directory: {os.path.expanduser('~')}\n"
- 100:             self.console.value += f"App directory: {os.path.dirname(__file__)}\n"
- 101:             self.console.value += f"Python executable: {sys.executable}\n"
- 102:             self.console.value += f"Is packaged: {getattr(sys, 'frozen', False)}\n"
- 103: 
- 104:             self.console.value += "\nTry looking for logs in these locations:\n"
- 105:             self.console.value += f"1. {os.path.join(os.path.expanduser('~'), 'Library', 'Logs', 'CodeSimulator')}\n"
- 106:             self.console.value += f"2. {tempfile.gettempdir()}\n"
- 107: 
- 108:             return
- 109: 
- 110:         file_size = os.path.getsize(log_path)
- 111:         last_modified = os.path.getmtime(log_path)
- 112:         import datetime
- 113:         mod_time = datetime.datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')
- 114: 
- 115:         self.console.value += f"Log file size: {file_size} bytes\n"
- 116:         self.console.value += f"Last modified: {mod_time}\n\n"
- 117: 
- 118:         try:
- 119:             with open(log_path, 'r') as f:
- 120:                 if file_size > 10000:
- 121:                     self.console.value += f"Log file is large. Showing last portion...\n\n"
- 122:                     f.seek(max(0, file_size - 10000))
- 123:                     f.readline()
- 124:                     content = f.read()
- 125:                 else:
- 126:                     content = f.read()
- 127: 
- 128:             self.console.value += "Log Content:\n"
- 129:             self.console.value += "===========\n\n"
- 130:             self.console.value += content
- 131: 
- 132:         except Exception as e:
- 133:             self.console.value += f"❌ Error reading log file: {e}\n"
- 134: 
- 135:     def startup(self):
- 136:         from .logging_config import setup_file_logging
- 137:         setup_file_logging()
- 138: 
- 139:         self.setup_ui()
- 140:         self.setup_components()
- 141:         logger.info("Application started successfully.")
- 142: 
- 143:     def setup_colors(self):
- 144:         self.colors = {
- 145:             'primary': rgb(0, 122, 255),
- 146:             'secondary': rgb(0, 163, 92),
- 147:             'danger': rgb(255, 45, 85),
- 148:             'background': rgb(34, 34, 34),
- 149:             'card': rgb(34, 34, 50),
- 150:             'text': rgb(230, 230, 230),
- 151:             'text_light': rgb(160, 160, 160),
- 152:             'menu_bg': rgb(24, 24, 24),
- 153:             'menu_text': rgb(255, 255, 255),
- 154:             'menu_selected': rgb(70, 70, 70),
- 155:             'toolbar': rgb(24, 24, 24),
- 156:             'toolbar_text': rgb(255, 255, 255),
- 157:         }
+  97:         logger.info("Test log message from View Logs button")
+  98: 
+  99:         if not os.path.exists(log_path):
+ 100:             self.console.value += f"❌ Log file still not found after write attempt!\n\n"
+ 101: 
+ 102:             try:
+ 103:                 log_dir = os.path.dirname(log_path)
+ 104:                 test_file_path = os.path.join(log_dir, "test_write.txt")
+ 105:                 with open(test_file_path, 'w') as f:
+ 106:                     f.write("Test write")
+ 107:                 self.console.value += f"✓ Successfully created test file at: {test_file_path}\n"
+ 108:                 os.remove(test_file_path)
+ 109:             except Exception as e:
+ 110:                 self.console.value += f"❌ Could not write test file: {e}\n"
+ 111:                 self.console.value += "This suggests a permissions issue or the directory doesn't exist\n"
+ 112: 
+ 113:             self.console.value += "\nEnvironment Information:\n"
+ 114:             self.console.value += f"Working directory: {os.getcwd()}\n"
+ 115:             self.console.value += f"Home directory: {os.path.expanduser('~')}\n"
+ 116:             self.console.value += f"App directory: {os.path.dirname(__file__)}\n"
+ 117:             self.console.value += f"Python executable: {sys.executable}\n"
+ 118:             self.console.value += f"Is packaged: {getattr(sys, 'frozen', False)}\n"
+ 119: 
+ 120:             self.console.value += "\nTry looking for logs in these locations:\n"
+ 121:             self.console.value += f"1. {os.path.join(os.path.expanduser('~'), 'Library', 'Logs', 'CodeSimulator')}\n"
+ 122:             self.console.value += f"2. {tempfile.gettempdir()}\n"
+ 123: 
+ 124:             return
+ 125: 
+ 126:         file_size = os.path.getsize(log_path)
+ 127:         last_modified = os.path.getmtime(log_path)
+ 128:         import datetime
+ 129:         mod_time = datetime.datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')
+ 130: 
+ 131:         self.console.value += f"Log file size: {file_size} bytes\n"
+ 132:         self.console.value += f"Last modified: {mod_time}\n\n"
+ 133: 
+ 134:         try:
+ 135:             with open(log_path, 'r') as f:
+ 136:                 if file_size > 10000:
+ 137:                     self.console.value += f"Log file is large. Showing last portion...\n\n"
+ 138:                     f.seek(max(0, file_size - 10000))
+ 139:                     f.readline()
+ 140:                     content = f.read()
+ 141:                 else:
+ 142:                     content = f.read()
+ 143: 
+ 144:             self.console.value += "Log Content:\n"
+ 145:             self.console.value += "===========\n\n"
+ 146:             self.console.value += content
+ 147: 
+ 148:         except Exception as e:
+ 149:             self.console.value += f"❌ Error reading log file: {e}\n"
+ 150: 
+ 151:     def startup(self):
+ 152:         from .logging_config import setup_file_logging
+ 153:         setup_file_logging()
+ 154: 
+ 155:         self.setup_ui()
+ 156:         self.setup_components()
+ 157:         logger.info("Application started successfully.")
  158: 
- 159:     def setup_ui(self):
- 160:         self.setup_colors()
- 161: 
- 162: 
- 163:         main_box = toga.Box(style=Pack(direction=COLUMN, flex=1, background_color=self.colors['background']))
- 164: 
- 165: 
- 166:         top_bar = toga.Box(style=Pack(
- 167:             direction=ROW,
- 168:             padding=(10, 15),
- 169:             height=50,
- 170:             background_color=self.colors['toolbar'],
- 171:             alignment=CENTER
- 172:         ))
- 173: 
+ 159:     def setup_colors(self):
+ 160:         self.colors = {
+ 161:             'primary': rgb(0, 122, 255),
+ 162:             'secondary': rgb(0, 163, 92),
+ 163:             'danger': rgb(255, 45, 85),
+ 164:             'background': rgb(34, 34, 34),
+ 165:             'card': rgb(34, 34, 50),
+ 166:             'text': rgb(230, 230, 230),
+ 167:             'text_light': rgb(160, 160, 160),
+ 168:             'menu_bg': rgb(24, 24, 24),
+ 169:             'menu_text': rgb(255, 255, 255),
+ 170:             'menu_selected': rgb(70, 70, 70),
+ 171:             'toolbar': rgb(24, 24, 24),
+ 172:             'toolbar_text': rgb(255, 255, 255),
+ 173:         }
  174: 
- 175:         app_title = toga.Label(
- 176:             "Code Simulator",
- 177:             style=Pack(font_size=16, font_weight="bold", color=self.colors['toolbar_text'], padding_right=20)
- 178:         )
- 179: 
+ 175:     def setup_ui(self):
+ 176:         self.setup_colors()
+ 177: 
+ 178: 
+ 179:         main_box = toga.Box(style=Pack(direction=COLUMN, flex=1, background_color=self.colors['background']))
  180: 
- 181:         self.start_button = toga.Button(
- 182:             "▶",
- 183:             on_press=self.start_simulation,
- 184:             style=Pack(width=40, height=30, background_color=self.colors['primary'], color="white", font_size=14),
- 185:         )
- 186:         self.stop_button = toga.Button(
- 187:             "⏹",
- 188:             on_press=self.stop_simulation,
- 189:             enabled=False,
- 190:             style=Pack(width=40, height=30, background_color=self.colors['danger'], color="white", font_size=14),
- 191:         )
- 192: 
- 193: 
- 194:         self.status_label = toga.Label(
- 195:             "Ready",
- 196:             style=Pack(font_size=12, color=self.colors['toolbar_text'], padding_left=20, flex=1)
- 197:         )
- 198: 
- 199:         top_bar.add(app_title)
- 200:         top_bar.add(self.start_button)
- 201:         top_bar.add(self.stop_button)
- 202:         top_bar.add(self.status_label)
- 203: 
- 204: 
- 205:         inner_box = toga.Box(style=Pack(direction=ROW, flex=1))
- 206:         self.side_menu = self.create_side_menu()
- 207:         self.content_container = toga.Box(style=Pack(
- 208:             direction=COLUMN,
- 209:             flex=1,
- 210:             padding=20,
- 211:             background_color=self.colors['background']
- 212:         ))
- 213: 
- 214:         inner_box.add(self.side_menu)
- 215:         inner_box.add(self.content_container)
- 216: 
- 217: 
- 218:         self.simulation_view = self.create_simulation_view()
- 219:         self.configuration_view = self.create_configuration_view()
- 220:         self.logs_view = self.create_logs_view()
- 221:         self.about_view = self.create_about_view()
- 222:         self.show_view("simulation")
- 223: 
- 224:         main_box.add(top_bar)
- 225:         main_box.add(inner_box)
- 226: 
- 227:         self.main_window = toga.MainWindow(title=self.formal_name)
- 228:         self.main_window.content = main_box
- 229:         self.main_window.show()
- 230: 
- 231:     def create_side_menu(self):
- 232:         side_menu = toga.Box(style=Pack(
- 233:             direction=COLUMN,
- 234:             width=60,
- 235:             background_color=self.colors['menu_bg'],
- 236:             padding_top=10
- 237:         ))
- 238: 
- 239:         menu_options = [
- 240:             ("simulation", "Simulation", "⌨️"),
- 241:             ("configuration", "Configuration", "⚙️"),
- 242:             ("logs", "Logs", "📊"),
- 243:             ("about", "About", "ℹ️")
- 244:         ]
- 245:         self.menu_items = {}
+ 181: 
+ 182:         top_bar = toga.Box(style=Pack(
+ 183:             direction=ROW,
+ 184:             padding=(10, 15),
+ 185:             height=50,
+ 186:             background_color=self.colors['toolbar'],
+ 187:             alignment=CENTER
+ 188:         ))
+ 189: 
+ 190: 
+ 191:         app_title = toga.Label(
+ 192:             "Code Simulator",
+ 193:             style=Pack(font_size=16, font_weight="bold", color=self.colors['toolbar_text'], padding_right=20)
+ 194:         )
+ 195: 
+ 196: 
+ 197:         self.start_button = toga.Button(
+ 198:             "▶",
+ 199:             on_press=self.start_simulation,
+ 200:             style=Pack(width=40, height=30, background_color=self.colors['primary'], color="white", font_size=14),
+ 201:         )
+ 202:         self.stop_button = toga.Button(
+ 203:             "⏹",
+ 204:             on_press=self.stop_simulation,
+ 205:             enabled=False,
+ 206:             style=Pack(width=40, height=30, background_color=self.colors['danger'], color="white", font_size=14),
+ 207:         )
+ 208: 
+ 209: 
+ 210:         self.status_label = toga.Label(
+ 211:             "Ready",
+ 212:             style=Pack(font_size=12, color=self.colors['toolbar_text'], padding_left=20, flex=1)
+ 213:         )
+ 214: 
+ 215:         top_bar.add(app_title)
+ 216:         top_bar.add(self.start_button)
+ 217:         top_bar.add(self.stop_button)
+ 218:         top_bar.add(self.status_label)
+ 219: 
+ 220: 
+ 221:         inner_box = toga.Box(style=Pack(direction=ROW, flex=1))
+ 222:         self.side_menu = self.create_side_menu()
+ 223:         self.content_container = toga.Box(style=Pack(
+ 224:             direction=COLUMN,
+ 225:             flex=1,
+ 226:             padding=20,
+ 227:             background_color=self.colors['background']
+ 228:         ))
+ 229: 
+ 230:         inner_box.add(self.side_menu)
+ 231:         inner_box.add(self.content_container)
+ 232: 
+ 233: 
+ 234:         self.simulation_view = self.create_simulation_view()
+ 235:         self.configuration_view = self.create_configuration_view()
+ 236:         self.logs_view = self.create_logs_view()
+ 237:         self.about_view = self.create_about_view()
+ 238:         self.show_view("simulation")
+ 239: 
+ 240:         main_box.add(top_bar)
+ 241:         main_box.add(inner_box)
+ 242: 
+ 243:         self.main_window = toga.MainWindow(title=self.formal_name)
+ 244:         self.main_window.content = main_box
+ 245:         self.main_window.show()
  246: 
- 247:         for item_id, label, icon in menu_options:
- 248:             menu_item = toga.Button(
- 249:                 icon,
- 250:                 on_press=lambda widget, vid=item_id: self.show_view(vid),
- 251:                 style=Pack(
- 252:                     width=60,
- 253:                     height=60,
- 254:                     font_size=20,
- 255:                     background_color=self.colors['menu_bg'],
- 256:                     color=self.colors['menu_text'],
- 257:                     alignment=CENTER
- 258:                 )
- 259:             )
- 260: 
- 261:             if item_id == self.current_view:
- 262:                 menu_item.style.background_color = self.colors['menu_selected']
- 263:             self.menu_items[item_id] = menu_item
- 264:             side_menu.add(menu_item)
- 265: 
- 266:         return side_menu
- 267: 
- 268:     def create_menu_item(self, item_id, label, icon):
- 269: 
- 270: 
- 271:         menu_item = toga.Box(style=Pack(
- 272:             direction=ROW,
- 273:             padding=(12, 15),
- 274:             alignment=CENTER,
- 275:         ))
+ 247:     def create_side_menu(self):
+ 248:         side_menu = toga.Box(style=Pack(
+ 249:             direction=COLUMN,
+ 250:             width=60,
+ 251:             background_color=self.colors['menu_bg'],
+ 252:             padding_top=10
+ 253:         ))
+ 254: 
+ 255:         menu_options = [
+ 256:             ("simulation", "Simulation", "⌨️"),
+ 257:             ("configuration", "Configuration", "⚙️"),
+ 258:             ("logs", "Logs", "📊"),
+ 259:             ("about", "About", "ℹ️")
+ 260:         ]
+ 261:         self.menu_items = {}
+ 262: 
+ 263:         for item_id, label, icon in menu_options:
+ 264:             menu_item = toga.Button(
+ 265:                 icon,
+ 266:                 on_press=lambda widget, vid=item_id: self.show_view(vid),
+ 267:                 style=Pack(
+ 268:                     width=60,
+ 269:                     height=60,
+ 270:                     font_size=20,
+ 271:                     background_color=self.colors['menu_bg'],
+ 272:                     color=self.colors['menu_text'],
+ 273:                     alignment=CENTER
+ 274:                 )
+ 275:             )
  276: 
- 277: 
- 278:         icon_label = toga.Label(
- 279:             icon,
- 280:             style=Pack(
- 281:                 font_size=16,
- 282:                 color=self.colors['menu_text'],
- 283:                 width=25,
- 284:                 text_align=CENTER
- 285:             )
- 286:         )
- 287: 
- 288: 
- 289:         text_label = toga.Label(
- 290:             label,
- 291:             style=Pack(
- 292:                 font_size=14,
- 293:                 color=self.colors['menu_text'],
- 294:                 padding_left=10,
- 295:                 text_align=LEFT,
- 296:                 flex=1
- 297:             )
- 298:         )
- 299: 
- 300:         menu_item.add(icon_label)
- 301:         menu_item.add(text_label)
- 302: 
+ 277:             if item_id == self.current_view:
+ 278:                 menu_item.style.background_color = self.colors['menu_selected']
+ 279:             self.menu_items[item_id] = menu_item
+ 280:             side_menu.add(menu_item)
+ 281: 
+ 282:         return side_menu
+ 283: 
+ 284:     def create_menu_item(self, item_id, label, icon):
+ 285: 
+ 286: 
+ 287:         menu_item = toga.Box(style=Pack(
+ 288:             direction=ROW,
+ 289:             padding=(12, 15),
+ 290:             alignment=CENTER,
+ 291:         ))
+ 292: 
+ 293: 
+ 294:         icon_label = toga.Label(
+ 295:             icon,
+ 296:             style=Pack(
+ 297:                 font_size=16,
+ 298:                 color=self.colors['menu_text'],
+ 299:                 width=25,
+ 300:                 text_align=CENTER
+ 301:             )
+ 302:         )
  303: 
- 304:         button = toga.Button(
- 305:             "",
- 306:             on_press=lambda widget: self.show_view(item_id),
+ 304: 
+ 305:         text_label = toga.Label(
+ 306:             label,
  307:             style=Pack(
- 308:                 padding=0,
- 309:                 flex=1
- 310:             )
- 311:         )
- 312: 
- 313:         button.style.background_color = rgba(0, 0, 0, 0)
- 314: 
- 315:         menu_item.add(button)
- 316: 
- 317: 
- 318:         if item_id == self.current_view:
- 319:             menu_item.style.background_color = self.colors['menu_selected']
- 320: 
- 321:         return menu_item
- 322: 
- 323:     def show_view(self, view_name):
- 324:         for child in self.content_container.children:
- 325:             self.content_container.remove(child)
- 326: 
- 327:         # Update menu item styling
- 328:         for item_id, menu_item in self.menu_items.items():
- 329:             menu_item.style.background_color = (
- 330:                 self.colors['menu_selected'] if item_id == view_name else self.colors['menu_bg']
- 331:             )
+ 308:                 font_size=14,
+ 309:                 color=self.colors['menu_text'],
+ 310:                 padding_left=10,
+ 311:                 text_align=LEFT,
+ 312:                 flex=1
+ 313:             )
+ 314:         )
+ 315: 
+ 316:         menu_item.add(icon_label)
+ 317:         menu_item.add(text_label)
+ 318: 
+ 319: 
+ 320:         button = toga.Button(
+ 321:             "",
+ 322:             on_press=lambda widget: self.show_view(item_id),
+ 323:             style=Pack(
+ 324:                 padding=0,
+ 325:                 flex=1
+ 326:             )
+ 327:         )
+ 328: 
+ 329:         button.style.background_color = rgba(0, 0, 0, 0)
+ 330: 
+ 331:         menu_item.add(button)
  332: 
- 333:         self.current_view = view_name
- 334:         if view_name == "simulation":
- 335:             self.content_container.add(self.simulation_view)
- 336:         elif view_name == "configuration":
- 337:             self.content_container.add(self.configuration_view)
- 338:         elif view_name == "logs":
- 339:             self.content_container.add(self.logs_view)
- 340:         elif view_name == "about":
- 341:             self.content_container.add(self.about_view)
+ 333: 
+ 334:         if item_id == self.current_view:
+ 335:             menu_item.style.background_color = self.colors['menu_selected']
+ 336: 
+ 337:         return menu_item
+ 338: 
+ 339:     def show_view(self, view_name):
+ 340:         for child in self.content_container.children:
+ 341:             self.content_container.remove(child)
  342: 
- 343:     def create_simulation_view(self):
- 344:         simulation_view = toga.Box(style=Pack(
- 345:             direction=COLUMN,
- 346:             background_color=self.colors['card'],
- 347:             padding=20,
- 348:         ))
- 349: 
- 350:         # Mode Selector
- 351:         mode_box = toga.Box(style=Pack(direction=ROW, padding_bottom=15))
- 352:         mode_label = toga.Label("Mode:", style=Pack(font_size=14, color=self.colors['text'], width=100))
- 353:         self.mode_selector = toga.Selection(
- 354:             items=["Typing Only", "Tab Switching Only", "Hybrid", "Mouse and Command+Tab"],
- 355:             style=Pack(flex=1, height=35, background_color=self.colors['card'])
- 356:         )
- 357:         mode_box.add(mode_label)
- 358:         mode_box.add(self.mode_selector)
- 359: 
- 360:         # File Selection
- 361:         file_box = toga.Box(style=Pack(direction=ROW, padding_bottom=15))
- 362:         self.file_display = toga.Label(
- 363:             "Using default resources/code files",
- 364:             style=Pack(flex=1, font_size=12, color=self.colors['text_light'])
- 365:         )
- 366:         choose_button = toga.Button(
- 367:             "Choose File",
- 368:             on_press=self.choose_file,
- 369:             style=Pack(width=120, height=35, background_color=self.colors['primary'], color="white")
- 370:         )
- 371:         file_box.add(self.file_display)
- 372:         file_box.add(choose_button)
- 373: 
- 374:         # Console
- 375:         self.console = toga.MultilineTextInput(
- 376:             readonly=True,
- 377:             style=Pack(flex=1, padding_top=10,
- 378:                        #background_color=self.colors['card']
- 379:                        )
- 380:         )
- 381: 
- 382:         simulation_view.add(mode_box)
- 383:         simulation_view.add(file_box)
- 384:         simulation_view.add(self.console)
- 385:         return simulation_view
- 386: 
- 387:     def create_configuration_view(self):
- 388: 
- 389:         configuration_view = toga.Box(style=Pack(
- 390:             direction=COLUMN,
- 391:             background_color=self.colors['background'],
- 392:             padding=(20, 20),
- 393:             flex=1
- 394:         ))
- 395: 
- 396:         # Top toolbar
- 397:         toolbar = toga.Box(style=Pack(
- 398:             direction=ROW,
- 399:             padding=(15, 10),
- 400:             background_color=self.colors['primary'],
- 401:             alignment=CENTER
- 402:         ))
- 403: 
- 404:         toolbar_title = toga.Label(
- 405:             "Configuration",
- 406:             style=Pack(
- 407:                 font_size=16,
- 408:                 font_weight="bold",
- 409:                 color=self.colors['toolbar_text'],
- 410:                 flex=1
- 411:             )
- 412:         )
- 413:         toolbar.add(toolbar_title)
- 414: 
- 415:         # Save configuration button
- 416:         save_config_button = toga.Button(
- 417:             "Save Settings",
- 418:             on_press=self.save_configuration_direct,
- 419:             style=Pack(
- 420:                 padding=(10, 15),
- 421:                 background_color=self.colors['secondary'],
- 422:                 color=self.colors['toolbar_text'],
- 423:                 font_weight="bold"
- 424:             )
- 425:         )
- 426:         toolbar.add(save_config_button)
- 427: 
- 428:         configuration_view.add(toolbar)
- 429: 
- 430:         # Main content with card design
- 431:         content_card = toga.Box(style=Pack(
- 432:             direction=COLUMN,
- 433:             background_color=self.colors['card'],
- 434:             padding=(20, 20),
- 435:             flex=1,
- 436:         ))
- 437: 
- 438:         # Create a scroll container to hold all settings
- 439:         scroll_container = toga.ScrollContainer(style=Pack(flex=1))
- 440:         settings_box = toga.Box(style=Pack(direction=COLUMN, padding=(0, 10)))
- 441: 
- 442:         # Code Configuration Section
- 443:         code_section = toga.Box(style=Pack(
- 444:             direction=COLUMN,
- 445:             padding=(0, 0, 20, 0)
- 446:         ))
- 447: 
- 448:         code_title = toga.Label(
- 449:             "Code Configuration",
- 450:             style=Pack(
- 451:                 font_size=16,
- 452:                 font_weight="bold",
- 453:                 color=self.colors['text'],
- 454:                 padding_bottom=10
- 455:             )
- 456:         )
- 457:         code_section.add(code_title)
- 458: 
- 459:         # Language selection
- 460:         language_box = toga.Box(style=Pack(
- 461:             direction=ROW,
- 462:             padding=(0, 0, 10, 0),
- 463:             alignment=CENTER
- 464:         ))
- 465: 
- 466:         language_label = toga.Label(
- 467:             "Language:",
- 468:             style=Pack(
- 469:                 width=150,
- 470:                 color=self.colors['text']
+ 343:         # Update menu item styling
+ 344:         for item_id, menu_item in self.menu_items.items():
+ 345:             menu_item.style.background_color = (
+ 346:                 self.colors['menu_selected'] if item_id == view_name else self.colors['menu_bg']
+ 347:             )
+ 348: 
+ 349:         self.current_view = view_name
+ 350:         if view_name == "simulation":
+ 351:             self.content_container.add(self.simulation_view)
+ 352:         elif view_name == "configuration":
+ 353:             self.content_container.add(self.configuration_view)
+ 354:         elif view_name == "logs":
+ 355:             self.content_container.add(self.logs_view)
+ 356:         elif view_name == "about":
+ 357:             self.content_container.add(self.about_view)
+ 358: 
+ 359:     def create_simulation_view(self):
+ 360:         simulation_view = toga.Box(style=Pack(
+ 361:             direction=COLUMN,
+ 362:             background_color=self.colors['card'],
+ 363:             padding=20,
+ 364:         ))
+ 365: 
+ 366:         # Mode Selector
+ 367:         mode_box = toga.Box(style=Pack(direction=ROW, padding_bottom=15))
+ 368:         mode_label = toga.Label("Mode:", style=Pack(font_size=14, color=self.colors['text'], width=100))
+ 369:         self.mode_selector = toga.Selection(
+ 370:             items=["Typing Only", "Tab Switching Only", "Hybrid", "Mouse and Command+Tab"],
+ 371:             style=Pack(flex=1, height=35, background_color=self.colors['card'])
+ 372:         )
+ 373:         mode_box.add(mode_label)
+ 374:         mode_box.add(self.mode_selector)
+ 375: 
+ 376:         # File Selection
+ 377:         file_box = toga.Box(style=Pack(direction=ROW, padding_bottom=15))
+ 378:         self.file_display = toga.Label(
+ 379:             "Using default resources/code files",
+ 380:             style=Pack(flex=1, font_size=12, color=self.colors['text_light'])
+ 381:         )
+ 382:         choose_button = toga.Button(
+ 383:             "Choose File",
+ 384:             on_press=self.choose_file,
+ 385:             style=Pack(width=120, height=35, background_color=self.colors['primary'], color="white")
+ 386:         )
+ 387:         file_box.add(self.file_display)
+ 388:         file_box.add(choose_button)
+ 389: 
+ 390:         # Console
+ 391:         self.console = toga.MultilineTextInput(
+ 392:             readonly=True,
+ 393:             style=Pack(flex=1, padding_top=10,
+ 394:                        #background_color=self.colors['card']
+ 395:                        )
+ 396:         )
+ 397: 
+ 398:         simulation_view.add(mode_box)
+ 399:         simulation_view.add(file_box)
+ 400:         simulation_view.add(self.console)
+ 401:         return simulation_view
+ 402: 
+ 403:     def create_configuration_view(self):
+ 404: 
+ 405:         configuration_view = toga.Box(style=Pack(
+ 406:             direction=COLUMN,
+ 407:             background_color=self.colors['background'],
+ 408:             padding=(20, 20),
+ 409:             flex=1
+ 410:         ))
+ 411: 
+ 412:         # Top toolbar
+ 413:         toolbar = toga.Box(style=Pack(
+ 414:             direction=ROW,
+ 415:             padding=(15, 10),
+ 416:             background_color=self.colors['primary'],
+ 417:             alignment=CENTER
+ 418:         ))
+ 419: 
+ 420:         toolbar_title = toga.Label(
+ 421:             "Configuration",
+ 422:             style=Pack(
+ 423:                 font_size=16,
+ 424:                 font_weight="bold",
+ 425:                 color=self.colors['toolbar_text'],
+ 426:                 flex=1
+ 427:             )
+ 428:         )
+ 429:         toolbar.add(toolbar_title)
+ 430: 
+ 431:         # Save configuration button
+ 432:         save_config_button = toga.Button(
+ 433:             "Save Settings",
+ 434:             on_press=self.save_configuration_direct,
+ 435:             style=Pack(
+ 436:                 padding=(10, 15),
+ 437:                 background_color=self.colors['secondary'],
+ 438:                 color=self.colors['toolbar_text'],
+ 439:                 font_weight="bold"
+ 440:             )
+ 441:         )
+ 442:         toolbar.add(save_config_button)
+ 443: 
+ 444:         configuration_view.add(toolbar)
+ 445: 
+ 446:         # Main content with card design
+ 447:         content_card = toga.Box(style=Pack(
+ 448:             direction=COLUMN,
+ 449:             background_color=self.colors['card'],
+ 450:             padding=(20, 20),
+ 451:             flex=1,
+ 452:         ))
+ 453: 
+ 454:         # Create a scroll container to hold all settings
+ 455:         scroll_container = toga.ScrollContainer(style=Pack(flex=1))
+ 456:         settings_box = toga.Box(style=Pack(direction=COLUMN, padding=(0, 10)))
+ 457: 
+ 458:         # Code Configuration Section
+ 459:         code_section = toga.Box(style=Pack(
+ 460:             direction=COLUMN,
+ 461:             padding=(0, 0, 20, 0)
+ 462:         ))
+ 463: 
+ 464:         code_title = toga.Label(
+ 465:             "Code Configuration",
+ 466:             style=Pack(
+ 467:                 font_size=16,
+ 468:                 font_weight="bold",
+ 469:                 color=self.colors['text'],
+ 470:                 padding_bottom=10
  471:             )
  472:         )
- 473: 
- 474:         self.language_input = toga.Selection(
- 475:             items=["python", "java", "php"],
- 476:             value="python",
- 477:             style=Pack(
- 478:                 flex=1,
- 479:                 padding=(5, 5)
- 480:             )
- 481:         )
- 482: 
- 483:         language_box.add(language_label)
- 484:         language_box.add(self.language_input)
- 485:         code_section.add(language_box)
- 486: 
- 487:         # Indent size
- 488:         indent_box = toga.Box(style=Pack(
- 489:             direction=ROW,
- 490:             padding=(0, 0, 10, 0),
- 491:             alignment=CENTER
- 492:         ))
- 493: 
- 494:         indent_label = toga.Label(
- 495:             "Indent Size:",
- 496:             style=Pack(
- 497:                 width=150,
- 498:                 color=self.colors['text']
- 499:             )
- 500:         )
- 501: 
- 502:         self.indent_input = toga.NumberInput(
- 503:             min_value=1,
- 504:             max_value=8,
- 505:             step=1,
- 506:             value=4,
- 507:             style=Pack(
- 508:                 flex=1,
- 509:                 padding=(5, 5)
- 510:             )
- 511:         )
- 512: 
- 513:         indent_box.add(indent_label)
- 514:         indent_box.add(self.indent_input)
- 515:         code_section.add(indent_box)
- 516: 
- 517:         # Max line length
- 518:         max_line_box = toga.Box(style=Pack(
- 519:             direction=ROW,
- 520:             padding=(0, 0, 10, 0),
- 521:             alignment=CENTER
- 522:         ))
- 523: 
- 524:         max_line_label = toga.Label(
- 525:             "Max Line Length:",
- 526:             style=Pack(
- 527:                 width=150,
- 528:                 color=self.colors['text']
- 529:             )
- 530:         )
- 531: 
- 532:         self.max_line_input = toga.NumberInput(
- 533:             min_value=40,
- 534:             max_value=120,
- 535:             step=1,
- 536:             value=80,
- 537:             style=Pack(
- 538:                 flex=1,
- 539:                 padding=(5, 5)
- 540:             )
- 541:         )
- 542: 
- 543:         max_line_box.add(max_line_label)
- 544:         max_line_box.add(self.max_line_input)
- 545:         code_section.add(max_line_box)
- 546: 
- 547:         settings_box.add(code_section)
- 548: 
- 549:         # Divider
- 550:         settings_box.add(toga.Divider(style=Pack(
- 551:             padding=(0, 10)
- 552:         )))
- 553: 
- 554:         # Typing Speed Configuration Section
- 555:         typing_section = toga.Box(style=Pack(
- 556:             direction=COLUMN,
- 557:             padding=(0, 0, 20, 0)
- 558:         ))
- 559: 
- 560:         typing_title = toga.Label(
- 561:             "Typing Speed Configuration",
- 562:             style=Pack(
- 563:                 font_size=16,
- 564:                 font_weight="bold",
- 565:                 color=self.colors['text'],
- 566:                 padding_bottom=10
- 567:             )
- 568:         )
- 569:         typing_section.add(typing_title)
- 570: 
- 571:         # Min typing speed
- 572:         min_speed_box = toga.Box(style=Pack(
- 573:             direction=ROW,
- 574:             padding=(0, 0, 10, 0),
- 575:             alignment=CENTER
- 576:         ))
- 577: 
- 578:         min_speed_label = toga.Label(
- 579:             "Min Speed (sec):",
- 580:             style=Pack(
- 581:                 width=150,
- 582:                 color=self.colors['text']
+ 473:         code_section.add(code_title)
+ 474: 
+ 475:         # Language selection
+ 476:         language_box = toga.Box(style=Pack(
+ 477:             direction=ROW,
+ 478:             padding=(0, 0, 10, 0),
+ 479:             alignment=CENTER
+ 480:         ))
+ 481: 
+ 482:         language_label = toga.Label(
+ 483:             "Language:",
+ 484:             style=Pack(
+ 485:                 width=150,
+ 486:                 color=self.colors['text']
+ 487:             )
+ 488:         )
+ 489: 
+ 490:         self.language_input = toga.Selection(
+ 491:             items=["python", "java", "php"],
+ 492:             value="python",
+ 493:             style=Pack(
+ 494:                 flex=1,
+ 495:                 padding=(5, 5)
+ 496:             )
+ 497:         )
+ 498: 
+ 499:         language_box.add(language_label)
+ 500:         language_box.add(self.language_input)
+ 501:         code_section.add(language_box)
+ 502: 
+ 503:         # Indent size
+ 504:         indent_box = toga.Box(style=Pack(
+ 505:             direction=ROW,
+ 506:             padding=(0, 0, 10, 0),
+ 507:             alignment=CENTER
+ 508:         ))
+ 509: 
+ 510:         indent_label = toga.Label(
+ 511:             "Indent Size:",
+ 512:             style=Pack(
+ 513:                 width=150,
+ 514:                 color=self.colors['text']
+ 515:             )
+ 516:         )
+ 517: 
+ 518:         self.indent_input = toga.NumberInput(
+ 519:             min_value=1,
+ 520:             max_value=8,
+ 521:             step=1,
+ 522:             value=4,
+ 523:             style=Pack(
+ 524:                 flex=1,
+ 525:                 padding=(5, 5)
+ 526:             )
+ 527:         )
+ 528: 
+ 529:         indent_box.add(indent_label)
+ 530:         indent_box.add(self.indent_input)
+ 531:         code_section.add(indent_box)
+ 532: 
+ 533:         # Max line length
+ 534:         max_line_box = toga.Box(style=Pack(
+ 535:             direction=ROW,
+ 536:             padding=(0, 0, 10, 0),
+ 537:             alignment=CENTER
+ 538:         ))
+ 539: 
+ 540:         max_line_label = toga.Label(
+ 541:             "Max Line Length:",
+ 542:             style=Pack(
+ 543:                 width=150,
+ 544:                 color=self.colors['text']
+ 545:             )
+ 546:         )
+ 547: 
+ 548:         self.max_line_input = toga.NumberInput(
+ 549:             min_value=40,
+ 550:             max_value=120,
+ 551:             step=1,
+ 552:             value=80,
+ 553:             style=Pack(
+ 554:                 flex=1,
+ 555:                 padding=(5, 5)
+ 556:             )
+ 557:         )
+ 558: 
+ 559:         max_line_box.add(max_line_label)
+ 560:         max_line_box.add(self.max_line_input)
+ 561:         code_section.add(max_line_box)
+ 562: 
+ 563:         settings_box.add(code_section)
+ 564: 
+ 565:         # Divider
+ 566:         settings_box.add(toga.Divider(style=Pack(
+ 567:             padding=(0, 10)
+ 568:         )))
+ 569: 
+ 570:         # Typing Speed Configuration Section
+ 571:         typing_section = toga.Box(style=Pack(
+ 572:             direction=COLUMN,
+ 573:             padding=(0, 0, 20, 0)
+ 574:         ))
+ 575: 
+ 576:         typing_title = toga.Label(
+ 577:             "Typing Speed Configuration",
+ 578:             style=Pack(
+ 579:                 font_size=16,
+ 580:                 font_weight="bold",
+ 581:                 color=self.colors['text'],
+ 582:                 padding_bottom=10
  583:             )
  584:         )
- 585: 
- 586:         self.min_speed_input = toga.NumberInput(
- 587:             min_value=0.01,
- 588:             max_value=0.5,
- 589:             step=0.01,
- 590:             value=0.15,
- 591:             style=Pack(
- 592:                 flex=1,
- 593:                 padding=(5, 5)
- 594:             )
- 595:         )
- 596: 
- 597:         min_speed_box.add(min_speed_label)
- 598:         min_speed_box.add(self.min_speed_input)
- 599:         typing_section.add(min_speed_box)
- 600: 
- 601:         # Max typing speed
- 602:         max_speed_box = toga.Box(style=Pack(
- 603:             direction=ROW,
- 604:             padding=(0, 0, 10, 0),
- 605:             alignment=CENTER
- 606:         ))
- 607: 
- 608:         max_speed_label = toga.Label(
- 609:             "Max Speed (sec):",
- 610:             style=Pack(
- 611:                 width=150,
- 612:                 color=self.colors['text']
- 613:             )
- 614:         )
- 615: 
- 616:         self.max_speed_input = toga.NumberInput(
- 617:             min_value=0.01,
- 618:             max_value=0.5,
- 619:             step=0.01,
- 620:             value=0.25,
- 621:             style=Pack(
- 622:                 flex=1,
- 623:                 padding=(5, 5)
- 624:             )
- 625:         )
- 626: 
- 627:         max_speed_box.add(max_speed_label)
- 628:         max_speed_box.add(self.max_speed_input)
- 629:         typing_section.add(max_speed_box)
- 630: 
- 631:         # Mistake rate
- 632:         mistake_box = toga.Box(style=Pack(
- 633:             direction=ROW,
- 634:             padding=(0, 0, 10, 0),
- 635:             alignment=CENTER
- 636:         ))
- 637: 
- 638:         mistake_label = toga.Label(
- 639:             "Mistake Rate:",
- 640:             style=Pack(
- 641:                 width=150,
- 642:                 color=self.colors['text']
- 643:             )
- 644:         )
- 645: 
- 646:         self.mistake_input = toga.NumberInput(
- 647:             min_value=0,
- 648:             max_value=0.5,
- 649:             step=0.01,
- 650:             value=0.09,
- 651:             style=Pack(
- 652:                 flex=1,
- 653:                 padding=(5, 5)
- 654:             )
- 655:         )
- 656: 
- 657:         mistake_box.add(mistake_label)
- 658:         mistake_box.add(self.mistake_input)
- 659:         typing_section.add(mistake_box)
- 660: 
- 661:         settings_box.add(typing_section)
- 662: 
- 663:         # Divider
- 664:         settings_box.add(toga.Divider(style=Pack(
- 665:             padding=(0, 10)
- 666:         )))
- 667: 
- 668:         # Applications Configuration Section
- 669:         apps_section = toga.Box(style=Pack(
- 670:             direction=COLUMN,
- 671:             padding=(0, 0, 20, 0)
- 672:         ))
- 673: 
- 674:         apps_title = toga.Label(
- 675:             "Applications Configuration",
- 676:             style=Pack(
- 677:                 font_size=16,
- 678:                 font_weight="bold",
- 679:                 color=self.colors['text'],
- 680:                 padding_bottom=10
- 681:             )
- 682:         )
- 683:         apps_section.add(apps_title)
- 684: 
- 685:         # Applications list (placeholder)
- 686:         apps_info = toga.Label(
- 687:             "Application settings are configured in applications.json.\nThe simulator will switch between these applications during simulation.",
- 688:             style=Pack(
- 689:                 color=self.colors['text'],
- 690:                 padding_bottom=10
- 691:             )
- 692:         )
- 693:         apps_section.add(apps_info)
- 694: 
- 695:         settings_box.add(apps_section)
- 696: 
- 697:         # Add the settings box to the scroll container
- 698:         scroll_container.content = settings_box
- 699:         content_card.add(scroll_container)
+ 585:         typing_section.add(typing_title)
+ 586: 
+ 587:         # Min typing speed
+ 588:         min_speed_box = toga.Box(style=Pack(
+ 589:             direction=ROW,
+ 590:             padding=(0, 0, 10, 0),
+ 591:             alignment=CENTER
+ 592:         ))
+ 593: 
+ 594:         min_speed_label = toga.Label(
+ 595:             "Min Speed (sec):",
+ 596:             style=Pack(
+ 597:                 width=150,
+ 598:                 color=self.colors['text']
+ 599:             )
+ 600:         )
+ 601: 
+ 602:         self.min_speed_input = toga.NumberInput(
+ 603:             min_value=0.01,
+ 604:             max_value=0.5,
+ 605:             step=0.01,
+ 606:             value=0.15,
+ 607:             style=Pack(
+ 608:                 flex=1,
+ 609:                 padding=(5, 5)
+ 610:             )
+ 611:         )
+ 612: 
+ 613:         min_speed_box.add(min_speed_label)
+ 614:         min_speed_box.add(self.min_speed_input)
+ 615:         typing_section.add(min_speed_box)
+ 616: 
+ 617:         # Max typing speed
+ 618:         max_speed_box = toga.Box(style=Pack(
+ 619:             direction=ROW,
+ 620:             padding=(0, 0, 10, 0),
+ 621:             alignment=CENTER
+ 622:         ))
+ 623: 
+ 624:         max_speed_label = toga.Label(
+ 625:             "Max Speed (sec):",
+ 626:             style=Pack(
+ 627:                 width=150,
+ 628:                 color=self.colors['text']
+ 629:             )
+ 630:         )
+ 631: 
+ 632:         self.max_speed_input = toga.NumberInput(
+ 633:             min_value=0.01,
+ 634:             max_value=0.5,
+ 635:             step=0.01,
+ 636:             value=0.25,
+ 637:             style=Pack(
+ 638:                 flex=1,
+ 639:                 padding=(5, 5)
+ 640:             )
+ 641:         )
+ 642: 
+ 643:         max_speed_box.add(max_speed_label)
+ 644:         max_speed_box.add(self.max_speed_input)
+ 645:         typing_section.add(max_speed_box)
+ 646: 
+ 647:         # Mistake rate
+ 648:         mistake_box = toga.Box(style=Pack(
+ 649:             direction=ROW,
+ 650:             padding=(0, 0, 10, 0),
+ 651:             alignment=CENTER
+ 652:         ))
+ 653: 
+ 654:         mistake_label = toga.Label(
+ 655:             "Mistake Rate:",
+ 656:             style=Pack(
+ 657:                 width=150,
+ 658:                 color=self.colors['text']
+ 659:             )
+ 660:         )
+ 661: 
+ 662:         self.mistake_input = toga.NumberInput(
+ 663:             min_value=0,
+ 664:             max_value=0.5,
+ 665:             step=0.01,
+ 666:             value=0.09,
+ 667:             style=Pack(
+ 668:                 flex=1,
+ 669:                 padding=(5, 5)
+ 670:             )
+ 671:         )
+ 672: 
+ 673:         mistake_box.add(mistake_label)
+ 674:         mistake_box.add(self.mistake_input)
+ 675:         typing_section.add(mistake_box)
+ 676: 
+ 677:         settings_box.add(typing_section)
+ 678: 
+ 679:         # Divider
+ 680:         settings_box.add(toga.Divider(style=Pack(
+ 681:             padding=(0, 10)
+ 682:         )))
+ 683: 
+ 684:         # Applications Configuration Section
+ 685:         apps_section = toga.Box(style=Pack(
+ 686:             direction=COLUMN,
+ 687:             padding=(0, 0, 20, 0)
+ 688:         ))
+ 689: 
+ 690:         apps_title = toga.Label(
+ 691:             "Applications Configuration",
+ 692:             style=Pack(
+ 693:                 font_size=16,
+ 694:                 font_weight="bold",
+ 695:                 color=self.colors['text'],
+ 696:                 padding_bottom=10
+ 697:             )
+ 698:         )
+ 699:         apps_section.add(apps_title)
  700: 
- 701:         # Add content card to the view
- 702:         configuration_view.add(content_card)
- 703: 
- 704:         return configuration_view
- 705: 
- 706:     def create_logs_view(self):
- 707: 
- 708:         logs_view = toga.Box(style=Pack(
- 709:             direction=COLUMN,
- 710:             background_color=self.colors['background'],
- 711:             padding=(20, 20),
- 712:             flex=1
- 713:         ))
- 714: 
- 715:         # Top toolbar
- 716:         toolbar = toga.Box(style=Pack(
- 717:             direction=ROW,
- 718:             padding=(15, 10),
- 719:             background_color=self.colors['primary'],
- 720:             alignment=CENTER
- 721:         ))
- 722: 
- 723:         toolbar_title = toga.Label(
- 724:             "Logs & Debugging",
- 725:             style=Pack(
- 726:                 font_size=16,
- 727:                 font_weight="bold",
- 728:                 color=self.colors['toolbar_text'],
- 729:                 flex=1
- 730:             )
- 731:         )
- 732:         toolbar.add(toolbar_title)
- 733: 
- 734:         logs_view.add(toolbar)
- 735: 
- 736:         # Main content with card design
- 737:         content_card = toga.Box(style=Pack(
- 738:             direction=COLUMN,
- 739:             background_color=self.colors['card'],
- 740:             padding=(20, 20),
- 741:             flex=1,
- 742:         ))
- 743: 
- 744:         # Debug buttons
- 745:         buttons_box = toga.Box(style=Pack(
- 746:             direction=ROW,
- 747:             padding=(0, 0, 15, 0)
- 748:         ))
+ 701:         # Applications list (placeholder)
+ 702:         apps_info = toga.Label(
+ 703:             "Application settings are configured in applications.json.\nThe simulator will switch between these applications during simulation.",
+ 704:             style=Pack(
+ 705:                 color=self.colors['text'],
+ 706:                 padding_bottom=10
+ 707:             )
+ 708:         )
+ 709:         apps_section.add(apps_info)
+ 710: 
+ 711:         settings_box.add(apps_section)
+ 712: 
+ 713:         # Add the settings box to the scroll container
+ 714:         scroll_container.content = settings_box
+ 715:         content_card.add(scroll_container)
+ 716: 
+ 717:         # Add content card to the view
+ 718:         configuration_view.add(content_card)
+ 719: 
+ 720:         return configuration_view
+ 721: 
+ 722:     def create_logs_view(self):
+ 723: 
+ 724:         logs_view = toga.Box(style=Pack(
+ 725:             direction=COLUMN,
+ 726:             background_color=self.colors['background'],
+ 727:             padding=(20, 20),
+ 728:             flex=1
+ 729:         ))
+ 730: 
+ 731:         # Top toolbar
+ 732:         toolbar = toga.Box(style=Pack(
+ 733:             direction=ROW,
+ 734:             padding=(15, 10),
+ 735:             background_color=self.colors['primary'],
+ 736:             alignment=CENTER
+ 737:         ))
+ 738: 
+ 739:         toolbar_title = toga.Label(
+ 740:             "Logs & Debugging",
+ 741:             style=Pack(
+ 742:                 font_size=16,
+ 743:                 font_weight="bold",
+ 744:                 color=self.colors['toolbar_text'],
+ 745:                 flex=1
+ 746:             )
+ 747:         )
+ 748:         toolbar.add(toolbar_title)
  749: 
- 750:         view_logs_button = toga.Button(
- 751:             "View Application Logs",
- 752:             on_press=self.view_logs,
- 753:             style=Pack(
- 754:                 padding=(10, 15),
- 755:                 background_color=self.colors['primary'],
- 756:                 color=self.colors['toolbar_text'],
- 757:             )
- 758:         )
+ 750:         logs_view.add(toolbar)
+ 751: 
+ 752:         # Main content with card design
+ 753:         content_card = toga.Box(style=Pack(
+ 754:             direction=COLUMN,
+ 755:             background_color=self.colors['card'],
+ 756:             padding=(20, 20),
+ 757:             flex=1,
+ 758:         ))
  759: 
- 760:         debug_info_button = toga.Button(
- 761:             "Show Debug Info",
- 762:             on_press=self.show_debug_info,
- 763:             style=Pack(
- 764:                 padding=(10, 15),
- 765:                 background_color=self.colors['primary'],
- 766:                 color=self.colors['toolbar_text'],
- 767:             )
- 768:         )
- 769: 
- 770:         console_logs_button = toga.Button(
- 771:             "View Console Logs",
- 772:             on_press=self.view_console_logs,
- 773:             style=Pack(
- 774:                 padding=(10, 15),
- 775:                 background_color=self.colors['primary'],
- 776:                 color=self.colors['toolbar_text']
- 777:             )
- 778:         )
- 779: 
- 780:         buttons_box.add(view_logs_button)
- 781:         buttons_box.add(debug_info_button)
- 782:         buttons_box.add(console_logs_button)
- 783:         content_card.add(buttons_box)
- 784: 
- 785:         # Divider
- 786:         content_card.add(toga.Divider(style=Pack(
- 787:             padding=(10, 0)
- 788:         )))
- 789: 
- 790:         # Log output section
- 791:         log_box = toga.Box(style=Pack(
- 792:             direction=COLUMN,
- 793:             padding=(10, 0, 0, 0),
- 794:             flex=1
- 795:         ))
- 796: 
- 797:         log_title = toga.Label(
- 798:             "Log Output",
- 799:             style=Pack(
- 800:                 font_size=16,
- 801:                 font_weight="bold",
- 802:                 color=self.colors['text'],
- 803:                 padding_bottom=10
- 804:             )
- 805:         )
- 806:         log_box.add(log_title)
- 807: 
- 808:         log_instructions = toga.Label(
- 809:             "Click one of the buttons above to view logs or debug information.",
- 810:             style=Pack(
- 811:                 color=self.colors['text_light'],
- 812:                 padding_bottom=10
- 813:             )
- 814:         )
- 815:         log_box.add(log_instructions)
- 816: 
- 817:         log_console = toga.MultilineTextInput(
- 818:             readonly=True,
- 819:             style=Pack(
- 820:                 flex=1,
- 821:                 # background_color=self.colors['card']
- 822:             )
- 823:         )
- 824:         self.console = log_console
- 825:         log_box.add(log_console)
- 826: 
- 827:         content_card.add(log_box)
- 828:         logs_view.add(content_card)
- 829: 
- 830:         return logs_view
- 831: 
- 832:     def create_about_view(self):
- 833: 
- 834:         about_view = toga.Box(style=Pack(
- 835:             direction=COLUMN,
- 836:             background_color=self.colors['background'],
- 837:             padding=(20, 20),
- 838:             flex=1
- 839:         ))
- 840: 
- 841:         # Top toolbar
- 842:         toolbar = toga.Box(style=Pack(
- 843:             direction=ROW,
- 844:             padding=(15, 10),
- 845:             background_color=self.colors['primary'],
- 846:             alignment=CENTER
- 847:         ))
- 848: 
- 849:         toolbar_title = toga.Label(
- 850:             "About & Help",
- 851:             style=Pack(
- 852:                 font_size=16,
- 853:                 font_weight="bold",
- 854:                 color=self.colors['toolbar_text'],
- 855:                 flex=1
- 856:             )
- 857:         )
- 858:         toolbar.add(toolbar_title)
- 859: 
- 860:         about_view.add(toolbar)
- 861: 
- 862:         # Main content with card design
- 863:         content_card = toga.Box(style=Pack(
- 864:             direction=COLUMN,
- 865:             background_color=self.colors['card'],
- 866:             padding=(20, 20),
- 867:             flex=1,
- 868:         ))
- 869: 
- 870:         # Create a scroll container for about content
- 871:         scroll_container = toga.ScrollContainer(style=Pack(flex=1))
- 872:         about_content = toga.Box(style=Pack(direction=COLUMN, padding=(0, 0)))
- 873: 
- 874:         # App information section
- 875:         app_info_box = toga.Box(style=Pack(
- 876:             direction=COLUMN,
- 877:             padding=(0, 0, 20, 0)
- 878:         ))
- 879: 
- 880:         app_name = toga.Label(
- 881:             "Code Simulator",
- 882:             style=Pack(
- 883:                 font_size=24,
- 884:                 font_weight="bold",
- 885:                 color=self.colors['text'],
- 886:                 padding_bottom=5
- 887:             )
- 888:         )
- 889:         app_info_box.add(app_name)
- 890: 
- 891:         app_version = toga.Label(
- 892:             "Version 0.0.1",
- 893:             style=Pack(
- 894:                 font_size=14,
- 895:                 color=self.colors['text_light'],
- 896:                 padding_bottom=10
- 897:             )
- 898:         )
- 899:         app_info_box.add(app_version)
- 900: 
- 901:         app_description = toga.Label(
- 902:             "Code Simulator is a tool for simulating coding activity including typing, window switching, and mouse movements. It's designed to create a realistic coding environment simulation.",
- 903:             style=Pack(
- 904:                 color=self.colors['text'],
- 905:                 padding_bottom=10
- 906:             )
- 907:         )
- 908:         app_info_box.add(app_description)
- 909: 
- 910:         copyright_label = toga.Label(
- 911:             "© 2025 rylxes. All rights reserved.",
- 912:             style=Pack(
- 913:                 font_size=12,
- 914:                 color=self.colors['text_light'],
- 915:                 padding_bottom=20
- 916:             )
- 917:         )
- 918:         app_info_box.add(copyright_label)
- 919: 
- 920:         about_content.add(app_info_box)
- 921: 
- 922:         # Divider
- 923:         about_content.add(toga.Divider(style=Pack(
- 924:             padding=(0, 10)
- 925:         )))
- 926: 
- 927:         # Help section
- 928:         help_box = toga.Box(style=Pack(
- 929:             direction=COLUMN,
- 930:             padding=(10, 0, 20, 0)
- 931:         ))
- 932: 
- 933:         help_title = toga.Label(
- 934:             "How to Use",
- 935:             style=Pack(
- 936:                 font_size=18,
- 937:                 font_weight="bold",
- 938:                 color=self.colors['text'],
- 939:                 padding_bottom=10
- 940:             )
- 941:         )
- 942:         help_box.add(help_title)
- 943: 
- 944:         # Help content
- 945:         help_sections = [
- 946:             ("Simulation Modes", [
- 947:                 "Typing Only: Simulates keyboard typing from a code file",
- 948:                 "Tab Switching Only: Simulates switching between application windows",
- 949:                 "Hybrid: Combines typing and application switching",
- 950:                 "Mouse and Command+Tab: Simulates mouse movements and Command+Tab switching"
- 951:             ]),
- 952:             ("File Selection", [
- 953:                 "Use the 'Choose File' button to select a .txt file for typing simulation",
- 954:                 "If no file is selected, default files from resources/code directory will be used"
- 955:             ]),
- 956:             ("Configuration", [
- 957:                 "Adjust typing speed, language formatting, and other settings in the Configuration tab",
- 958:                 "Application targets for switching can be configured in applications.json"
- 959:             ]),
- 960:             ("Keyboard Shortcuts", [
- 961:                 "⌘+S: Start Simulation",
- 962:                 "⌘+X: Stop Simulation"
- 963:             ])
- 964:         ]
- 965: 
- 966:         for section_title, items in help_sections:
- 967:             section_label = toga.Label(
- 968:                 section_title,
- 969:                 style=Pack(
- 970:                     font_size=16,
- 971:                     font_weight="bold",
- 972:                     color=self.colors['text'],
- 973:                     padding=(10, 0, 5, 0)
- 974:                 )
- 975:             )
- 976:             help_box.add(section_label)
- 977: 
- 978:             for item in items:
- 979:                 item_label = toga.Label(
- 980:                     "• " + item,
- 981:                     style=Pack(
- 982:                         color=self.colors['text'],
- 983:                         padding=(0, 0, 5, 15)
- 984:                     )
- 985:                 )
- 986:                 help_box.add(item_label)
- 987: 
- 988:         about_content.add(help_box)
- 989: 
- 990:         # Add the about content to the scroll container
- 991:         scroll_container.content = about_content
- 992:         content_card.add(scroll_container)
+ 760:         # Debug buttons
+ 761:         buttons_box = toga.Box(style=Pack(
+ 762:             direction=ROW,
+ 763:             padding=(0, 0, 15, 0)
+ 764:         ))
+ 765: 
+ 766:         view_logs_button = toga.Button(
+ 767:             "View Application Logs",
+ 768:             on_press=self.view_logs,
+ 769:             style=Pack(
+ 770:                 padding=(10, 15),
+ 771:                 background_color=self.colors['primary'],
+ 772:                 color=self.colors['toolbar_text'],
+ 773:             )
+ 774:         )
+ 775: 
+ 776:         debug_info_button = toga.Button(
+ 777:             "Show Debug Info",
+ 778:             on_press=self.show_debug_info,
+ 779:             style=Pack(
+ 780:                 padding=(10, 15),
+ 781:                 background_color=self.colors['primary'],
+ 782:                 color=self.colors['toolbar_text'],
+ 783:             )
+ 784:         )
+ 785: 
+ 786:         console_logs_button = toga.Button(
+ 787:             "View Console Logs",
+ 788:             on_press=self.view_console_logs,
+ 789:             style=Pack(
+ 790:                 padding=(10, 15),
+ 791:                 background_color=self.colors['primary'],
+ 792:                 color=self.colors['toolbar_text']
+ 793:             )
+ 794:         )
+ 795: 
+ 796:         buttons_box.add(view_logs_button)
+ 797:         buttons_box.add(debug_info_button)
+ 798:         buttons_box.add(console_logs_button)
+ 799:         content_card.add(buttons_box)
+ 800: 
+ 801:         # Divider
+ 802:         content_card.add(toga.Divider(style=Pack(
+ 803:             padding=(10, 0)
+ 804:         )))
+ 805: 
+ 806:         # Log output section
+ 807:         log_box = toga.Box(style=Pack(
+ 808:             direction=COLUMN,
+ 809:             padding=(10, 0, 0, 0),
+ 810:             flex=1
+ 811:         ))
+ 812: 
+ 813:         log_title = toga.Label(
+ 814:             "Log Output",
+ 815:             style=Pack(
+ 816:                 font_size=16,
+ 817:                 font_weight="bold",
+ 818:                 color=self.colors['text'],
+ 819:                 padding_bottom=10
+ 820:             )
+ 821:         )
+ 822:         log_box.add(log_title)
+ 823: 
+ 824:         log_instructions = toga.Label(
+ 825:             "Click one of the buttons above to view logs or debug information.",
+ 826:             style=Pack(
+ 827:                 color=self.colors['text_light'],
+ 828:                 padding_bottom=10
+ 829:             )
+ 830:         )
+ 831:         log_box.add(log_instructions)
+ 832: 
+ 833:         log_console = toga.MultilineTextInput(
+ 834:             readonly=True,
+ 835:             style=Pack(
+ 836:                 flex=1,
+ 837:                 # background_color=self.colors['card']
+ 838:             )
+ 839:         )
+ 840:         self.console = log_console
+ 841:         log_box.add(log_console)
+ 842: 
+ 843:         content_card.add(log_box)
+ 844:         logs_view.add(content_card)
+ 845: 
+ 846:         return logs_view
+ 847: 
+ 848:     def create_about_view(self):
+ 849: 
+ 850:         about_view = toga.Box(style=Pack(
+ 851:             direction=COLUMN,
+ 852:             background_color=self.colors['background'],
+ 853:             padding=(20, 20),
+ 854:             flex=1
+ 855:         ))
+ 856: 
+ 857:         # Top toolbar
+ 858:         toolbar = toga.Box(style=Pack(
+ 859:             direction=ROW,
+ 860:             padding=(15, 10),
+ 861:             background_color=self.colors['primary'],
+ 862:             alignment=CENTER
+ 863:         ))
+ 864: 
+ 865:         toolbar_title = toga.Label(
+ 866:             "About & Help",
+ 867:             style=Pack(
+ 868:                 font_size=16,
+ 869:                 font_weight="bold",
+ 870:                 color=self.colors['toolbar_text'],
+ 871:                 flex=1
+ 872:             )
+ 873:         )
+ 874:         toolbar.add(toolbar_title)
+ 875: 
+ 876:         about_view.add(toolbar)
+ 877: 
+ 878:         # Main content with card design
+ 879:         content_card = toga.Box(style=Pack(
+ 880:             direction=COLUMN,
+ 881:             background_color=self.colors['card'],
+ 882:             padding=(20, 20),
+ 883:             flex=1,
+ 884:         ))
+ 885: 
+ 886:         # Create a scroll container for about content
+ 887:         scroll_container = toga.ScrollContainer(style=Pack(flex=1))
+ 888:         about_content = toga.Box(style=Pack(direction=COLUMN, padding=(0, 0)))
+ 889: 
+ 890:         # App information section
+ 891:         app_info_box = toga.Box(style=Pack(
+ 892:             direction=COLUMN,
+ 893:             padding=(0, 0, 20, 0)
+ 894:         ))
+ 895: 
+ 896:         app_name = toga.Label(
+ 897:             "Code Simulator",
+ 898:             style=Pack(
+ 899:                 font_size=24,
+ 900:                 font_weight="bold",
+ 901:                 color=self.colors['text'],
+ 902:                 padding_bottom=5
+ 903:             )
+ 904:         )
+ 905:         app_info_box.add(app_name)
+ 906: 
+ 907:         app_version = toga.Label(
+ 908:             "Version 0.0.1",
+ 909:             style=Pack(
+ 910:                 font_size=14,
+ 911:                 color=self.colors['text_light'],
+ 912:                 padding_bottom=10
+ 913:             )
+ 914:         )
+ 915:         app_info_box.add(app_version)
+ 916: 
+ 917:         app_description = toga.Label(
+ 918:             "Code Simulator is a tool for simulating coding activity including typing, window switching, and mouse movements. It's designed to create a realistic coding environment simulation.",
+ 919:             style=Pack(
+ 920:                 color=self.colors['text'],
+ 921:                 padding_bottom=10
+ 922:             )
+ 923:         )
+ 924:         app_info_box.add(app_description)
+ 925: 
+ 926:         copyright_label = toga.Label(
+ 927:             "© 2025 rylxes. All rights reserved.",
+ 928:             style=Pack(
+ 929:                 font_size=12,
+ 930:                 color=self.colors['text_light'],
+ 931:                 padding_bottom=20
+ 932:             )
+ 933:         )
+ 934:         app_info_box.add(copyright_label)
+ 935: 
+ 936:         about_content.add(app_info_box)
+ 937: 
+ 938:         # Divider
+ 939:         about_content.add(toga.Divider(style=Pack(
+ 940:             padding=(0, 10)
+ 941:         )))
+ 942: 
+ 943:         # Help section
+ 944:         help_box = toga.Box(style=Pack(
+ 945:             direction=COLUMN,
+ 946:             padding=(10, 0, 20, 0)
+ 947:         ))
+ 948: 
+ 949:         help_title = toga.Label(
+ 950:             "How to Use",
+ 951:             style=Pack(
+ 952:                 font_size=18,
+ 953:                 font_weight="bold",
+ 954:                 color=self.colors['text'],
+ 955:                 padding_bottom=10
+ 956:             )
+ 957:         )
+ 958:         help_box.add(help_title)
+ 959: 
+ 960:         # Help content
+ 961:         help_sections = [
+ 962:             ("Simulation Modes", [
+ 963:                 "Typing Only: Simulates keyboard typing from a code file",
+ 964:                 "Tab Switching Only: Simulates switching between application windows",
+ 965:                 "Hybrid: Combines typing and application switching",
+ 966:                 "Mouse and Command+Tab: Simulates mouse movements and Command+Tab switching"
+ 967:             ]),
+ 968:             ("File Selection", [
+ 969:                 "Use the 'Choose File' button to select a .txt file for typing simulation",
+ 970:                 "If no file is selected, default files from resources/code directory will be used"
+ 971:             ]),
+ 972:             ("Configuration", [
+ 973:                 "Adjust typing speed, language formatting, and other settings in the Configuration tab",
+ 974:                 "Application targets for switching can be configured in applications.json"
+ 975:             ]),
+ 976:             ("Keyboard Shortcuts", [
+ 977:                 "⌘+S: Start Simulation",
+ 978:                 "⌘+X: Stop Simulation"
+ 979:             ])
+ 980:         ]
+ 981: 
+ 982:         for section_title, items in help_sections:
+ 983:             section_label = toga.Label(
+ 984:                 section_title,
+ 985:                 style=Pack(
+ 986:                     font_size=16,
+ 987:                     font_weight="bold",
+ 988:                     color=self.colors['text'],
+ 989:                     padding=(10, 0, 5, 0)
+ 990:                 )
+ 991:             )
+ 992:             help_box.add(section_label)
  993: 
- 994:         # Add content card to the view
- 995:         about_view.add(content_card)
- 996: 
- 997:         return about_view
- 998: 
- 999:     def load_configuration_values(self):
-1000: 
-1001:         try:
-1002:             # Get configuration path
-1003:             config_path = self.action_simulator._get_config_path()
-1004: 
-1005:             # Read configuration file
-1006:             with open(config_path, 'r') as f:
-1007:                 config = json.load(f)
-1008: 
-1009:             # Set code configuration values
-1010:             code_config = config.get('code', {})
-1011:             self.language_input.value = code_config.get('language', 'python')
-1012:             self.indent_input.value = code_config.get('indent_size', 4)
-1013:             self.max_line_input.value = code_config.get('max_line_length', 80)
+ 994:             for item in items:
+ 995:                 item_label = toga.Label(
+ 996:                     "• " + item,
+ 997:                     style=Pack(
+ 998:                         color=self.colors['text'],
+ 999:                         padding=(0, 0, 5, 15)
+1000:                     )
+1001:                 )
+1002:                 help_box.add(item_label)
+1003: 
+1004:         about_content.add(help_box)
+1005: 
+1006:         # Add the about content to the scroll container
+1007:         scroll_container.content = about_content
+1008:         content_card.add(scroll_container)
+1009: 
+1010:         # Add content card to the view
+1011:         about_view.add(content_card)
+1012: 
+1013:         return about_view
 1014: 
-1015:             # Set typing speed configuration values
-1016:             typing_config = config.get('typing_speed', {})
-1017:             self.min_speed_input.value = typing_config.get('min', 0.03)
-1018:             self.max_speed_input.value = typing_config.get('max', 0.07)
-1019:             self.mistake_input.value = typing_config.get('mistake_rate', 0.07)
+1015:     def load_configuration_values(self):
+1016: 
+1017:         try:
+1018:             # Get configuration path
+1019:             config_path = self.action_simulator._get_config_path()
 1020: 
-1021:             logger.info("Configuration values loaded successfully")
-1022:         except Exception as e:
-1023:             logger.error(f"Error loading configuration values: {e}")
-1024:             self.console.value = f"Error loading configuration: {e}\n"
-1025: 
-1026:     async def save_configuration_direct(self, widget):
-1027: 
-1028:         try:
-1029:             # Get configuration path
-1030:             config_path = self.action_simulator._get_config_path()
-1031: 
-1032:             # Read current configuration
-1033:             with open(config_path, 'r') as f:
-1034:                 config = json.load(f)
-1035: 
-1036:             # Update code configuration
-1037:             if 'code' not in config:
-1038:                 config['code'] = {}
-1039: 
-1040:             config['code']['language'] = self.language_input.value
-1041:             config['code']['indent_size'] = self.indent_input.value
-1042:             config['code']['max_line_length'] = self.max_line_input.value
+1021:             # Read configuration file
+1022:             with open(config_path, 'r') as f:
+1023:                 config = json.load(f)
+1024: 
+1025:             # Set code configuration values
+1026:             code_config = config.get('code', {})
+1027:             self.language_input.value = code_config.get('language', 'python')
+1028:             self.indent_input.value = code_config.get('indent_size', 4)
+1029:             self.max_line_input.value = code_config.get('max_line_length', 80)
+1030: 
+1031:             # Set typing speed configuration values
+1032:             typing_config = config.get('typing_speed', {})
+1033:             self.min_speed_input.value = typing_config.get('min', 0.03)
+1034:             self.max_speed_input.value = typing_config.get('max', 0.07)
+1035:             self.mistake_input.value = typing_config.get('mistake_rate', 0.07)
+1036: 
+1037:             logger.info("Configuration values loaded successfully")
+1038:         except Exception as e:
+1039:             logger.error(f"Error loading configuration values: {e}")
+1040:             self.console.value = f"Error loading configuration: {e}\n"
+1041: 
+1042:     async def save_configuration_direct(self, widget):
 1043: 
-1044:             # Update typing speed configuration
-1045:             if 'typing_speed' not in config:
-1046:                 config['typing_speed'] = {}
+1044:         try:
+1045:             # Get configuration path
+1046:             config_path = self.action_simulator._get_config_path()
 1047: 
-1048:             config['typing_speed']['min'] = self.min_speed_input.value
-1049:             config['typing_speed']['max'] = self.max_speed_input.value
-1050:             config['typing_speed']['mistake_rate'] = self.mistake_input.value
+1048:             # Read current configuration
+1049:             with open(config_path, 'r') as f:
+1050:                 config = json.load(f)
 1051: 
-1052:             # Preserve line_break if it exists
-1053:             if 'line_break' not in config['typing_speed']:
-1054:                 config['typing_speed']['line_break'] = [0.5, 1.0]
+1052:             # Update code configuration
+1053:             if 'code' not in config:
+1054:                 config['code'] = {}
 1055: 
-1056:             # Write updated configuration
-1057:             with open(config_path, 'w') as f:
-1058:                 json.dump(config, f, indent=4)
+1056:             config['code']['language'] = self.language_input.value
+1057:             config['code']['indent_size'] = self.indent_input.value
+1058:             config['code']['max_line_length'] = self.max_line_input.value
 1059: 
-1060:             # Reload configuration in action simulator
-1061:             self.action_simulator.config = self.action_simulator._load_config()
-1062:             self.action_simulator._setup_from_config()
+1060:             # Update typing speed configuration
+1061:             if 'typing_speed' not in config:
+1062:                 config['typing_speed'] = {}
 1063: 
-1064:             # Show success message
-1065:             self.console.value = "✅ Configuration saved and reloaded successfully.\n"
-1066:             self.status_label.text = "Configuration saved"
-1067:             logger.info("Configuration updated successfully")
-1068: 
-1069:         except Exception as e:
-1070:             self.console.value = f"❌ Error saving configuration: {e}\n"
-1071:             logger.error(f"Error saving configuration: {e}")
-1072: 
-1073:     def setup_components(self):
-1074: 
-1075:         self.action_simulator = ActionSimulator(self.console, self)
-1076:         self.key_handler = GlobalKeyHandler(self, self.action_simulator)
-1077:         self.simulation_task = None
-1078: 
-1079:         # Now that ActionSimulator is initialized, we can load configuration values
-1080:         self.load_configuration_values()
-1081: 
-1082:     async def choose_file(self, widget):
-1083: 
-1084:         try:
-1085:             dialog = toga.OpenFileDialog(
-1086:                 title="Select a Code File",
-1087:                 file_types=["txt"]
-1088:             )
-1089:             file_path = await self.main_window.dialog(dialog)
+1064:             config['typing_speed']['min'] = self.min_speed_input.value
+1065:             config['typing_speed']['max'] = self.max_speed_input.value
+1066:             config['typing_speed']['mistake_rate'] = self.mistake_input.value
+1067: 
+1068:             # Preserve line_break if it exists
+1069:             if 'line_break' not in config['typing_speed']:
+1070:                 config['typing_speed']['line_break'] = [0.5, 1.0]
+1071: 
+1072:             # Write updated configuration
+1073:             with open(config_path, 'w') as f:
+1074:                 json.dump(config, f, indent=4)
+1075: 
+1076:             # Reload configuration in action simulator
+1077:             self.action_simulator.config = self.action_simulator._load_config()
+1078:             self.action_simulator._setup_from_config()
+1079: 
+1080:             # Show success message
+1081:             self.console.value = "✅ Configuration saved and reloaded successfully.\n"
+1082:             self.status_label.text = "Configuration saved"
+1083:             logger.info("Configuration updated successfully")
+1084: 
+1085:         except Exception as e:
+1086:             self.console.value = f"❌ Error saving configuration: {e}\n"
+1087:             logger.error(f"Error saving configuration: {e}")
+1088: 
+1089:     def setup_components(self):
 1090: 
-1091:             # Handle the file_path based on its type
-1092:             if file_path:
-1093:                 # Convert PosixPath to string if needed
-1094:                 if hasattr(file_path, 'resolve'):  # It's a Path object
-1095:                     self.selected_file = str(file_path.resolve())
-1096:                 elif isinstance(file_path, list) and file_path:  # It's a list of paths
-1097:                     self.selected_file = str(file_path[0])
-1098:                 else:  # It's already a string
-1099:                     self.selected_file = str(file_path)
-1100: 
-1101:                 filename = os.path.basename(self.selected_file)
-1102:                 self.file_display.text = f"Selected: {filename}"
-1103:                 logger.info(f"Selected file: {self.selected_file}")
-1104:                 self.status_label.text = f"File selected: {filename}"
-1105:             else:
-1106:                 self.selected_file = None
-1107:                 self.file_display.text = "Using default resources/code files"
-1108:                 logger.info("No file selected; using default.")
-1109:                 self.status_label.text = "Using default files"
-1110:         except Exception as e:
-1111:             self.console.value += f"Error selecting file: {str(e)}\n"
-1112:             logger.error(f"Error in choose_file: {e}")
-1113:             self.selected_file = None
-1114:             self.file_display.text = "Using default resources/code files"
-1115: 
-1116:     async def start_simulation(self, widget):
-1117: 
-1118:         if not self.action_simulator.loop_flag:
-1119:             try:
-1120:                 self.console.value = "🚀 Starting simulation...\n"
-1121:                 self.update_button_states(running=True)
-1122:                 self.action_simulator.loop_flag = True
-1123:                 self.status_label.text = "Simulation running"
-1124: 
-1125:                 # Get the selected simulation mode
-1126:                 selected_mode = self.mode_selector.value
-1127:                 self.action_simulator.simulation_mode = selected_mode
-1128:                 self.console.value += f"▶️ Mode: {selected_mode}\n"
-1129: 
-1130:                 # Determine which file to use based on the selected mode and whether a file was chosen
-1131:                 file_to_use = None
-1132:                 if selected_mode in ["Typing Only", "Hybrid"]:
-1133:                     if self.selected_file and os.path.exists(self.selected_file):
-1134:                         file_to_use = self.selected_file
-1135:                         filename = os.path.basename(file_to_use)
-1136:                         self.console.value += f"📄 Using selected file: {filename}\n"
-1137:                         logger.info(f"Using selected file: {file_to_use}")
-1138:                     else:
-1139:                         self.console.value += "📄 No valid file selected. Using default code samples\n"
-1140:                         logger.info("No valid file selected, using default code samples")
-1141:                 else:
-1142:                     self.console.value += "📄 File selection not applicable for this mode\n"
-1143:                     logger.info("File selection not applicable for this mode")
-1144: 
-1145:                 # Start the simulation task
-1146:                 if not self.simulation_task:
-1147:                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
-1148:                 logger.info("Simulation started successfully.")
-1149:             except Exception as e:
-1150:                 logger.error(f"Error starting simulation: {e}")
-1151:                 await self.stop_simulation(widget)
-1152: 
-1153:     async def run_continuous_simulation(self, file_to_use: Optional[str]):
-1154: 
-1155:         try:
-1156:             while self.action_simulator.loop_flag:
-1157:                 # Determine which file to use
-1158:                 if file_to_use and os.path.exists(file_to_use):
-1159:                     next_file = file_to_use
-1160:                     logger.debug(f"Using provided file: {next_file}")
-1161:                 else:
-1162:                     next_file = self.action_simulator.get_next_code_file()
-1163:                     logger.debug(f"Using default file: {next_file}")
-1164: 
-1165:                 if not next_file:
-1166:                     self.console.value += "❌ No code files found to simulate typing.\n"
-1167:                     await asyncio.sleep(2)
-1168:                     continue
-1169: 
-1170:                 # Calculate typing time if applicable
-1171:                 if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
-1172:                     await self.action_simulator.calculate_typing_time(next_file)
-1173: 
-1174:                 # Execute the simulation based on the selected mode
-1175:                 if self.action_simulator.simulation_mode == "Typing Only":
-1176:                     self.console.value += "⌨️ Simulating typing...\n"
-1177:                     await self.action_simulator.simulate_typing(next_file)
-1178:                 elif self.action_simulator.simulation_mode == "Tab Switching Only":
-1179:                     self.console.value += "🔄 Switching between applications...\n"
-1180:                     self.action_simulator.switch_window()
-1181:                     await asyncio.sleep(2)
-1182:                 elif self.action_simulator.simulation_mode == "Hybrid":
-1183:                     self.console.value += "⌨️ Simulating typing...\n"
-1184:                     await self.action_simulator.simulate_typing(next_file)
-1185:                     self.console.value += "🔄 Switching between applications...\n"
-1186:                     self.action_simulator.switch_window()
-1187:                     await asyncio.sleep(2)
-1188:                 elif self.action_simulator.simulation_mode == "Mouse and Command+Tab":
-1189:                     # Use the dedicated method for this simulation mode
-1190:                     await self.action_simulator.simulate_mouse_and_command_tab(duration=15)  # Run for 15 seconds
-1191: 
-1192:                 filename = os.path.basename(next_file)
-1193:                 self.console.value += f"\n✅ Finished simulating file: {filename}\n"
-1194:                 self.console.value += "🔄 Cycle completed. Restarting...\n\n"
-1195:                 self.status_label.text = "Cycle completed"
-1196:                 await asyncio.sleep(2)
-1197:         except asyncio.CancelledError:
-1198:             self.console.value += "⏹️ Simulation task cancelled.\n"
-1199:             self.status_label.text = "Simulation cancelled"
-1200:         except Exception as e:
-1201:             self.console.value += f"❌ Error during simulation: {str(e)}\n"
-1202:             self.status_label.text = "Error in simulation"
-1203:             logger.error(f"Error in continuous simulation: {e}")
-1204:             await self.stop_simulation(None)
-1205: 
-1206:     async def stop_simulation(self, widget):
+1091:         self.action_simulator = ActionSimulator(self.console, self)
+1092:         self.key_handler = GlobalKeyHandler(self, self.action_simulator)
+1093:         self.simulation_task = None
+1094: 
+1095:         # Now that ActionSimulator is initialized, we can load configuration values
+1096:         self.load_configuration_values()
+1097: 
+1098:     async def choose_file(self, widget):
+1099: 
+1100:         try:
+1101:             dialog = toga.OpenFileDialog(
+1102:                 title="Select a Code File",
+1103:                 file_types=["txt"]
+1104:             )
+1105:             file_path = await self.main_window.dialog(dialog)
+1106: 
+1107:             # Handle the file_path based on its type
+1108:             if file_path:
+1109:                 # Convert PosixPath to string if needed
+1110:                 if hasattr(file_path, 'resolve'):  # It's a Path object
+1111:                     self.selected_file = str(file_path.resolve())
+1112:                 elif isinstance(file_path, list) and file_path:  # It's a list of paths
+1113:                     self.selected_file = str(file_path[0])
+1114:                 else:  # It's already a string
+1115:                     self.selected_file = str(file_path)
+1116: 
+1117:                 filename = os.path.basename(self.selected_file)
+1118:                 self.file_display.text = f"Selected: {filename}"
+1119:                 logger.info(f"Selected file: {self.selected_file}")
+1120:                 self.status_label.text = f"File selected: {filename}"
+1121:             else:
+1122:                 self.selected_file = None
+1123:                 self.file_display.text = "Using default resources/code files"
+1124:                 logger.info("No file selected; using default.")
+1125:                 self.status_label.text = "Using default files"
+1126:         except Exception as e:
+1127:             self.console.value += f"Error selecting file: {str(e)}\n"
+1128:             logger.error(f"Error in choose_file: {e}")
+1129:             self.selected_file = None
+1130:             self.file_display.text = "Using default resources/code files"
+1131: 
+1132:     async def start_simulation(self, widget):
+1133: 
+1134:         if not self.action_simulator.loop_flag:
+1135:             try:
+1136:                 self.console.value = "🚀 Starting simulation...\n"
+1137:                 self.update_button_states(running=True)
+1138:                 self.action_simulator.loop_flag = True
+1139:                 self.status_label.text = "Simulation running"
+1140: 
+1141:                 # Get the selected simulation mode
+1142:                 selected_mode = self.mode_selector.value
+1143:                 self.action_simulator.simulation_mode = selected_mode
+1144:                 self.console.value += f"▶️ Mode: {selected_mode}\n"
+1145: 
+1146:                 # Determine which file to use based on the selected mode and whether a file was chosen
+1147:                 file_to_use = None
+1148:                 if selected_mode in ["Typing Only", "Hybrid"]:
+1149:                     if self.selected_file and os.path.exists(self.selected_file):
+1150:                         file_to_use = self.selected_file
+1151:                         filename = os.path.basename(file_to_use)
+1152:                         self.console.value += f"📄 Using selected file: {filename}\n"
+1153:                         logger.info(f"Using selected file: {file_to_use}")
+1154:                     else:
+1155:                         self.console.value += "📄 No valid file selected. Using default code samples\n"
+1156:                         logger.info("No valid file selected, using default code samples")
+1157:                 else:
+1158:                     self.console.value += "📄 File selection not applicable for this mode\n"
+1159:                     logger.info("File selection not applicable for this mode")
+1160: 
+1161:                 # Start the simulation task
+1162:                 if not self.simulation_task:
+1163:                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
+1164:                 logger.info("Simulation started successfully.")
+1165:             except Exception as e:
+1166:                 logger.error(f"Error starting simulation: {e}")
+1167:                 await self.stop_simulation(widget)
+1168: 
+1169:     async def run_continuous_simulation(self, file_to_use: Optional[str]):
+1170: 
+1171:         try:
+1172:             while self.action_simulator.loop_flag:
+1173:                 # Determine which file to use
+1174:                 if file_to_use and os.path.exists(file_to_use):
+1175:                     next_file = file_to_use
+1176:                     logger.debug(f"Using provided file: {next_file}")
+1177:                 else:
+1178:                     next_file = self.action_simulator.get_next_code_file()
+1179:                     logger.debug(f"Using default file: {next_file}")
+1180: 
+1181:                 if not next_file:
+1182:                     self.console.value += "❌ No code files found to simulate typing.\n"
+1183:                     await asyncio.sleep(2)
+1184:                     continue
+1185: 
+1186:                 # Calculate typing time if applicable
+1187:                 if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
+1188:                     await self.action_simulator.calculate_typing_time(next_file)
+1189: 
+1190:                 # Execute the simulation based on the selected mode
+1191:                 if self.action_simulator.simulation_mode == "Typing Only":
+1192:                     self.console.value += "⌨️ Simulating typing...\n"
+1193:                     await self.action_simulator.simulate_typing(next_file)
+1194:                 elif self.action_simulator.simulation_mode == "Tab Switching Only":
+1195:                     self.console.value += "🔄 Switching between applications...\n"
+1196:                     self.action_simulator.switch_window()
+1197:                     await asyncio.sleep(2)
+1198:                 elif self.action_simulator.simulation_mode == "Hybrid":
+1199:                     self.console.value += "⌨️ Simulating typing...\n"
+1200:                     await self.action_simulator.simulate_typing(next_file)
+1201:                     self.console.value += "🔄 Switching between applications...\n"
+1202:                     self.action_simulator.switch_window()
+1203:                     await asyncio.sleep(2)
+1204:                 elif self.action_simulator.simulation_mode == "Mouse and Command+Tab":
+1205:                     # Use the dedicated method for this simulation mode
+1206:                     await self.action_simulator.simulate_mouse_and_command_tab(duration=15)  # Run for 15 seconds
 1207: 
-1208:         if self.action_simulator.loop_flag:
-1209:             try:
-1210:                 self.console.value += "⏹️ Stopping simulation...\n"
-1211:                 self.action_simulator.loop_flag = False
-1212:                 self.update_button_states(running=False)
-1213:                 self.status_label.text = "Simulation stopped"
-1214:                 if self.simulation_task:
-1215:                     self.simulation_task.cancel()
-1216:                     self.simulation_task = None
-1217:                 logger.info("Simulation stopped successfully.")
-1218:             except Exception as e:
-1219:                 logger.error(f"Error stopping simulation: {e}")
-1220: 
-1221:     def update_button_states(self, running: bool):
-1222: 
-1223:         self.start_button.enabled = not running
-1224:         self.stop_button.enabled = running
-1225: 
-1226: 
-1227: def main():
-1228:     return CodeSimulator()
+1208:                 filename = os.path.basename(next_file)
+1209:                 self.console.value += f"\n✅ Finished simulating file: {filename}\n"
+1210:                 self.console.value += "🔄 Cycle completed. Restarting...\n\n"
+1211:                 self.status_label.text = "Cycle completed"
+1212:                 await asyncio.sleep(2)
+1213:         except asyncio.CancelledError:
+1214:             self.console.value += "⏹️ Simulation task cancelled.\n"
+1215:             self.status_label.text = "Simulation cancelled"
+1216:         except Exception as e:
+1217:             self.console.value += f"❌ Error during simulation: {str(e)}\n"
+1218:             self.status_label.text = "Error in simulation"
+1219:             logger.error(f"Error in continuous simulation: {e}")
+1220:             await self.stop_simulation(None)
+1221: 
+1222:     async def stop_simulation(self, widget):
+1223: 
+1224:         if self.action_simulator.loop_flag:
+1225:             try:
+1226:                 self.console.value += "⏹️ Stopping simulation...\n"
+1227:                 self.action_simulator.loop_flag = False
+1228:                 self.update_button_states(running=False)
+1229:                 self.status_label.text = "Simulation stopped"
+1230:                 if self.simulation_task:
+1231:                     self.simulation_task.cancel()
+1232:                     self.simulation_task = None
+1233:                 logger.info("Simulation stopped successfully.")
+1234:             except Exception as e:
+1235:                 logger.error(f"Error stopping simulation: {e}")
+1236: 
+1237:     def update_button_states(self, running: bool):
+1238: 
+1239:         self.start_button.enabled = not running
+1240:         self.stop_button.enabled = running
+1241: 
+1242: 
+1243: def main():
+1244:     return CodeSimulator()
 
 ================
 File: src/codesimulator/config.py
@@ -2187,82 +2198,172 @@ File: src/codesimulator/config.py
 ================
 File: src/codesimulator/key_handler.py
 ================
- 1: import asyncio
- 2: from platform import system
- 3: from .logging_config import logger
- 4: 
- 5: 
- 6: class GlobalKeyHandler:
- 7: 
- 8: 
- 9:     def __init__(self, app, action_simulator):
-10: 
-11:         self.app = app
-12:         self.action_simulator = action_simulator
-13:         self.platform = system()
-14:         self._setup_platform_handler()
-15: 
-16:     def _setup_platform_handler(self):
-17: 
-18:         try:
-19:             if self.platform == 'Darwin':
-20:                 self._setup_macos_handler()
-21:             else:
-22:                 logger.info(f"Using default key handling for platform: {self.platform}")
-23:         except Exception as e:
-24:             logger.error(f"Error setting up key handler: {e}")
-25: 
-26:     def _setup_macos_handler(self):
-27: 
-28:         try:
-29:             from AppKit import NSEvent, NSKeyDownMask
-30: 
-31:             def handle_ns_event(event):
-32:                 if event.type() == NSKeyDownMask:
-33:                     key = event.charactersIgnoringModifiers()
-34:                     if key in ["+", "="]:
-35:                         self.toggle_simulation()
-36:                     elif key == "-":
-37:                         self.app.stop_simulation(None)
-38: 
-39:             NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(
-40:                 NSKeyDownMask,
-41:                 handle_ns_event
-42:             )
-43:             logger.info("MacOS key handler initialized successfully")
-44:         except Exception as e:
-45:             logger.error(f"Failed to initialize MacOS key handler: {e}")
-46: 
-47:     async def run(self):
-48: 
-49:         try:
-50:             logger.info("Global key handler started")
-51:             while True:
-52:                 await asyncio.sleep(0.1)
-53:         except asyncio.CancelledError:
-54:             logger.info("Key handler task cancelled")
-55:         except Exception as e:
-56:             logger.error(f"Error in key handler: {e}")
-57: 
-58:     def toggle_simulation(self):
-59: 
-60:         try:
-61:             if self.action_simulator.loop_flag:
-62:                 self.app.stop_simulation(None)
-63:             else:
-64:                 self.app.start_simulation(None)
-65:         except Exception as e:
-66:             logger.error(f"Error toggling simulation: {e}")
-67: 
-68:     def cleanup(self):
-69: 
-70:         try:
-71:             if self.platform == 'Darwin':
-72: 
-73:                 pass
-74:             logger.info("Key handler cleanup completed")
-75:         except Exception as e:
-76:             logger.error(f"Error during key handler cleanup: {e}")
+  1: import asyncio
+  2: from platform import system
+  3: import sys
+  4: from .logging_config import logger
+  5: 
+  6: 
+  7: class GlobalKeyHandler:
+  8: 
+  9:     def __init__(self, app, action_simulator):
+ 10:         self.app = app
+ 11:         self.action_simulator = action_simulator
+ 12:         self.platform = sys.platform
+ 13:         self.keyboard_listener = None
+ 14:         self._setup_platform_handler()
+ 15: 
+ 16:     def _setup_platform_handler(self):
+ 17:         try:
+ 18:             if self.platform == 'darwin':
+ 19:                 self._setup_macos_handler()
+ 20:             elif self.platform == 'win32':
+ 21:                 self._setup_windows_handler()
+ 22:             else:
+ 23:                 self._setup_linux_handler()
+ 24:         except Exception as e:
+ 25:             logger.error(f"Error setting up key handler: {e}")
+ 26: 
+ 27:     def _setup_macos_handler(self):
+ 28:         try:
+ 29:             import Quartz
+ 30:             from AppKit import NSEvent, NSKeyDownMask, NSEventModifierFlagCommand
+ 31: 
+ 32:             def handle_ns_event(event):
+ 33:                 if event.type() == NSKeyDownMask:
+ 34: 
+ 35:                     command_key = (event.modifierFlags() & NSEventModifierFlagCommand) != 0
+ 36:                     key = event.charactersIgnoringModifiers()
+ 37: 
+ 38: 
+ 39:                     if command_key and key.lower() == 's':
+ 40:                         logger.info("Global hotkey detected: Command+S (start simulation)")
+ 41:                         self.toggle_simulation()
+ 42: 
+ 43:                     elif command_key and key.lower() == 'x':
+ 44:                         logger.info("Global hotkey detected: Command+X (stop simulation)")
+ 45:                         self.app.stop_simulation(None)
+ 46: 
+ 47: 
+ 48:             NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(
+ 49:                 NSKeyDownMask,
+ 50:                 handle_ns_event
+ 51:             )
+ 52:             logger.info("MacOS global key handler initialized successfully")
+ 53:         except ImportError as e:
+ 54:             logger.error(f"Failed to import MacOS modules: {e}")
+ 55:         except Exception as e:
+ 56:             logger.error(f"Failed to initialize MacOS key handler: {e}")
+ 57: 
+ 58:     def _setup_windows_handler(self):
+ 59:         try:
+ 60:             from pynput import keyboard
+ 61: 
+ 62:             def on_press(key):
+ 63:                 try:
+ 64: 
+ 65:                     if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
+ 66:                         self.ctrl_pressed = True
+ 67:                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char.lower() == 's':
+ 68:                         logger.info("Global hotkey detected: Ctrl+S (start simulation)")
+ 69:                         self.toggle_simulation()
+ 70: 
+ 71:                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char.lower() == 'x':
+ 72:                         logger.info("Global hotkey detected: Ctrl+X (stop simulation)")
+ 73:                         self.app.stop_simulation(None)
+ 74:                 except AttributeError:
+ 75: 
+ 76:                     pass
+ 77:                 except Exception as e:
+ 78:                     logger.error(f"Error in keyboard handler: {e}")
+ 79: 
+ 80:             def on_release(key):
+ 81:                 if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
+ 82:                     self.ctrl_pressed = False
+ 83: 
+ 84: 
+ 85:             self.ctrl_pressed = False
+ 86: 
+ 87: 
+ 88:             self.keyboard_listener = keyboard.Listener(
+ 89:                 on_press=on_press,
+ 90:                 on_release=on_release
+ 91:             )
+ 92:             self.keyboard_listener.start()
+ 93:             logger.info("Windows global key handler initialized successfully")
+ 94:         except ImportError:
+ 95:             logger.error("pynput module not found. Please install with: pip install pynput")
+ 96:         except Exception as e:
+ 97:             logger.error(f"Failed to initialize Windows key handler: {e}")
+ 98: 
+ 99:     def _setup_linux_handler(self):
+100:         try:
+101:             from pynput import keyboard
+102: 
+103:             def on_press(key):
+104:                 try:
+105: 
+106:                     if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
+107:                         self.ctrl_pressed = True
+108:                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char and key.char.lower() == 's':
+109:                         logger.info("Global hotkey detected: Ctrl+S (start simulation)")
+110:                         self.toggle_simulation()
+111: 
+112:                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char and key.char.lower() == 'x':
+113:                         logger.info("Global hotkey detected: Ctrl+X (stop simulation)")
+114:                         self.app.stop_simulation(None)
+115:                 except AttributeError:
+116: 
+117:                     pass
+118:                 except Exception as e:
+119:                     logger.error(f"Error in keyboard handler: {e}")
+120: 
+121:             def on_release(key):
+122:                 if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
+123:                     self.ctrl_pressed = False
+124: 
+125: 
+126:             self.ctrl_pressed = False
+127: 
+128: 
+129:             self.keyboard_listener = keyboard.Listener(
+130:                 on_press=on_press,
+131:                 on_release=on_release
+132:             )
+133:             self.keyboard_listener.start()
+134:             logger.info("Linux global key handler initialized successfully")
+135:         except ImportError:
+136:             logger.error("pynput module not found. Please install with: pip install pynput")
+137:         except Exception as e:
+138:             logger.error(f"Failed to initialize Linux key handler: {e}")
+139: 
+140:     async def run(self):
+141:         try:
+142:             logger.info("Global key handler started")
+143:             while True:
+144:                 await asyncio.sleep(0.1)
+145:         except asyncio.CancelledError:
+146:             logger.info("Key handler task cancelled")
+147:         except Exception as e:
+148:             logger.error(f"Error in key handler: {e}")
+149: 
+150:     def toggle_simulation(self):
+151:         try:
+152:             if self.action_simulator.loop_flag:
+153:                 self.app.stop_simulation(None)
+154:             else:
+155:                 self.app.start_simulation(None)
+156:         except Exception as e:
+157:             logger.error(f"Error toggling simulation: {e}")
+158: 
+159:     def cleanup(self):
+160:         try:
+161:             if self.keyboard_listener:
+162:                 self.keyboard_listener.stop()
+163:                 logger.info("Keyboard listener stopped")
+164:             logger.info("Key handler cleanup completed")
+165:         except Exception as e:
+166:             logger.error(f"Error during key handler cleanup: {e}")
 
 ================
 File: src/codesimulator/language_formatter.py
@@ -2672,39 +2773,6 @@ File: src/codesimulator/path_utils.py
 103:         return os.path.join(tempfile.gettempdir(), 'codesimulator.log')
 
 ================
-File: src/codesimulator.dist-info/INSTALLER
-================
-1: briefcase
-
-================
-File: src/codesimulator.dist-info/METADATA
-================
- 1: Metadata-Version: 2.1
- 2: Briefcase-Version: 0.3.14
- 3: Name: codesimulator
- 4: Formal-Name: Code Simulator
- 5: App-ID: com.rylxes.code-simulator.codesimulator
- 6: Version: 0.0.1
- 7: Home-page: https://code-simulator.rylxes.com/codesimulator
- 8: Download-URL: https://code-simulator.rylxes.com/codesimulator
- 9: Author: rylxes
-10: Author-email: rylxes@gmail.com
-11: Summary: My first application
-
-================
-File: src/codesimulator.dist-info/top_level.txt
-================
-1: codesimulator
-
-================
-File: src/codesimulator.dist-info/WHEEL
-================
-1: Wheel-Version: 1.0
-2: Root-Is-Purelib: true
-3: Generator: briefcase (0.3.14)
-4: Tag: py3-none-any
-
-================
 File: CHANGELOG
 ================
 1: # Code Simulator Release Notes
@@ -2771,191 +2839,195 @@ File: pyproject.toml
  22: 
  23: requires = [
  24:     "pyautogui>=0.9.53",
- 25:     "PyQt5>=5.15"
- 26: ]
- 27: test_requires = [
- 28:     "pytest",
- 29: ]
- 30: 
- 31: resources = [
- 32:     "src/codesimulator/resources",
- 33: ]
- 34: 
- 35: [tool.briefcase.app.codesimulator.macOS]
- 36: universal_build = true
- 37: requires = [
- 38:     "toga-cocoa~=0.4.7",
- 39:     "std-nslog~=1.0.3",
- 40:     "pyautogui>=0.9.53",
- 41:     "PyQt5>=5.15"
- 42: ]
- 43: 
- 44: entitlements = [
- 45:     "com.apple.security.automation.apple-events",
- 46:     "com.apple.security.device.camera",  # if needed
- 47:     "com.apple.security.device.audio-input",  # if needed
- 48: ]
- 49: 
- 50: 
- 51: [tool.briefcase.app.codesimulator.macOS.info]
- 52: NSAppleEventsUsageDescription = "Code Simulator needs to control other applications to perform simulations."
- 53: NSAccessibilityUsageDescription = "Code Simulator needs accessibility access to simulate keyboard and mouse inputs."
- 54: 
- 55: [tool.briefcase.app.codesimulator.linux]
- 56: requires = [
- 57:     "toga-cocoa~=0.4.7",
- 58:     "std-nslog~=1.0.3",
- 59:     "pyautogui>=0.9.53",
- 60:     "PyQt5>=5.15"
- 61: ]
- 62: 
- 63: [tool.briefcase.app.codesimulator.linux.system.debian]
- 64: system_requires = [
- 65:     # Needed to compile pycairo wheel
- 66:     "libcairo2-dev",
- 67:     # Needed to compile PyGObject wheel
- 68:     "libgirepository1.0-dev",
- 69: ]
- 70: 
- 71: system_runtime_requires = [
- 72:     # Needed to provide GTK and its GI bindings
- 73:     "gir1.2-gtk-3.0",
- 74:     "libgirepository-1.0-1",
- 75:     # Dependencies that GTK looks for at runtime
- 76:     "libcanberra-gtk3-module",
- 77:     # Needed to provide WebKit2 at runtime
- 78:     # Note: Debian 11 and Ubuntu 20.04 require gir1.2-webkit2-4.0 instead
- 79:     # "gir1.2-webkit2-4.1",
- 80: ]
- 81: 
- 82: [tool.briefcase.app.codesimulator.linux.system.rhel]
- 83: system_requires = [
- 84:     # Needed to compile pycairo wheel
- 85:     "cairo-gobject-devel",
- 86:     # Needed to compile PyGObject wheel
- 87:     "gobject-introspection-devel",
- 88: ]
- 89: 
- 90: system_runtime_requires = [
- 91:     # Needed to support Python bindings to GTK
- 92:     "gobject-introspection",
- 93:     # Needed to provide GTK
- 94:     "gtk3",
- 95:     # Dependencies that GTK looks for at runtime
- 96:     "libcanberra-gtk3",
- 97:     # Needed to provide WebKit2 at runtime
- 98:     # "webkit2gtk3",
- 99: ]
-100: 
-101: [tool.briefcase.app.codesimulator.linux.system.suse]
-102: system_requires = [
-103:     # Needed to compile pycairo wheel
-104:     "cairo-devel",
-105:     # Needed to compile PyGObject wheel
-106:     "gobject-introspection-devel",
-107: ]
-108: 
-109: system_runtime_requires = [
-110:     # Needed to provide GTK
-111:     "gtk3",
-112:     # Needed to support Python bindings to GTK
-113:     "gobject-introspection", "typelib(Gtk) = 3.0",
-114:     # Dependencies that GTK looks for at runtime
-115:     "libcanberra-gtk3-module",
-116:     # Needed to provide WebKit2 at runtime
-117:     # "libwebkit2gtk3", "typelib(WebKit2)",
-118: ]
-119: 
-120: [tool.briefcase.app.codesimulator.linux.system.arch]
-121: system_requires = [
-122:     # Needed to compile pycairo wheel
-123:     "cairo",
-124:     # Needed to compile PyGObject wheel
-125:     "gobject-introspection",
-126:     # Runtime dependencies that need to exist so that the
-127:     # Arch package passes final validation.
-128:     # Needed to provide GTK
-129:     "gtk3",
-130:     # Dependencies that GTK looks for at runtime
-131:     "libcanberra",
-132:     # Needed to provide WebKit2
-133:     # "webkit2gtk",
-134: ]
-135: 
-136: system_runtime_requires = [
-137:     # Needed to provide GTK
-138:     "gtk3",
-139:     # Needed to provide PyGObject bindings
-140:     "gobject-introspection-runtime",
-141:     # Dependencies that GTK looks for at runtime
-142:     "libcanberra",
-143:     # Needed to provide WebKit2 at runtime
-144:     # "webkit2gtk",
-145: ]
-146: 
-147: [tool.briefcase.app.codesimulator.linux.appimage]
-148: manylinux = "manylinux_2_28"
+ 25:     "PyQt5>=5.15",
+ 26:     "pynput>=1.7.6"
+ 27: ]
+ 28: test_requires = [
+ 29:     "pytest",
+ 30: ]
+ 31: 
+ 32: resources = [
+ 33:     "src/codesimulator/resources",
+ 34: ]
+ 35: 
+ 36: [tool.briefcase.app.codesimulator.macOS]
+ 37: universal_build = true
+ 38: requires = [
+ 39:     "toga-cocoa~=0.4.7",
+ 40:     "std-nslog~=1.0.3",
+ 41:     "pyautogui>=0.9.53",
+ 42:     "PyQt5>=5.15",
+ 43:     "pynput>=1.7.6"
+ 44: ]
+ 45: 
+ 46: entitlements = [
+ 47:     "com.apple.security.automation.apple-events",
+ 48:     "com.apple.security.device.camera",  # if needed
+ 49:     "com.apple.security.device.audio-input",  # if needed
+ 50: ]
+ 51: 
+ 52: 
+ 53: [tool.briefcase.app.codesimulator.macOS.info]
+ 54: NSAppleEventsUsageDescription = "Code Simulator needs to control other applications to perform simulations."
+ 55: NSAccessibilityUsageDescription = "Code Simulator needs accessibility access to simulate keyboard and mouse inputs."
+ 56: 
+ 57: [tool.briefcase.app.codesimulator.linux]
+ 58: requires = [
+ 59:     "toga-cocoa~=0.4.7",
+ 60:     "std-nslog~=1.0.3",
+ 61:     "pyautogui>=0.9.53",
+ 62:     "PyQt5>=5.15",
+ 63:     "pynput>=1.7.6"
+ 64: ]
+ 65: 
+ 66: [tool.briefcase.app.codesimulator.linux.system.debian]
+ 67: system_requires = [
+ 68:     # Needed to compile pycairo wheel
+ 69:     "libcairo2-dev",
+ 70:     # Needed to compile PyGObject wheel
+ 71:     "libgirepository1.0-dev",
+ 72: ]
+ 73: 
+ 74: system_runtime_requires = [
+ 75:     # Needed to provide GTK and its GI bindings
+ 76:     "gir1.2-gtk-3.0",
+ 77:     "libgirepository-1.0-1",
+ 78:     # Dependencies that GTK looks for at runtime
+ 79:     "libcanberra-gtk3-module",
+ 80:     # Needed to provide WebKit2 at runtime
+ 81:     # Note: Debian 11 and Ubuntu 20.04 require gir1.2-webkit2-4.0 instead
+ 82:     # "gir1.2-webkit2-4.1",
+ 83: ]
+ 84: 
+ 85: [tool.briefcase.app.codesimulator.linux.system.rhel]
+ 86: system_requires = [
+ 87:     # Needed to compile pycairo wheel
+ 88:     "cairo-gobject-devel",
+ 89:     # Needed to compile PyGObject wheel
+ 90:     "gobject-introspection-devel",
+ 91: ]
+ 92: 
+ 93: system_runtime_requires = [
+ 94:     # Needed to support Python bindings to GTK
+ 95:     "gobject-introspection",
+ 96:     # Needed to provide GTK
+ 97:     "gtk3",
+ 98:     # Dependencies that GTK looks for at runtime
+ 99:     "libcanberra-gtk3",
+100:     # Needed to provide WebKit2 at runtime
+101:     # "webkit2gtk3",
+102: ]
+103: 
+104: [tool.briefcase.app.codesimulator.linux.system.suse]
+105: system_requires = [
+106:     # Needed to compile pycairo wheel
+107:     "cairo-devel",
+108:     # Needed to compile PyGObject wheel
+109:     "gobject-introspection-devel",
+110: ]
+111: 
+112: system_runtime_requires = [
+113:     # Needed to provide GTK
+114:     "gtk3",
+115:     # Needed to support Python bindings to GTK
+116:     "gobject-introspection", "typelib(Gtk) = 3.0",
+117:     # Dependencies that GTK looks for at runtime
+118:     "libcanberra-gtk3-module",
+119:     # Needed to provide WebKit2 at runtime
+120:     # "libwebkit2gtk3", "typelib(WebKit2)",
+121: ]
+122: 
+123: [tool.briefcase.app.codesimulator.linux.system.arch]
+124: system_requires = [
+125:     # Needed to compile pycairo wheel
+126:     "cairo",
+127:     # Needed to compile PyGObject wheel
+128:     "gobject-introspection",
+129:     # Runtime dependencies that need to exist so that the
+130:     # Arch package passes final validation.
+131:     # Needed to provide GTK
+132:     "gtk3",
+133:     # Dependencies that GTK looks for at runtime
+134:     "libcanberra",
+135:     # Needed to provide WebKit2
+136:     # "webkit2gtk",
+137: ]
+138: 
+139: system_runtime_requires = [
+140:     # Needed to provide GTK
+141:     "gtk3",
+142:     # Needed to provide PyGObject bindings
+143:     "gobject-introspection-runtime",
+144:     # Dependencies that GTK looks for at runtime
+145:     "libcanberra",
+146:     # Needed to provide WebKit2 at runtime
+147:     # "webkit2gtk",
+148: ]
 149: 
-150: system_requires = [
-151:     # Needed to compile pycairo wheel
-152:     "cairo-gobject-devel",
-153:     # Needed to compile PyGObject wheel
-154:     "gobject-introspection-devel",
-155:     # Needed to provide GTK
-156:     "gtk3-devel",
-157:     # Dependencies that GTK looks for at runtime, that need to be
-158:     # in the build environment to be picked up by linuxdeploy
-159:     "libcanberra-gtk3",
-160:     "PackageKit-gtk3-module",
-161:     "gvfs-client",
-162: ]
-163: 
-164: linuxdeploy_plugins = [
-165:     "DEPLOY_GTK_VERSION=3 gtk",
-166: ]
-167: 
-168: [tool.briefcase.app.codesimulator.linux.flatpak]
-169: flatpak_runtime = "org.gnome.Platform"
-170: flatpak_runtime_version = "47"
-171: flatpak_sdk = "org.gnome.Sdk"
-172: 
-173: [tool.briefcase.app.codesimulator.windows]
-174: requires = [
-175:     "toga-winforms~=0.4.7",
-176:     "pyautogui>=0.9.53",
-177:     "PyQt5>=5.15"
-178: ]
-179: 
-180: # Mobile deployments
-181: [tool.briefcase.app.codesimulator.iOS]
-182: requires = [
-183:     "toga-iOS~=0.4.7",
-184:     "std-nslog~=1.0.3",
-185: ]
-186: 
-187: [tool.briefcase.app.codesimulator.android]
-188: requires = [
-189:     "toga-android~=0.4.7",
-190: ]
-191: 
-192: base_theme = "Theme.MaterialComponents.Light.DarkActionBar"
-193: 
-194: build_gradle_dependencies = [
-195:     "com.google.android.material:material:1.12.0",
-196:     # Needed for DetailedList
-197:     # "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
-198:     # Needed for MapView
-199:     # "org.osmdroid:osmdroid-android:6.1.20",
-200: ]
-201: 
-202: # Web deployments
-203: [tool.briefcase.app.codesimulator.web]
-204: requires = [
-205:     "toga-web~=0.4.7",
-206:     "pyautogui>=0.9.53",
-207:     "PyQt5>=5.15"
-208: ]
-209: style_framework = "Shoelace v2.3"
+150: [tool.briefcase.app.codesimulator.linux.appimage]
+151: manylinux = "manylinux_2_28"
+152: 
+153: system_requires = [
+154:     # Needed to compile pycairo wheel
+155:     "cairo-gobject-devel",
+156:     # Needed to compile PyGObject wheel
+157:     "gobject-introspection-devel",
+158:     # Needed to provide GTK
+159:     "gtk3-devel",
+160:     # Dependencies that GTK looks for at runtime, that need to be
+161:     # in the build environment to be picked up by linuxdeploy
+162:     "libcanberra-gtk3",
+163:     "PackageKit-gtk3-module",
+164:     "gvfs-client",
+165: ]
+166: 
+167: linuxdeploy_plugins = [
+168:     "DEPLOY_GTK_VERSION=3 gtk",
+169: ]
+170: 
+171: [tool.briefcase.app.codesimulator.linux.flatpak]
+172: flatpak_runtime = "org.gnome.Platform"
+173: flatpak_runtime_version = "47"
+174: flatpak_sdk = "org.gnome.Sdk"
+175: 
+176: [tool.briefcase.app.codesimulator.windows]
+177: requires = [
+178:     "toga-winforms~=0.4.7",
+179:     "pyautogui>=0.9.53",
+180:     "PyQt5>=5.15",
+181:     "pynput>=1.7.6"
+182: ]
+183: 
+184: # Mobile deployments
+185: [tool.briefcase.app.codesimulator.iOS]
+186: requires = [
+187:     "toga-iOS~=0.4.7",
+188:     "std-nslog~=1.0.3",
+189: ]
+190: 
+191: [tool.briefcase.app.codesimulator.android]
+192: requires = [
+193:     "toga-android~=0.4.7",
+194: ]
+195: 
+196: base_theme = "Theme.MaterialComponents.Light.DarkActionBar"
+197: 
+198: build_gradle_dependencies = [
+199:     "com.google.android.material:material:1.12.0",
+200:     # Needed for DetailedList
+201:     # "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+202:     # Needed for MapView
+203:     # "org.osmdroid:osmdroid-android:6.1.20",
+204: ]
+205: 
+206: # Web deployments
+207: [tool.briefcase.app.codesimulator.web]
+208: requires = [
+209:     "toga-web~=0.4.7",
+210:     "pyautogui>=0.9.53",
+211:     "PyQt5>=5.15"
+212: ]
+213: style_framework = "Shoelace v2.3"
 
 ================
 File: README.rst

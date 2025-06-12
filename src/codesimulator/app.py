@@ -157,6 +157,12 @@ class CodeSimulator(toga.App):
 
         self.setup_ui()
         self.setup_components()
+
+        # Start the global key handler to listen for keyboard shortcuts
+        if hasattr(self, 'key_handler'):
+            self.key_handler.start()
+            logger.info("Started global key handler for keyboard shortcuts")
+
         logger.info("Application started successfully.")
 
     def setup_colors(self):
