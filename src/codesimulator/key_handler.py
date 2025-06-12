@@ -7,6 +7,24 @@ from .logging_config import logger
 class GlobalKeyHandler:
 
     def __init__(self, app, action_simulator):
+        try:
+            self.main_loop = asyncio.get_event_loop()
+        except RuntimeError: # For example, if called from a thread where no loop is set
+            logger.warning("Could not get current event loop in GlobalKeyHandler init. Using asyncio.new_event_loop().")
+            # This might happen if Toga's main loop isn't the one asyncio.get_event_loop() sees by default
+            # or if this class is initialized from a non-main thread without a loop.
+            # A more robust solution might involve passing the Toga app's loop explicitly if available and suitable.
+            # For now, this is a fallback. If Toga runs its own loop on the main thread,
+            # get_event_loop() should ideally get that one if called from main thread.
+            self.main_loop = asyncio.new_event_loop()
+            # If new_event_loop is used, it might need to be run in a separate thread if this handler isn't on main.
+            # However, Toga usually runs its main loop, and callbacks from foreign threads (pynput, Quartz)
+            # need to schedule onto *that* specific loop.
+            # Assuming Toga sets the main thread's loop for asyncio.get_event_loop() to find.
+            # If app.loop is available and is an asyncio loop, that would be more direct:
+            # self.main_loop = app.loop
+            # For now, proceeding with get_event_loop() as primary.
+
         self.app = app
         self.action_simulator = action_simulator
         self.platform = sys.platform
@@ -43,58 +61,72 @@ class GlobalKeyHandler:
 
                         # Check for Command+S (keycode 1)
                         if command_down and keycode == 1:  # 'S' key
-                            logger.info("Global hotkey detected: Command+S (start simulation)")
-                            asyncio.create_task(self.toggle_simulation_async())
-                            return None  # Let the event propagate
+                            logger.info("Global hotkey detected: Command+S (start/toggle simulation)")
+                            asyncio.run_coroutine_threadsafe(self.toggle_simulation_async(), self.main_loop)
+                            return None  # Consume event (important for macOS to prevent beeps/further processing)
 
                         # Check for Command+X (keycode 7)
                         if command_down and keycode == 7:  # 'X' key
                             logger.info("Global hotkey detected: Command+X (stop simulation)")
-                            asyncio.create_task(self.app.stop_simulation(None))
-                            return None  # Let the event propagate
+                            asyncio.run_coroutine_threadsafe(self.app.stop_simulation(None), self.main_loop)
+                            return None  # Consume event
                 except Exception as e:
-                    logger.error(f"Error in macOS event handler: {e}")
+                    logger.error(f"Error in macOS event handler: {e}", exc_info=True) # Added exc_info
 
                 return event  # Let the event propagate
 
-            # Create event tap
-            self.event_tap = Quartz.CFMachPortCreateWithFix(
-                None,
-                handle_event,
-                None,
-                None
+            # Specify the events we want to listen for (KeyDown and KeyUp can be useful for some stateful logic)
+            # For simple hotkeys, KeyDown might be sufficient.
+            mask = (Quartz.CGEventMaskBit(Quartz.kCGEventKeyDown) |
+                    Quartz.CGEventMaskBit(Quartz.kCGEventKeyUp)) # Using KeyDown and KeyUp as originally intended
+
+            # Create the event tap using CGEventTapCreate
+            self.event_tap = Quartz.CGEventTapCreate(
+                Quartz.kCGSessionEventTap,      # Tap into session events (all applications)
+                Quartz.kCGHeadInsertEventTap,   # Insert at the head of the event tap list
+                Quartz.kCGEventTapOptionDefault,# Default tap options (listen-only can be kCGEventTapOptionListenOnly)
+                mask,                           # Mask for KeyDown and KeyUp events
+                handle_event,                   # Callback function
+                None                            # No user data (refcon)
             )
 
-            # Create a run loop source and add it to the current run loop
-            loop_source = Quartz.CFMachPortCreateRunLoopSource(None, self.event_tap, 0)
+            if not self.event_tap:
+                logger.error("Failed to create CGEventTap. Global hotkeys on macOS will likely not work. Please ensure the application has Accessibility permissions in System Settings > Privacy & Security.")
+                self.loop_source = None # Ensure it's None
+                return
+
+            # Create a run loop source from the event tap
+            self.loop_source = Quartz.CFMachPortCreateRunLoopSource(None, self.event_tap, 0)
+            if not self.loop_source:
+                logger.error("Failed to create run loop source for CGEventTap.")
+                # Attempt to clean up the event_tap if loop source creation fails
+                if hasattr(self, 'event_tap') and self.event_tap: # Should exist if we got here
+                    Quartz.CGEventTapEnable(self.event_tap, False) # Disable it
+                    # Quartz.CFRelease(self.event_tap) # CFRelease is not directly available via PyObjC for CFMachPortRef
+                self.event_tap = None
+                return
+
+            # Add the run loop source to the current run loop
             Quartz.CFRunLoopAddSource(
                 Quartz.CFRunLoopGetCurrent(),
-                loop_source,
+                self.loop_source,
                 Quartz.kCFRunLoopDefaultMode
             )
 
-            # Enable the event tap
+            # Enable the event tap so it starts receiving events
             Quartz.CGEventTapEnable(self.event_tap, True)
 
-            # Specify the events we want to listen for
-            mask = (Quartz.CGEventMaskBit(Quartz.kCGEventKeyDown) |
-                    Quartz.CGEventMaskBit(Quartz.kCGEventKeyUp))
-
-            # Create the tap
-            Quartz.CGEventTapCreate(
-                Quartz.kCGSessionEventTap,  # Global events
-                Quartz.kCGHeadInsertEventTap,
-                Quartz.kCGEventTapOptionDefault,
-                mask,
-                handle_event,
-                None
-            )
-
-            logger.info("macOS global key handler initialized successfully with event tap")
-        except ImportError as e:
-            logger.error(f"Failed to import macOS modules: {e}")
+            logger.info("macOS global key handler initialized successfully with CGEventTap.")
+        except ImportError: # Keep specific ImportError for Quartz
+            logger.error("Failed to import Quartz for macOS key handling. Global hotkeys will not be available.")
         except Exception as e:
-            logger.error(f"Failed to initialize macOS key handler: {e}")
+            logger.error(f"Failed to initialize macOS key handler with CGEventTap: {e}", exc_info=True)
+            if hasattr(self, 'event_tap') and self.event_tap: # Cleanup if partial setup failed
+                 Quartz.CGEventTapEnable(self.event_tap, False)
+                 self.event_tap = None
+            if hasattr(self, 'loop_source') and self.loop_source : # Should not exist if event_tap failed first
+                 self.loop_source = None
+
 
     def _setup_windows_handler(self):
         try:
@@ -105,15 +137,13 @@ class GlobalKeyHandler:
                     if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
                         self.ctrl_pressed = True
                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char and key.char.lower() == 's':
-                        logger.info("Global hotkey detected: Ctrl+S (start simulation)")
-                        # Use asyncio to handle the simulation toggle
-                        asyncio.create_task(self.toggle_simulation_async())
+                        logger.info("Global hotkey detected: Ctrl+S (start/toggle simulation)")
+                        asyncio.run_coroutine_threadsafe(self.toggle_simulation_async(), self.main_loop)
                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char and key.char.lower() == 'x':
                         logger.info("Global hotkey detected: Ctrl+X (stop simulation)")
-                        # Use asyncio to handle stopping the simulation
-                        asyncio.create_task(self.app.stop_simulation(None))
+                        asyncio.run_coroutine_threadsafe(self.app.stop_simulation(None), self.main_loop)
                 except AttributeError:
-                    pass
+                    pass # pynput raises this for special keys if .char is accessed without check
                 except Exception as e:
                     logger.error(f"Error in keyboard handler: {e}")
 
@@ -145,15 +175,13 @@ class GlobalKeyHandler:
                     if key == keyboard.Key.ctrl_l or key == keyboard.Key.ctrl_r:
                         self.ctrl_pressed = True
                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char and key.char.lower() == 's':
-                        logger.info("Global hotkey detected: Ctrl+S (start simulation)")
-                        # Use asyncio to handle the simulation toggle
-                        asyncio.create_task(self.toggle_simulation_async())
+                        logger.info("Global hotkey detected: Ctrl+S (start/toggle simulation)")
+                        asyncio.run_coroutine_threadsafe(self.toggle_simulation_async(), self.main_loop)
                     elif hasattr(key, 'char') and self.ctrl_pressed and key.char and key.char.lower() == 'x':
                         logger.info("Global hotkey detected: Ctrl+X (stop simulation)")
-                        # Use asyncio to handle stopping the simulation
-                        asyncio.create_task(self.app.stop_simulation(None))
+                        asyncio.run_coroutine_threadsafe(self.app.stop_simulation(None), self.main_loop)
                 except AttributeError:
-                    pass
+                    pass # pynput raises this for special keys if .char is accessed without check
                 except Exception as e:
                     logger.error(f"Error in keyboard handler: {e}")
 
@@ -223,11 +251,29 @@ class GlobalKeyHandler:
                 self._listener_task.cancel()
                 logger.info("Key handler task cancelled")
 
-            if hasattr(self, 'event_tap') and self.platform == 'darwin':
-                # Disable the event tap if we're on macOS
-                import Quartz
+            if hasattr(self, 'event_tap') and self.event_tap and self.platform == 'darwin':
+                import Quartz # Ensure Quartz is available for cleanup
+                logger.info("Cleaning up macOS CGEventTap...")
                 Quartz.CGEventTapEnable(self.event_tap, False)
 
+                if hasattr(self, 'loop_source') and self.loop_source:
+                    Quartz.CFRunLoopRemoveSource(
+                        Quartz.CFRunLoopGetCurrent(),
+                        self.loop_source,
+                        Quartz.kCFRunLoopDefaultMode
+                    )
+                    logger.info("Removed run loop source.")
+                    # self.loop_source = None # CFRelease not typically needed for CFRunLoopSourceRef with PyObjC
+
+                # CFRelease is tricky with PyObjC for CFMachPortRef (event_tap).
+                # Disabling and removing from run loop is usually sufficient and safer.
+                # If direct release were needed and possible: Quartz.CFRelease(self.event_tap)
+                self.event_tap = None
+                self.loop_source = None # Ensure it's cleared
+                logger.info("macOS CGEventTap cleanup completed.")
+
             logger.info("Key handler cleanup completed")
+        except ImportError:
+            logger.error("Failed to import Quartz during macOS cleanup. Some resources might not be released.")
         except Exception as e:
             logger.error(f"Error during key handler cleanup: {e}")
