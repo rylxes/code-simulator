@@ -1,0 +1,14 @@
+[
+    {
+        "name": "ExampleApp",
+        "path_darwin": "/Applications/Example.app",
+        "bundle_id": "com.example.ExampleApp",
+        "process_name_darwin": "ExampleApp",
+        "path_windows": "C:\\Program Files\\Example\\example.exe",
+        "process_name_windows": "example.exe",
+        "window_class_windows": "ExampleWindowClass",
+        "path_linux": "/usr/bin/example",
+        "process_name_linux": "example",
+        "window_class_linux": "ExampleWindowClass"
+    }
+]

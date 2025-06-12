@@ -1,0 +1,16 @@
+{
+  "code": {
+    "language": "python",
+    "indent_size": 4,
+    "max_line_length": 80
+  },
+  "typing_speed": {
+    "min": 0.03,
+    "max": 0.07,
+    "line_break": [
+      0.5,
+      1.0
+    ],
+    "mistake_rate": 0.07
+  }
+}

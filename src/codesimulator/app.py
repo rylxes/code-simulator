@@ -1079,21 +1079,45 @@ class CodeSimulator(toga.App):
                 config['typing_speed']['line_break'] = [0.5, 1.0]
 
             # Write updated configuration
-            with open(config_path, 'w') as f:
-                json.dump(config, f, indent=4)
+            try:
+                with open(config_path, 'w') as f:
+                    json.dump(config, f, indent=4)
+                logger.info(f"Configuration saved successfully to {config_path}")
+            except (IOError, OSError) as e:
+                logger.error(f"Error saving configuration to {config_path}: {e}", exc_info=True)
+                self.console.value += f"❌ Error saving configuration to {os.path.basename(config_path)}: {e}. Settings were not saved.\n"
+                self.status_label.text = "Error saving config"
+                return # Stop further processing if save failed
 
             # Reload configuration in action simulator
-            self.action_simulator.config = self.action_simulator._load_config()
-            self.action_simulator._setup_from_config()
+            # Ensure _load_config_with_defaults is used as per previous changes in actions.py
+            self.action_simulator.config = self.action_simulator._load_config_with_defaults()
+            if self.action_simulator.config is not None:
+                self.action_simulator._setup_from_config()
+                # Show success message
+                self.console.value += "✅ Configuration saved and reloaded successfully.\n" # Append to console
+                self.status_label.text = "Configuration saved"
+                logger.info("Configuration updated successfully after save.")
+            else:
+                # This case implies _load_config_with_defaults failed (e.g. created default but failed to write, then failed to read it back)
+                # Or the config file became malformed immediately after saving and couldn't be reloaded.
+                self.console.value += "⚠️ Configuration saved, but failed to reload. Default settings might be active. Check logs.\n"
+                self.status_label.text = "Config saved, reload issue"
+                logger.warning("Configuration saved, but failed to reload into ActionSimulator.")
 
-            # Show success message
-            self.console.value = "✅ Configuration saved and reloaded successfully.\n"
-            self.status_label.text = "Configuration saved"
-            logger.info("Configuration updated successfully")
 
-        except Exception as e:
-            self.console.value = f"❌ Error saving configuration: {e}\n"
-            logger.error(f"Error saving configuration: {e}")
+        except FileNotFoundError: # Specifically if the config_path itself is an issue initially
+            logger.error(f"Configuration file path not found during save: {config_path}", exc_info=True)
+            self.console.value += f"❌ Configuration file path error. Cannot save settings.\n"
+            self.status_label.text = "Config path error"
+        except json.JSONDecodeError as e: # If reading current config fails
+            logger.error(f"Error decoding existing JSON from {config_path} during save: {e}", exc_info=True)
+            self.console.value += f"❌ Error reading current configuration: {e}. Save aborted.\n"
+            self.status_label.text = "Error reading config"
+        except Exception as e: # Catch any other unexpected errors during the process
+            logger.error(f"Unexpected error saving configuration: {e}", exc_info=True)
+            self.console.value += f"❌ Unexpected error saving configuration: {e}\n"
+            self.status_label.text = "Error saving config"
 
     def setup_components(self):
         """Set up the application components."""
@@ -1102,7 +1126,21 @@ class CodeSimulator(toga.App):
         self.simulation_task = None
 
         # Now that ActionSimulator is initialized, we can load configuration values
-        self.load_configuration_values()
+        self.load_configuration_values() # This might try to use self.console which is on a different view.
+                                         # For now, errors are logged. If self.console is None here, it would fail.
+                                         # Assuming self.console is the one from create_simulation_view,
+                                         # and it's accessible if an error occurs during load_configuration_values.
+                                         # This is fine as ActionSimulator's init also uses self.console (simulation view's console).
+
+        # Check PyAutoGUI status after ActionSimulator is fully initialized
+        if self.action_simulator.pyautogui_failed:
+            self.start_button.enabled = False
+            self.status_label.text = "Simulation unavailable: PyAutoGUI error."
+            # The detailed error from actions.py's _configure_pyautogui is already in self.console.
+            self.console.value += "➡️ Please check the error messages above for PyAutoGUI initialization issues.\n"
+        else:
+            self.status_label.text = "Ready" # Initial state if pyautogui is fine
+
 
     async def choose_file(self, widget):
         """Allow the user to select a code file."""
@@ -1140,12 +1178,19 @@ class CodeSimulator(toga.App):
 
     async def start_simulation(self, widget):
         """Start the simulation process."""
+        if hasattr(self, 'action_simulator') and self.action_simulator.pyautogui_failed:
+            self.console.value += "❌ Cannot start simulation: PyAutoGUI is not available. Check logs for details.\n"
+            self.status_label.text = "PyAutoGUI error. Cannot simulate."
+            if hasattr(self, 'start_button'): # Defensive check
+                self.start_button.enabled = False
+            return
+
         if not self.action_simulator.loop_flag:
             try:
-                self.console.value = "🚀 Starting simulation...\n"
-                self.update_button_states(running=True)
-                self.action_simulator.loop_flag = True
-                self.status_label.text = "Simulation running"
+                self.console.value = "" # Clear previous messages for a new session
+                self.console.value += "🚀 Starting simulation...\n"
+                self.status_label.text = "Starting..."
+                self.update_button_states(running=True) # This will disable start, enable stop
 
                 # Get the selected simulation mode
                 selected_mode = self.mode_selector.value
@@ -1154,99 +1199,142 @@ class CodeSimulator(toga.App):
 
                 # Determine which file to use based on the selected mode and whether a file was chosen
                 file_to_use = None
-                if selected_mode in ["Typing Only", "Hybrid"]:
+                if selected_mode in ["Typing Only", "Hybrid", "Mouse and Command+Tab"]: # Mouse mode might also use file for context
                     if self.selected_file and os.path.exists(self.selected_file):
                         file_to_use = self.selected_file
                         filename = os.path.basename(file_to_use)
                         self.console.value += f"📄 Using selected file: {filename}\n"
                         logger.info(f"Using selected file: {file_to_use}")
                     else:
-                        self.console.value += "📄 No valid file selected. Using default code samples\n"
-                        logger.info("No valid file selected, using default code samples")
-                else:
-                    self.console.value += "📄 File selection not applicable for this mode\n"
-                    logger.info("File selection not applicable for this mode")
+                        # For modes that can use files, if no specific file, ActionSimulator might use its defaults
+                        self.console.value += "📄 No specific file selected by user. ActionSimulator will use its default/next file if needed.\n"
+                        logger.info("No specific file selected, ActionSimulator might use default code samples for typing parts.")
+                        # file_to_use remains None, ActionSimulator.get_next_code_file() will be used
+                else: # Tab Switching Only
+                    self.console.value += "📄 File selection not applicable for Tab Switching Only mode.\n"
+                    logger.info("File selection not applicable for Tab Switching Only mode.")
+
+                self.action_simulator.loop_flag = True # Set loop flag before creating task
+                self.status_label.text = "Simulation running..." # Update status
 
                 # Start the simulation task
-                if not self.simulation_task:
+                if not self.simulation_task or self.simulation_task.done(): # Ensure no task is running or re-create if done
                     self.simulation_task = asyncio.create_task(self.run_continuous_simulation(file_to_use))
-                logger.info("Simulation started successfully.")
+                logger.info("Simulation task (re)started successfully.")
             except Exception as e:
-                logger.error(f"Error starting simulation: {e}")
-                await self.stop_simulation(widget)
+                logger.error(f"Error starting simulation: {e}", exc_info=True)
+                self.console.value += f"❌ Error starting simulation: {e}\n"
+                self.status_label.text = "Error starting simulation"
+                await self.stop_simulation(widget) # Ensure cleanup
 
     async def run_continuous_simulation(self, file_to_use: Optional[str]):
         """Run the continuous simulation loop."""
         try:
             while self.action_simulator.loop_flag:
-                # Determine which file to use
-                if file_to_use and os.path.exists(file_to_use):
-                    next_file = file_to_use
-                    logger.debug(f"Using provided file: {next_file}")
+                current_file_for_simulation = file_to_use
+                # If a specific file_to_use was given for the session, keep using it.
+                # Otherwise, cycle through ActionSimulator's internal list.
+                if not current_file_for_simulation:
+                    current_file_for_simulation = self.action_simulator.get_next_code_file()
+                    if not current_file_for_simulation: # Still no file
+                        self.console.value += "❌ No code files found to simulate typing. Check resources/code.\n"
+                        self.status_label.text = "No code files found."
+                        await asyncio.sleep(5) # Wait before trying again or stopping
+                        # Consider stopping the loop if no files are ever found.
+                        # For now, it will keep trying.
+                        continue
+                    logger.debug(f"Using default/next file: {current_file_for_simulation}")
                 else:
-                    next_file = self.action_simulator.get_next_code_file()
-                    logger.debug(f"Using default file: {next_file}")
+                    logger.debug(f"Using session-specific file: {current_file_for_simulation}")
 
-                if not next_file:
-                    self.console.value += "❌ No code files found to simulate typing.\n"
-                    await asyncio.sleep(2)
-                    continue
 
-                # Calculate typing time if applicable
-                if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"]:
-                    await self.action_simulator.calculate_typing_time(next_file)
+                # Calculate typing time if applicable and file exists
+                if self.action_simulator.simulation_mode in ["Typing Only", "Hybrid"] and \
+                   current_file_for_simulation and os.path.exists(current_file_for_simulation):
+                    await self.action_simulator.calculate_typing_time(current_file_for_simulation)
 
                 # Execute the simulation based on the selected mode
                 if self.action_simulator.simulation_mode == "Typing Only":
-                    self.console.value += "⌨️ Simulating typing...\n"
-                    await self.action_simulator.simulate_typing(next_file)
+                    self.console.value += f"⌨️ Simulating typing from {os.path.basename(current_file_for_simulation)}...\n"
+                    await self.action_simulator.simulate_typing(current_file_for_simulation)
                 elif self.action_simulator.simulation_mode == "Tab Switching Only":
                     self.console.value += "🔄 Switching between applications...\n"
-                    self.action_simulator.switch_window()
-                    await asyncio.sleep(2)
+                    self.action_simulator.switch_window() # This is synchronous in ActionSimulator
+                    await asyncio.sleep(random.uniform(2,5)) # Add some delay for this mode
                 elif self.action_simulator.simulation_mode == "Hybrid":
-                    self.console.value += "⌨️ Simulating typing...\n"
-                    await self.action_simulator.simulate_typing(next_file)
+                    self.console.value += f"⌨️ Simulating typing from {os.path.basename(current_file_for_simulation)}...\n"
+                    await self.action_simulator.simulate_typing(current_file_for_simulation)
+                    if not self.action_simulator.loop_flag: break # Check flag after long operation
                     self.console.value += "🔄 Switching between applications...\n"
                     self.action_simulator.switch_window()
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(random.uniform(2,5)) # Add some delay
                 elif self.action_simulator.simulation_mode == "Mouse and Command+Tab":
-                    # Use the dedicated method for this simulation mode
+                    self.console.value += "🖱️ Simulating mouse and Command+Tab...\n"
                     await self.action_simulator.simulate_mouse_and_command_tab(duration=15)  # Run for 15 seconds
 
-                filename = os.path.basename(next_file)
-                self.console.value += f"\n✅ Finished simulating file: {filename}\n"
-                self.console.value += "🔄 Cycle completed. Restarting...\n\n"
-                self.status_label.text = "Cycle completed"
-                await asyncio.sleep(2)
+                if not self.action_simulator.loop_flag: break # Check flag again
+
+                filename_display = os.path.basename(current_file_for_simulation) if current_file_for_simulation else "current cycle"
+                self.console.value += f"✅ Cycle for {filename_display} completed.\n"
+
+                if file_to_use: # If a specific file was chosen for the session, don't say "Restarting" unless it means restarting with that same file
+                    self.console.value += "Pausing before next cycle with the same file...\n\n"
+                    self.status_label.text = f"Completed {filename_display}. Pausing."
+                else: # Using default files, so it will cycle
+                    self.console.value += "🔄 Restarting with next file/cycle...\n\n"
+                    self.status_label.text = "Cycle completed. Next..."
+                await asyncio.sleep(random.uniform(3,7)) # Longer pause between full cycles
         except asyncio.CancelledError:
-            self.console.value += "⏹️ Simulation task cancelled.\n"
-            self.status_label.text = "Simulation cancelled"
+            self.console.value += "⏹️ Simulation task was cancelled.\n"
+            self.status_label.text = "Simulation cancelled."
+            logger.info("Simulation task cancelled.")
         except Exception as e:
-            self.console.value += f"❌ Error during simulation: {str(e)}\n"
-            self.status_label.text = "Error in simulation"
-            logger.error(f"Error in continuous simulation: {e}")
+            self.console.value += f"❌ Critical error during simulation loop: {str(e)}\n"
+            self.status_label.text = "Error in simulation!"
+            logger.error(f"Error in continuous simulation loop: {e}", exc_info=True)
+            # Loop is broken by exception, call stop_simulation to ensure states are reset
             await self.stop_simulation(None)
+        finally:
+            if self.action_simulator.loop_flag: # If loop exited but flag is still true (e.g. unhandled break)
+                logger.warning("Simulation loop exited while loop_flag was still true.")
+            # Final status update if loop terminates naturally (flag becomes false)
+            # This is mostly handled by stop_simulation, but as a fallback:
+            if not self.action_simulator.loop_flag and self.status_label.text not in ["Simulation stopped.", "Ready", "PyAutoGUI error. Cannot simulate."]:
+                 self.status_label.text = "Simulation ended."
+
 
     async def stop_simulation(self, widget):
         """Stop the simulation process."""
-        if self.action_simulator.loop_flag:
-            try:
-                self.console.value += "⏹️ Stopping simulation...\n"
-                self.action_simulator.loop_flag = False
-                self.update_button_states(running=False)
-                self.status_label.text = "Simulation stopped"
-                if self.simulation_task:
-                    self.simulation_task.cancel()
-                    self.simulation_task = None
-                logger.info("Simulation stopped successfully.")
-            except Exception as e:
-                logger.error(f"Error stopping simulation: {e}")
+        if self.action_simulator.loop_flag or (self.simulation_task and not self.simulation_task.done()):
+            self.console.value += "⏹️ Stopping simulation...\n"
+            self.action_simulator.loop_flag = False # Signal the loop to stop
+
+            if self.simulation_task and not self.simulation_task.done():
+                self.simulation_task.cancel()
+            self.simulation_task = None # Clear the task
+
+            self.update_button_states(running=False) # Updates buttons based on new state
+            # Status label is updated by update_button_states or by the loop ending
+            logger.info("Simulation stop requested and processed.")
+        else:
+            self.console.value += "ℹ️ Simulation is not currently running or already stopping.\n"
+            # Ensure buttons and status are correctly set if already stopped
+            self.update_button_states(running=False)
+
 
     def update_button_states(self, running: bool):
         """Update UI button states based on simulation status."""
         self.start_button.enabled = not running
         self.stop_button.enabled = running
+
+        # If PyAutoGUI failed, start button should always be disabled.
+        if hasattr(self, 'action_simulator') and self.action_simulator.pyautogui_failed:
+            self.start_button.enabled = False
+            if not running: # If we are stopping and pyautogui had failed
+                 self.status_label.text = "Simulation unavailable: PyAutoGUI error."
+        else: # PyAutoGUI is fine
+            if not running:
+                self.status_label.text = "Ready"
 
 
 def main():
